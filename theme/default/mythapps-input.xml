@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mythuitheme SYSTEM "http://www.mythtv.org/schema/mythuitheme.dtd">
+<mythuitheme>
+    <window name="osd_input">
+        <area>-1,300,800,335</area>
+        <shape name="background">
+            <area>0,0,100%,100%</area>
+            <type>roundbox</type>
+            <fill color="#000000" alpha="150" />
+            <line color="#222222" alpha="170" width="2" />
+            <cornerradius>18</cornerradius>
+        </shape>
+        <textarea name="title">
+            <font>baselarge</font>
+            <area>100,15,600,45</area>
+            <align>center,top</align>
+        </textarea>
+        <textedit name="TextEditValue">
+            <area>100,95,600,45</area>
+            <statetype name="background">
+                <state name="active">
+                    <shape name="backgroundSearch1">
+                        <area>0,0,600,45</area>
+                        <type>roundbox</type>
+                        <fill color="#808080" />
+                        <cornerradius>6</cornerradius>
+                    </shape>
+                </state>
+                <state name="selected">
+                    <shape name="backgroundSearch2">
+                        <area>0,0,600,45</area>
+                        <type>roundbox</type>
+                        <fill style="gradient">
+                            <gradient start="#52CA38" end="#349838" alpha="255" />
+                        </fill>>
+                        <cornerradius>6</cornerradius>
+                    </shape>
+                </state>
+                <state name="inactive">
+                    <shape name="backgroundSearch1">
+                        <area>0,0,600,45</area>
+                        <type>roundbox</type>
+                        <fill color="#808080" />
+                        <cornerradius>6</cornerradius>
+                    </shape>
+                </state>
+            </statetype>
+            <imagetype name="cursor">
+                <filename>cursor.png</filename>
+            </imagetype>
+            <textarea name="text">
+                <area>7,0,600,45</area>
+                <font>basesmallblack</font>
+                <value></value>
+            </textarea>
+        </textedit>
+        <button name="okButton" from="basebutton">
+            <position>275,190</position>
+            <value>Ok</value>
+        </button>
+    </window>
+</mythuitheme>

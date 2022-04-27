@@ -1,0 +1,733 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Myth Apps Theme. Please only edit mythapps-ui.xml and then run "perl ./generateThemes.pl" after making any changes unless you want to fork the default theme. !!-->	
+<!-- This will generate the changes across all themes to help increase maintainbity. Please see generateThemes.pl for help. !!-->	
+<mythuitheme>
+	<window name="mythapps">
+		<imagetype name="titleSourceThumbnail">
+			<area>20,850,45,45</area>
+			<preserveaspect>true</preserveaspect>
+		</imagetype>
+		<textarea name="title">
+			<area>15,10,820,120</area><!--720!!<area>15,10,535,120</area>  !!-->
+			<font>basesmall</font>
+			<align>hcenter</align>
+			<multiline>Yes</multiline>
+		</textarea>
+		<textarea name="plot">
+			<area>850,10,92%,120</area><!--720!!<area>555,10,53%,120</area>!!-->
+			<font>basesmall</font>
+			<align>left</align>
+			<multiline>yes</multiline>
+			<value></value>
+		</textarea>
+		<textarea name="filepath">
+			<area>20,1056,1000,50</area><!--720!!<area>20,690,1000,50</area>!!-->
+			<font>small</font>
+			<align>left</align>
+			<multiline>no</multiline>
+			<alpha>100</alpha>
+			<value></value>
+		</textarea>
+		
+		<textedit name="SearchTextEdit">
+			<area>60,16,447,45</area><!--720!!<area>60,16,292,45</area>!!-->
+			<statetype name="background">
+				<state name="active">
+					<shape name="backgroundSearch1">
+						<area>0,0,447,45</area><!--720!!<area>0,0,292,45</area>!!-->
+						<type>roundbox</type>
+						<fill color="#808080" />
+						<cornerradius>6</cornerradius>
+					</shape>
+				</state>
+				<state name="selected">
+					<shape name="backgroundSearch2">
+						<area>0,0,447,45</area><!--720!!<area>0,0,292,45</area>!!-->
+						<type>roundbox</type>
+						<fill style="gradient">
+							<gradient start="#52CA38" end="#349838" alpha="255" />
+						</fill>
+						<cornerradius>6</cornerradius>
+					</shape>
+				</state>
+				<state name="inactive">
+					<shape name="backgroundSearch1">
+						<area>0,0,447,45</area><!--720!!<area>0,0,292,45</area>!!-->
+						<type>roundbox</type>
+						<fill color="#808080" />
+						<cornerradius>6</cornerradius>
+					</shape>
+				</state>
+			</statetype>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>7,0,447,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+		</textedit>
+		<buttonlist name="fileListGrid" from="basebuttonlist">
+			<area>15,130,1900,100%</area><!--720!!<area>15,130,1350,70%</area>!!-->
+			<layout>grid</layout>
+			<spacing>-5</spacing><!--720!!<spacing>0</spacing>!!-->
+			<scrollstyle>free</scrollstyle>
+			<!--<arrange>stack</arrange>!-->
+			<!--<align>center</align>!-->
+			<!--<wrapstyle>captive</wrapstyle>!-->
+			<buttonarea>0,0,100%,100%</buttonarea>
+			<statetype name="buttonitem">
+				<state name="active">
+<area>0,0,50,220</area>
+					<shape name="buttonbackground">
+						<area>0,0,0,0</area>
+					</shape>
+					<shape name="buttonbackground2">
+						<!--/1.53-->
+<area>5,5,98%,208</area>
+						<fill style="gradient">
+							<gradient start="#505050" end="#000000" alpha="0" direction="vertical"  />
+<gradient start="#05A7A9" end="#05A7A9" alpha="255" />
+						</fill>
+					</shape>
+					<imagetype name="buttonimage">
+<area>5,11,98%,200</area>
+						<alpha>255</alpha>
+						<preserveaspect>true</preserveaspect>
+					</imagetype>
+					<textarea name="buttontextWatched">
+						<area>5,0,310,30</area><!--720!!<area>3,1,202,30</area>!!-->
+						<align>center,vcenter</align>
+						<font>basesmallgreen</font><!--720!!<font>basesmallblue</font>!!--><!--MCW!!~<font>basesmallgreen</font>~!!-->
+						<alpha>255</alpha>
+					</textarea>
+					<textarea name="buttontext2">
+<area>5,10,310,30</area>
+						<align>center,vcenter</align>
+						<font>basesmall</font>
+						<alpha>255</alpha>
+					</textarea>
+				</state>
+				<state name="selectedactive" from="active">
+					<shape name="buttonbackground">
+						<area>0,0,0,0</area>
+					</shape>
+					
+					<shape name="buttonbackground2">
+						<fill style="gradient">
+							<gradient start="#52CA38" end="#349838" alpha="255" />
+<gradient start="#3B1E3B" end="#3B1E3B" alpha="255" />
+						</fill>
+						
+					</shape>
+<shape name="selector">
+<area>10,10,290,10</area>
+<fill style="gradient">
+<gradient start="#52CA38" end="#349838" alpha="255" />
+</fill>
+</shape>
+					<imagetype name="buttonimage">
+<area>5,11,98%,200</area>
+						<alpha>255</alpha>
+						<preserveaspect>true</preserveaspect>
+					</imagetype>
+					<textarea name="buttontextWatched">
+						<area>0,0,300,60</area><!--720!!<area>0,-7,196,53</area>!!-->
+						<align>center,vcenter</align>
+						<font>basesmallgreen</font><!--720!!<font>basesmallblue</font>!!--><!--MCW!!~<font>basesmallgreen</font>~!!-->
+						<alpha>255</alpha>
+					</textarea>
+					<textarea name="buttontext2">
+						<area>0,0,300,60</area><!--720!!<area>0,-7,196,53</area>!!-->
+						<align>center,vcenter</align>
+						<font>basesmall</font>
+						<alpha>255</alpha>
+					</textarea>
+				</state>
+				<state name="selectedinactive" from="active">
+					<shape name="buttonbackground">
+						<area>0,0,0,0</area>
+					</shape>
+				</state>
+			</statetype>
+		</buttonlist>
+		<button name="androidMenuBtn" from="basebutton">
+			<position>850,1010</position><!--720!!<position>562,661</position>!!-->
+			<value>Menu</value>
+		</button>
+		
+		<shape name="streamDetailsbackground">
+			<area>2%,910,98%,280</area><!--720!!<area>2%,410,1100,280</area>!!-->
+			<type>roundbox</type>
+			<fill color="#000000"  alpha="200" />
+			<cornerradius>3</cornerradius>
+		</shape>
+		<textarea name="streamDetails">
+			<area>3%,920,97%,280</area><!--720!!<area>3%,420,1100,280</area>!!-->
+			<font>small</font>
+			<align>left</align>
+			<multiline>yes</multiline>
+			<value></value>
+		</textarea>
+		
+		<group name="musicDetailsUI">
+			<area>0,0,100%,100%</area>    
+<shape name="themeBackground2">
+<area>962,15,100%,105</area>
+<fill style="gradient">
+<gradient start="#170B17" end="#170B17" alpha="255" />
+</fill>
+</shape>
+			<buttonlist name="fileListMusicGrid" from="basebuttonlist">
+				<area>15,130,1400,920</area><!--720!!<area>15,130,915,613</area>!!-->
+				<layout>Grid</layout>
+				<spacing>-5</spacing>
+				<scrollstyle>free</scrollstyle>
+				<buttonarea>0,0,100%,100%</buttonarea>		
+				<arrange>Fixed</arrange>
+				<align>left</align>	
+				<statetype name="buttonitem">
+					<state name="active">
+						<area>0,0,50,50</area>
+						<shape name="buttonbackground">
+							<area>0,0,0,0</area>        
+						</shape>
+						<shape name="buttonbackground2">
+							<area>0,0,100%,234</area><!--720!!<area>0,0,100%,152</area>!!-->
+							<fill style="gradient">
+								<gradient start="#505050" end="#000000" alpha="0" direction="vertical"  />
+<gradient start="#170B17" end="#170B17" alpha="255" />
+							</fill>
+						</shape>
+						<imagetype name="buttonimage">
+							<area>0,0,320,208</area><!--720!!<area>0,6,209,135</area>!!-->
+							<alpha>255</alpha>
+							<preserveaspect>true</preserveaspect>
+						</imagetype>
+						<textarea name="buttontext2">
+							<area>5,0,310,30</area><!--720!!<area>3,1,202,30</area>!!-->
+							<align>center,vcenter</align>
+							<font>basesmall</font>
+							<alpha>255</alpha>
+						</textarea>
+					</state>
+					<state name="selectedactive" from="active">
+						<shape name="buttonbackground">
+							<area>0,0,0,0</area>
+						</shape>
+						<shape name="buttonbackground2">
+							<fill style="gradient">
+								<gradient start="#52CA38" end="#349838" alpha="255" />
+							</fill>
+						</shape>
+						<imagetype name="buttonimage">
+							<area>10,10,300,216</area><!--720!!<area>6,6,196,141</area>!!-->
+							<alpha>255</alpha>
+							<preserveaspect>true</preserveaspect>
+						</imagetype>
+						<textarea name="buttontext2">
+							<area>0,0,300,60</area><!--720!!<area>0,-7,196,53</area>!!-->
+							<align>center,vcenter</align>
+							<font>basesmall</font>
+							<alpha>255</alpha>
+						</textarea>
+					</state>
+					<state name="selectedinactive" from="active">
+						<shape name="buttonbackground">
+							<area>0,0,0,0</area>
+						</shape>
+						
+						<imagetype name="buttonimage">
+							<area>7,0,310,215</area><!--720!!<area>7,0,202,140</area>!!-->
+							<alpha>255</alpha>
+							<preserveaspect>true</preserveaspect>
+						</imagetype>
+					</state>
+				</statetype>
+			</buttonlist>
+			
+			<shape name="rightsidebar">
+				<area>1650,120,270,772</area><!--720!!<area>1078,85,200,495</area>!!-->
+				<type>roundbox</type>
+				<cornerradius>0</cornerradius>
+				<fill color="#666666" alpha="50" />
+				<!--720!!<fill color="#666666" alpha="100" />!!-->
+				<line color="#FFFFFF" alpha="0" width="0" />
+			</shape>
+			<textarea name="playlistHeading">
+				<area>1650,120,270,50</area><!--720!!<area>1083,84,200,50</area>!!-->
+				<font>basesmall</font>
+				<align>hcenter</align>
+				<value>Playlist</value>
+			</textarea>
+			<buttonlist name="filterGrid" from="basebuttonlist">
+				<area>970,20,550,110</area><!--720!!<area>633,20,359,71</area>!!-->
+				<layout>grid</layout>
+				<spacing>-3</spacing>
+				<scrollstyle>free</scrollstyle>
+				<buttonarea>0,0,100%,100%</buttonarea>
+				<arrange>Fixed</arrange>
+				<align>left</align>				
+				<statetype name="buttonitem">
+					<state name="active">
+						<area>0,0,90,90</area><!--720!!<area>0,0,58,58</area>!!-->
+						<shape name="buttonbackground">
+							<area>0,0,0,0</area>
+						</shape>
+						
+						<shape name="buttonbackground2">
+							<area>0,0,100,100</area><!--720!!<area>0,0,65,65</area>!!-->
+							<fill style="gradient">
+								<gradient start="#505050" end="#000000" alpha="0" direction="vertical"  />
+<gradient start="#170B17" end="#170B17" alpha="255" />
+							</fill>
+						</shape>
+						<imagetype name="buttonimage">
+							<area>5,5,90,90</area><!--720!!<area>3,3,58,58</area>!!-->
+							<alpha>255</alpha>
+							<preserveaspect>true</preserveaspect>
+						</imagetype>
+					</state>
+					<state name="selectedactive" from="active">
+						<shape name="buttonbackground">
+							<area>0,0,0,0</area>
+						</shape>
+						
+						<shape name="buttonbackground2">
+							<fill style="gradient">
+								<gradient start="#52CA38" end="#349838" alpha="255" />
+							</fill>
+						</shape>
+					</state>
+					<state name="selectedinactive" from="active">
+						<shape name="buttonbackground">
+							<area>0,0,0,0</area>
+						</shape>
+						
+					</state>
+					
+				</statetype>
+				<statetype name="upscrollarrow">
+					<position>2500,50%</position>
+					<state type="off"></state>
+					<state type="full"></state>
+				</statetype>
+				<statetype name="downscrollarrow">
+					<position>2500,50%</position>
+					<state type="off"></state>
+					<state type="full"></state>
+				</statetype>
+			</buttonlist>
+<shape name="themeBackground">
+<area>962,120,685,100%</area>
+<fill style="gradient">
+<gradient start="#505050" end="#000000" alpha="255" direction="vertical"  />
+</fill>
+</shape>
+			<shape name="seekbar">
+				<area>960,900,957,170</area><!--720!!<area>627,588,625,111</area>!!-->
+				<type>roundbox</type>
+				<fill color="#000000" alpha="150" />
+				<line color="#222222" alpha="170" width="2" />
+				<cornerradius>18</cornerradius>
+			</shape>
+			<buttonlist name="fileListDetails">
+				<area>965,130,660,790</area><!--720!!<area>630,130,431,480</area>!!-->
+				<scrollstyle>free</scrollstyle>
+				<wrapstyle>items</wrapstyle>
+				<layout>vertical</layout>
+				<spacing>10</spacing>
+				<drawfrombottom>false</drawfrombottom>
+				<arrange>Fixed</arrange>
+				<align>left</align>				
+				<buttonarea>0,0,100%,100%</buttonarea>
+				<statetype name="buttonitem">
+					<state name="active">
+						<area>0,0,100%,45</area>
+						<shape name="item">
+							<area>2,2,100%,45</area>
+							<type>roundbox</type>
+							<cornerradius>25</cornerradius>
+							<fill color="#666666" alpha="50" />
+							<line color="#FFFFFF" alpha="0" width="0" />
+						</shape>
+						<textarea name="buttontext2">
+							<area>30,7,100%,42</area>
+							<align>left,vcenter</align>
+							<font>basesmall</font>
+							<alpha>210</alpha>
+						</textarea>
+					</state>
+					<state name="selectedactive" from="active">
+						<shape name="item">
+							<area>-5,-7,100%,57</area><!--720!! <area>2,2,100%,45</area> !!-->
+							<fill color="#ffffff" alpha="50" />
+						</shape>
+						<textarea name="buttontext2">
+							<area>30,7,100%,42</area>
+							<alpha>200</alpha>
+							<font>basesmall</font>
+						</textarea>
+						<imagetype name="divider">
+							<filename />
+						</imagetype>
+					</state>
+					<state name="selectedinactive" from="active">
+					</state>
+				</statetype>
+				<statetype name="upscrollarrow">
+					<position>0%,93%</position>
+					<state type="off"></state>
+					<state type="full">
+						<imagetype name="upon">
+							<filename>shared/uparrow.png</filename>
+							<alpha>230</alpha>
+						</imagetype>
+					</state>
+				</statetype>
+				<statetype name="downscrollarrow">
+					<position>4%,93%</position>
+					<state type="off"></state>
+					<state type="full">
+						<imagetype name="dnon">
+							<filename>shared/downarrow.png</filename>
+							<alpha>230</alpha>
+						</imagetype>
+					</state>
+				</statetype>
+			</buttonlist>
+			<buttonlist name="filterOptionsList" from="basebuttonlist">
+				<area>1360,15,650,150</area><!--720!!<area>888,15,424,98</area>!!-->
+				<scrollstyle>free</scrollstyle>
+				<wrapstyle>none</wrapstyle>
+				<layout>horizontal</layout>
+				<spacing>5</spacing>
+				<drawfrombottom>false</drawfrombottom>
+				<arrange>Fixed</arrange>
+				<align>left</align>			
+				<buttonarea>0,0,100%,100%</buttonarea>
+				<statetype name="buttonitem">
+					<state name="active">
+						<area>0,0,130,45</area><!--720!!<area>0,0,84,45</area>!!-->
+						<shape name="buttonbackground">
+							<area>0,0,0,0</area>
+						</shape>
+						<shape name="item">
+							<area>0,0,130,45</area><!--720!!<area>0,0,84,45</area>!!-->
+<type>square</type>
+							<cornerradius>25</cornerradius>
+							<fill color="#666666" alpha="50" />
+							<line color="#FFFFFF" alpha="0" width="0" />
+						</shape>
+						<textarea name="buttontext">
+							<area>0,0,100%,45</area>
+							<align>center,vcenter</align>
+							<font>basetiny</font>
+							<alpha>210</alpha>
+						</textarea>
+					</state>
+					<state name="selectedactive" from="active">
+						<shape name="buttonbackground">
+							<area>0,0,0,0</area>
+						</shape>
+						<shape name="item">
+							<area>-4,-4,138,52</area><!--720!!<area>0,0,138,52</area>!!-->
+							<fill color="#ffffff" alpha="50" />
+						</shape>
+						<textarea name="buttontext">
+							<area>0,0,100%,45</area>
+							<align>center,vcenter</align>
+							<font>basetiny</font>
+							<alpha>210</alpha>
+						</textarea>
+						<imagetype name="divider">
+							<filename />
+						</imagetype>
+					</state>
+					<state name="selectedinactive" from="active">
+						<shape name="buttonbackground">
+							<area>0,0,0,0</area>
+						</shape>
+					</state>
+				</statetype>
+				<statetype name="upscrollarrow">
+					<position>2500,50%</position>
+					<state type="off"></state>
+					<state type="full"></state>
+				</statetype>
+				<statetype name="downscrollarrow">
+					<position>2500,50%</position>
+					<state type="off"></state>
+					<state type="full"></state>
+				</statetype>
+			</buttonlist>
+			<imagetype name="mm_blackhole_border">
+				<filename>ma_mm_blackhole_border.png</filename>
+				<area>972,910,152,152</area><!--720!!<area>635,594,99,99</area>!!-->
+			</imagetype>
+			<imagetype name="coverart">
+				<filename>ma_mm_nothumb.png</filename>
+				<area>975,914,146,145</area><!--720!!<area>637,597,95,94</area>!!-->
+			</imagetype>
+			<textarea name="song" from="basetextarea">
+				<area>1135,920,800,34</area><!--720!!<area>741,601,522,22</area>!!-->
+				<font>basemedium</font>
+				<value></value>
+			</textarea>
+			<textarea name="artist" from="basetextarea">
+				<area>1135,960,550,34</area><!--720!!<area>741,627,359,22</area>!!-->
+				<font>basesmall</font>
+				<value></value>
+			</textarea>
+			<textarea name="album" from="basetextarea">
+				<area>1135,995,380,34</area><!--720!!<area>741,650,248,22</area>!!-->
+				<font>basesmall</font>
+				<value></value>
+			</textarea>
+			<textarea name="musicDuration2" from="basetextarea">
+				<area>1435,995,430,34</area><!--720!!<area>937,650,281,22</area>!!-->
+				<font>basesmall</font>
+				<value></value>
+			</textarea>
+			<textarea name="musicDuration" from="basetextarea">
+				<area>1500,995,430,34</area><!--720!!<area>980,650,281,22</area>!!-->
+				<font>basesmall</font>
+				<value></value>
+			</textarea>
+			<progressbar name="trackprogress">
+				<area>1120,1050,780,20</area><!--720!!<area>732,686,509,13</area>!!-->
+				<layout>horizontal</layout>
+				<style>reveal</style>
+				<imagetype name="progressimage">
+					<area>0,0,780,20</area><!--720!!<area>0,0,509,13</area>!!-->
+					<filename>ma_mm_progress-fg.png</filename>
+				</imagetype>
+			</progressbar>
+			<imagetype name="playingOn">
+				<area>1700,995,30,30</area><!--720!!<area>1111,650,19,19</area>!!-->
+				<filename>ma_kplay_button_on.png</filename>
+			</imagetype>
+			<imagetype name="playingOff">
+				<area>1700,995,30,30</area><!--720!!<area>1111,650,19,19</area>!!-->
+				<filename>ma_kplay_button_off.png</filename>
+			</imagetype>
+			<imagetype name="next_buttonOn">
+				<area>1760,995,30,30</area><!--720!!<area>1150,650,19,19</area>!!-->
+				<filename>knext_button_on.png</filename>
+			</imagetype>
+			<imagetype name="next_buttonOff">
+				<area>1760,995,30,30</area><!--720!!<area>1150,650,19,19</area>!!-->
+				<filename>ma_knext_button_off.png</filename>
+			</imagetype>
+			<imagetype name="ff_buttonOn">
+				<area>1820,995,30,30</area> <!--720!!<area>1189,650,19,19</area>!!-->
+				<filename>ma_kff_button_on.png</filename>
+			</imagetype>
+			<imagetype name="ff_buttonOff">
+				<area>1820,995,30,30</area><!--720!!<area>1189,650,19,19</area>!!-->
+				<filename>ma_kff_button_off.png</filename>
+			</imagetype>
+			<textarea name="musicTitle">
+				<area>550,10,400,120</area><!--720!!<area>359,6,261,78</area>!!-->
+				<font>basemedium</font>
+				<align>hcenter</align>
+				<value></value>
+				<multiline>Yes</multiline>
+			</textarea>
+			<buttonlist name="playlistVertical" from="basebuttonlist">
+				<area>1650,175,300,700</area><!--720!!<area>1078,114,196,457</area>!!-->
+				<scrollstyle>free</scrollstyle>
+				<wrapstyle>items</wrapstyle>
+				<layout>vertical</layout>
+				<spacing>10</spacing>
+				<drawfrombottom>false</drawfrombottom>
+				<arrange>Fixed</arrange>
+				<align>left</align>						
+				<buttonarea>0,0,100%,100%</buttonarea>
+				<statetype name="buttonitem">
+					<state name="active">
+						<area>0,0,100%,45</area>
+						<shape name="item">
+							<area>0,0,100%,45</area> 
+<type>square</type>
+							<cornerradius>25</cornerradius>
+							<fill color="#666666" alpha="50" />
+							<line color="#FFFFFF" alpha="0" width="0" />
+						</shape>
+						
+						<textarea name="buttontext">
+							<area>30,7,100%,42</area>
+							<align>left,vcenter</align>
+							<font>basesmallgrey</font>
+							<alpha>210</alpha>
+						</textarea>
+						<textarea name="buttontext2">
+							<area>30,7,100%,42</area>
+							<align>left,vcenter</align>
+							<font>basesmall</font>
+							<alpha>210</alpha>
+						</textarea>
+					</state>
+					<state name="selectedactive" from="active">
+						<shape name="item">
+							<area>0-7,100%,57</area> <!--720!! <area>0,0,100%,45</area> !!-->
+							<fill color="#ffffff" alpha="50" />
+						</shape>
+						<textarea name="buttontext">
+							<area>30,7,100%,42</area>
+							<alpha>200</alpha>
+							<font>basesmallgrey</font>
+						</textarea>
+						
+						<textarea name="buttontext2">
+							<area>30,7,100%,42</area>
+							<alpha>200</alpha>
+							<font>basesmall</font>
+						</textarea>
+						<imagetype name="divider">
+							<filename />
+						</imagetype>
+					</state>
+					<state name="selectedinactive" from="active">
+					</state>
+				</statetype>
+				<statetype name="upscrollarrow">
+					<position>0%,93%</position>
+					<state type="off"></state>
+					<state type="full">
+						<imagetype name="upon">
+							<filename>shared/uparrow.png</filename>
+							<alpha>230</alpha>
+						</imagetype>
+					</state>
+				</statetype>
+				<statetype name="downscrollarrow">
+					<position>4%,93%</position>
+					<state type="off"></state>
+					<state type="full">
+						<imagetype name="dnon">
+							<filename>shared/downarrow.png</filename>
+							<alpha>230</alpha>
+						</imagetype>
+					</state>
+				</statetype>
+			</buttonlist>
+			<textarea name="hint">
+				<area>60,80,700,120</area> <!--720!!<area>39,80,457,78</area>!!-->
+				<font>basesmall</font>
+				<align>left</align>
+			</textarea>
+		</group>
+		<group name="searchButtonListGroup">
+			<buttonlist name="searchButtonList" from="basebuttonlist">
+				<area>60,65,450,700</area> <!--720!!<area>60,65,292,700</area>!!-->
+				<layout>>vertical</layout>
+				<spacing>0</spacing>
+				<scrollstyle>free</scrollstyle>
+				<arrange>Fixed</arrange>
+				<align>left</align>						
+				<buttonarea>0,0,100%,100%</buttonarea>
+				<statetype name="buttonitem">
+					<state name="active">
+						<area>0,0,100%,60</area>
+						<shape name="buttonbackground2">
+							<area>0,0,100%,60</area>
+							<fill style="gradient">
+								<gradient start="#505050" end="#000000" alpha="255" direction="vertical"  />
+							</fill>
+						</shape>
+						<textarea name="buttontext2">
+							<area>30,0,100%,100%</area>
+							<align>left,vcenter</align>
+							<font>basesmall</font>
+							<alpha>170</alpha>
+						</textarea>
+					</state>
+					<state name="selectedactive" from="active">
+						<shape name="buttonbackground2">
+							<area>0,0,100%,60</area>
+							<fill style="gradient">
+								<gradient start="#52CA38" end="#349838" alpha="255" direction="vertical"  />
+							</fill>
+						</shape>
+						<textarea name="buttontext2">
+							<area>30,0,100%,100%</area>
+							<align>left,vcenter</align>
+							<font>basesmall</font>
+							<alpha>170</alpha>
+						</textarea>
+					</state>
+					<state name="selectedinactive" from="active">
+						<shape name="buttonbackground2">
+							<area>0,0,100%,60</area>
+							<fill style="gradient">
+								<gradient start="#505050" end="#000000" alpha="255" direction="vertical"  />
+							</fill>
+						</shape>
+						<textarea name="buttontext2">
+							<area>30,0,100%,100%</area>
+							<align>left,vcenter</align>
+							<font>basesmall</font>
+							<alpha>170</alpha>
+						</textarea>
+					</state>
+				</statetype>
+				<statetype name="upscrollarrow">
+					<position>2500,50%</position>
+					<state type="off"></state>
+					<state type="full"></state>
+				</statetype>
+				<statetype name="downscrollarrow">
+					<position>2500,50%</position>
+					<state type="off"></state>
+					<state type="full"></state>
+				</statetype>
+			</buttonlist>
+		</group>
+		
+		
+		<imagetype name="screenshotImageMain">
+			<area>0,0,1920,1080</area>
+		</imagetype>
+		<imagetype name="loaderImage">
+			<filename>mk_loader_1.png</filename>
+			<area>45%,49%,100,100</area>
+			<alpha>200</alpha>
+			<preserveaspect>true</preserveaspect>
+			<filepattern low="1" high="8">mk_loader_%1.png</filepattern>
+			<delay>180</delay>
+		</imagetype>
+		
+		<group name="help">		
+			<area>0%,0,100%,100%</area>
+			<shape name="shapeHelp">
+				<area>1%,150,98%,98%</area>
+				<type>roundbox</type>
+				<cornerradius>25</cornerradius>
+				<fill color="#000000" alpha="255" />
+				<line color="#FFFFFF" alpha="255" width="0" />
+			</shape>
+			<textarea name="texteditHelp">
+				<area>2%,150,98%,98%</area>
+				<font>small</font>
+				<align>left</align>
+				<multiline>yes</multiline>
+				<value>
+					HELP, F1 (hide this)\n					
+					\n						
+					KEYS\n	
+					Show details, U\n
+					Toggle Fullscreen, F2\n
+					Toggle Auto Minimize, F3\n
+					Force Close and Return to Main Menu, F4\n
+					Refresh, F5\n
+					Toggle Hidden Folders, F6\n
+					Setup, M\n
+					Add to Watch List for Later Viewing, R
+				</value>
+			</textarea>
+		</group>
+		
+	</window>
+</mythuitheme>

@@ -1,0 +1,50 @@
+#ifndef shared_h
+#define shared_h
+
+// QT Headers
+#include <QApplication>
+#include <QJsonObject>
+#include <QString>
+#include <QThread>
+#include <QUrlQuery>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+
+/** \class Shared
+ *  \brief Contains shared functions or static functions */
+QString createProgramData(QString file, QString plot, QString thumbnail, bool play, QString seek);
+QString requestUrl(QJsonObject value, QString username, QString password, QString ip, QString port);
+
+void delay(int seconds);
+void delayMilli(int milliseconds);
+
+QString friendlyUrl(QString url);
+
+void createDirectoryIfDoesNotExist(QString _dir);
+QString removeBBCode(QString text);
+
+QString urlencode(QString url);
+
+bool QListContains(QList<QString> list, QString search);
+int QListContainsPos(QList<QString> list, QString search);
+
+QString QListSearch(QList<QString> list, QString search);
+
+bool isKodiPingable(QString ip, QString port);
+
+int getChar(QString text, int positon);
+QString ROT13(QString text);
+
+QString removeTrailingChar(QString text, QChar characterToRemove);
+
+bool overrideAppAZSearch(QString appHash);
+bool excludePreviouslyPlayed(QString lastMediaLocation);
+
+QString getParm(QString string, int position);
+bool isSettingsDialog(QString systemCurrentWindow);
+
+QString getWebSiteDomain(QString websiteUrl);
+
+void openBrowser(QString website);
+
+#endif

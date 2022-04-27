@@ -1,0 +1,814 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mythuitheme>
+	<window name="settings">
+		<textarea name="main" from="basetextarea">
+			<area>32%,30,900,50</area>
+			<font>baselarge</font>
+			<align>left</align>
+			<multiline>no</multiline>
+			<value>Settings - Press F1 to toggle help</value>
+		</textarea>
+		<textarea name="version">
+			<area>5%,20,150,300</area>
+			<font>small</font>
+			<align>left</align>
+			<multiline>yes</multiline>
+			<value>Version: 0.1\n* = Global Setting</value>
+		</textarea>
+		<textarea name="commands">
+			<area>30,110,100%,50</area>
+			<font>small</font>
+			<align>left</align>
+			<multiline>yes</multiline>
+			<value></value>
+		</textarea>		
+		<button name="cancel" from="basebutton">
+			<position>30,647</position>
+			<value></value>
+		</button>
+
+		<button name="save" from="basebutton">
+			<position>1088,647</position>
+			<value></value>
+		</button>		
+		
+<group name="page1">
+		<area>0,0,100%,100%</area>
+		<shape name="User-Shape">
+			<area>30,150,200,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="User-Textarea">
+			<area>36,150,188,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Kodi User</value>
+		</textarea>
+		
+
+		<shape name="User-Settings-Shape">
+			<area>242,150,200,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		
+		<textedit name="User-Settings-Textedit">
+			<area>242,150,200,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>7,0,200,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>	
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>
+		</textedit>		
+				
+		<shape name="Password-Shape">
+			<area>30,200,200,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="Password-Textarea">
+			<area>36,200,200,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>edit
+			<value>Kodi Password</value>
+		</textarea>
+		<shape name="Password-Settings-Shape">
+			<area>242,200,200,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textedit name="Password-Settings-Textedit">
+			<area>242,200,200,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>7,0,200,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>			
+		</textedit>
+		<shape name="IP-Shape">
+			<area>30,250,200,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="IP-Textarea">
+			<area>36,250,200,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Kodi IP</value>
+		</textarea>
+		<shape name="IP-Settings-Shape">
+			<area>242,250,200,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textedit name="IP-Settings-Textedit">
+			<area>242,250,3200,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>7,0,200,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>	
+		</textedit>
+		<shape name="Port-Shape">
+			<area>30,300,200,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="Port-Textarea">
+			<area>36,300,200,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Kodi Port</value>
+		</textarea>
+		<shape name="Port-Settings-Shape">
+			<area>242,300,200,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textedit name="Port-Settings-Textedit">
+			<area>242,300,200,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>7,0,200,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>			
+		</textedit>
+		<shape name="SuggestUrl-Shape">
+			<area>500,250,600,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="SuggestUrl-Textarea">
+			<area>500,250,588,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Custom Search Suggest Url*</value>
+		</textarea>
+		<shape name="SuggestUrl-Settings-Shape">
+			<area>880,250,385,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textedit name="SuggestUrl-Settings-Textedit">
+			<area>880,250,385,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>7,0,380,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>	
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>					
+		</textedit>
+		<shape name="AppPass-Shape">
+			<area>500,300,600,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="AppPass-Textarea"> 
+			<area>500,300,588,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>App Password for login/subscription*</value>
+		</textarea>
+		<shape name="AppPass-Settings-Shape">
+			<area>1015,300,250,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textedit name="AppPass-Settings-Textedit">
+			<area>1015,300,250,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>7,0,240,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>			
+		</textedit>
+		
+		<shape name="Web-Shape">
+			<area>30,380,600,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="Web-Textarea">
+			<area>36,380,588,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Websites (~ seperator, begin with http:)*</value>
+		</textarea>
+		<shape name="Web-Settings-Shape">
+			<area>642,380,625,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textedit name="Web-Settings-Textedit">
+			<area>642,380,625,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>7,0,620,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>			
+		</textedit>
+		<shape name="MyVideo-Shape">
+			<area>30,430,600,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="MyVideo-Textarea">
+			<area>36,430,588,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Enable My Videos</value>
+		</textarea>
+		<checkbox name="MyVideo-Settings-Checkbox">
+			<area>642,440,100%,50</area>
+			<statetype name="background">
+				<state name="active">
+					<imagetype name="background">
+						<filename>unchecked.png</filename>
+					</imagetype>
+				</state>
+				<state name="selected">
+					<imagetype name="background">
+						<filename>checkbox_background_selected.png</filename>
+					</imagetype>
+				</state>
+				<state name="disabled" />
+			</statetype>
+			<statetype name="checkstate">
+				<area>0,0,30,30</area>
+				<state type="off" />
+				<state type="half">
+					<imagetype name="background">
+						<filename>checked_selected.png</filename>
+					</imagetype>
+				</state>
+				<state type="full">
+					<imagetype name="mark">
+						<filename>checked.png</filename>
+					</imagetype>
+				</state>
+			</statetype>
+		</checkbox>
+		<shape name="Mute-Shape">
+			<area>730,430,328,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="Mute-Textarea">
+			<area>736,430,328,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Enable Internal Mute</value>
+		</textarea>
+		<checkbox name="Mute-Settings-Checkbox">
+			<area>1062,440,100%,50</area>
+			<statetype name="background">
+				<state name="active">
+					<imagetype name="background">
+						<filename>unchecked.png</filename>
+					</imagetype>
+				</state>
+				<state name="selected">
+					<imagetype name="background">
+						<filename>checkbox_background_selected.png</filename>
+					</imagetype>
+				</state>
+				<state name="disabled" />
+			</statetype>
+			<statetype name="checkstate">
+				<area>0,0,30,30</area>
+				<state type="off" />
+				<state type="half">
+					<imagetype name="background">
+						<filename>checked_selected.png</filename>
+					</imagetype>
+				</state>
+				<state type="full">
+					<imagetype name="mark">
+						<filename>checked.png</filename>
+					</imagetype>
+				</state>
+			</statetype>
+		</checkbox>
+		<shape name="CloseKodiOnExit-Shape">
+			<area>30,480,600,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="CloseKodiOnExit-Textarea">
+			<area>36,480,588,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Close Kodi on Exit</value>			
+		</textarea>
+		<checkbox name="CloseKodiOnExit-Settings-Checkbox">
+			<area>642,480,100%,50</area>
+			<statetype name="background">
+				<state name="active">
+					<imagetype name="background">
+						<filename>unchecked.png</filename>
+					</imagetype>
+				</state>
+				<state name="selected">
+					<imagetype name="background">
+						<filename>checkbox_background_selected.png</filename>
+					</imagetype>
+				</state>
+				<state name="disabled" />
+			</statetype>
+			<statetype name="checkstate">
+				<area>0,0,30,30</area>
+				<state type="off" />
+				<state type="half">
+					<imagetype name="background">
+						<filename>checked_selected.png</filename>
+					</imagetype>
+				</state>
+				<state type="full">
+					<imagetype name="mark">
+						<filename>checked.png</filename>
+					</imagetype>
+				</state>
+			</statetype>
+		</checkbox>
+		<shape name="Vol-Shape">
+			<area>730,480,328,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="Vol-Textarea">
+			<area>736,480,328,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Enable Internal Volume</value>
+		</textarea>
+		<checkbox name="Vol-Settings-Checkbox">
+			<area>1062,480,100%,50</area>
+			<statetype name="background">
+				<state name="active">
+					<imagetype name="background">
+						<filename>unchecked.png</filename>
+					</imagetype>
+				</state>
+				<state name="selected">
+					<imagetype name="background">
+						<filename>checkbox_background_selected.png</filename>
+					</imagetype>
+				</state>
+				<state name="disabled" />
+			</statetype>
+			<statetype name="checkstate">
+				<area>0,0,30,30</area>
+				<state type="off" />
+				<state type="half">
+					<imagetype name="background">
+						<filename>checked_selected.png</filename>
+					</imagetype>
+				</state>
+				<state type="full">
+					<imagetype name="mark">
+						<filename>checked.png</filename>
+					</imagetype>
+				</state>
+			</statetype>
+		</checkbox>
+		<shape name="Remote-Shape">
+			<area>30,530,600,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="Remote-Textarea">
+			<area>36,530,588,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Use MythTV remote</value>
+		</textarea>
+		<checkbox name="Remote-Settings-Checkbox">
+			<area>642,530,100%,50</area>
+			<statetype name="background">
+				<state name="active">
+					<imagetype name="background">
+						<filename>unchecked.png</filename>
+					</imagetype>
+				</state>
+				<state name="selected">
+					<imagetype name="background">
+						<filename>checkbox_background_selected.png</filename>
+					</imagetype>
+				</state>
+				<state name="disabled" />
+			</statetype>
+			<statetype name="checkstate">
+				<area>0,0,30,30</area>
+				<state type="off" />
+				<state type="half">
+					<imagetype name="background">
+						<filename>checked_selected.png</filename>
+					</imagetype>
+				</state>
+				<state type="full">
+					<imagetype name="mark">
+						<filename>checked.png</filename>
+					</imagetype>
+				</state>
+			</statetype>
+		</checkbox>
+		<shape name="Music-Shape">
+			<area>730,530,328,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="Music-Textarea">
+			<area>736,530,328,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>Enable Music</value>
+		</textarea>
+		<checkbox name="Music-Settings-Checkbox">
+			<area>1062,530,100%,50</area>
+			<statetype name="background">
+				<state name="active">
+					<imagetype name="background">
+						<filename>unchecked.png</filename>
+					</imagetype>
+				</state>
+				<state name="selected">
+					<imagetype name="background">
+						<filename>checkbox_background_selected.png</filename>
+					</imagetype>
+				</state>
+				<state name="disabled" />
+			</statetype>
+			<statetype name="checkstate">
+				<area>0,0,30,30</area>
+				<state type="off" />
+				<state type="half">
+					<imagetype name="background">
+						<filename>checked_selected.png</filename>
+					</imagetype>
+				</state>
+				<state type="full">
+					<imagetype name="mark">
+						<filename>checked.png</filename>
+					</imagetype>
+				</state>
+			</statetype>
+		</checkbox>
+		<shape name="YT-Shape">
+			<area>30,580,1128,45</area>
+			<type>roundbox</type>
+			<fill color="#000000" alpha="130" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textarea name="YTapi-Textarea">
+			<area>36,580,228,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>YT API Key*</value>
+		</textarea>
+		<shape name="YTapi-Settings-Shape">
+			<area>195,580,250,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textedit name="YTapi-Settings-Textedit">
+			<area>195,580,250,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>3,0,240,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>			
+		</textedit>
+		<textarea name="YTid-Textarea">
+			<area>450,580,228,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>YT Client ID*</value>
+		</textarea>
+		<shape name="YTid-Settings-Shape">
+			<area>625,580,250,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textedit name="YTid-Settings-Textedit">
+			<area>625,580,250,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>4,0,240,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>			
+		</textedit>
+		<textarea name="YTcs-Textarea">
+			<area>880,580,238,45</area>
+			<font>basesmallgreen</font>
+			<align>left,vcenter</align>
+			<value>YT Client Secret*</value>
+		</textarea>
+		<shape name="YTcs-Settings-Shape">
+			<area>1110,580,170,45</area>
+			<type>roundbox</type>
+			<fill color="#FFFFFF" />
+			<cornerradius>6</cornerradius>
+		</shape>
+		<textedit name="YTcs-Settings-Textedit">
+			<area>1110,580,160,45</area>
+			<imagetype name="cursor">
+				<filename>cursor.png</filename>
+			</imagetype>
+			<textarea name="text">
+				<area>4,0,150,45</area>
+				<font>basesmallblack</font>
+				<value></value>
+			</textarea>
+			<statetype name="background">
+				<state name="active">
+				</state>
+				<state name="selected" from="active">
+				</state>
+				<state name="inactive" from="active">
+				</state>
+			</statetype>			
+		</textedit>
+</group>
+<group name="page2">
+		<area>0,0,100%,100%</area>
+		<textarea name="searchSource-Textarea">
+			<area>30,160,100%,50</area>
+			<font>small</font>
+			<align>left</align>
+			<multiline>yes</multiline>
+			<value>Enable / Disable Search Sources. (must open each addon once to appear below) </value>
+		</textarea>
+		<buttonlist name="apps">
+			<area>30,200,1400,300</area>
+			<scrollstyle>free</scrollstyle>
+			<wrapstyle>items</wrapstyle>
+			<layout>vertical</layout>
+			<spacing>10</spacing>
+			<drawfrombottom>false</drawfrombottom>
+			<buttonarea>0,0,100%,100%</buttonarea>
+			<statetype name="buttonitem">
+				<state name="active">
+					<area>0,0,100%,45</area>
+					<shape name="item">
+						<area>0,0,100%,45</area>
+						<type>roundbox</type>
+						<cornerradius>25</cornerradius>
+						<fill color="#666666" alpha="50" />
+						<line color="#FFFFFF" alpha="0" width="0" />
+					</shape>
+					<textarea name="buttontext">
+						<area>50,7,100%,42</area>
+						<align>left,vcenter</align>
+						<font>basesmallgrey</font>
+						<alpha>250</alpha>
+					</textarea>
+					<textarea name="buttontext2">
+						<area>50,7,100%,42</area>
+						<align>left,vcenter</align>
+						<font>basesmallred</font>
+						<alpha>150</alpha>
+					</textarea>
+				</state>
+				<state name="selectedactive" from="active">
+					<shape name="item">
+						<area>-15,-7,100%,57</area>
+						<fill color="#ffffff" alpha="50" />
+					</shape>
+					<textarea name="buttontext">
+						<area>50,7,100%,42</area>
+						<alpha>200</alpha>
+						<font>basesmallgrey</font>
+					</textarea>
+					<textarea name="buttontext2">
+						<area>50,7,100%,42</area>
+						<align>left,vcenter</align>
+						<font>basesmallred</font>
+						<alpha>150</alpha>
+					</textarea>
+				</state>
+				<state name="selectedinactive" from="active">
+					<shape name="item">
+						<area>-15,-7,100%,57</area>
+						<fill color="#ffffff" alpha="50" />
+					</shape>
+					<textarea name="buttontext">
+						<area>50,7,100%,42</area>
+						<alpha>200</alpha>
+						<font>basesmallgrey</font>
+					</textarea>
+					<textarea name="buttontext2">
+						<area>50,7,100%,42</area>
+						<align>left,vcenter</align>
+						<font>basesmallred</font>
+						<alpha>150</alpha>
+					</textarea>
+				</state>
+			</statetype>
+			<statetype name="upscrollarrow">
+				<position>0%,93%</position>
+				<state type="off"></state>
+				<state type="full">
+					<imagetype name="upon">
+						<filename>shared/uparrow.png</filename>
+						<alpha>230</alpha>
+					</imagetype>
+				</state>
+			</statetype>
+			<statetype name="downscrollarrow">
+				<position>4%,93%</position>
+				<state type="off"></state>
+				<state type="full">
+					<imagetype name="dnon">
+						<filename>shared/downarrow.png</filename>
+						<alpha>230</alpha>
+					</imagetype>
+				</state>
+			</statetype>
+		</buttonlist>	
+		<button name="ResetImages" from="basebutton">
+			<position>285,647</position>
+			<value>Clear Images</value>
+		</button>						
+</group>	
+		<button name="ResetSearchList" from="basebutton">
+			<position>885,140</position>
+			<value>Remove All</value>
+		</button>	
+		<shape name="shapeHelp">
+			<area>1%,150,98%,98%</area>
+			<type>roundbox</type>
+			<cornerradius>25</cornerradius>
+			<fill color="#000000" alpha="255" />
+			<line color="#FFFFFF" alpha="255" width="0" />
+		</shape>
+		<textarea name="texteditHelp">
+			<area>2%,150,98%,98%</area>
+			<font>small</font>
+			<align>left</align>
+			<multiline>yes</multiline>
+			<value>
+SETUP\n		
+1. Install Kodi and the packages listed above. Recommended to use the offical Kodi Repo as it has DRM support - https://kodi.wiki/view/Official_Ubuntu_PPA. \n
+DRM - inputstream adaptive is required for 4k video and most popular streaming services. (subscription required) Recommended packages: kodi-inputstream-adaptive, kodi-visualization-projectm.\n   
+  .  .  .  .sudo add-apt-repository ppa:team-xbmc/ppa; sudo apt-get update\n 
+  .  .  .  .sudo apt-get install kodi kodi-inputstream-adaptive kodi-visualization-projectm netcat-openbsd kodi-eventclients-kodi-send chromium-browser xdotool vnstat\n
+\n
+2. Open Kodi. Enabled remote control via http in Kodi->Setting->Services->Control.     Allow Remote Control via HTTP - Yes.\n 
+                   Require Aurthenitcation - Yes. Username / Password / Port (8080)\n 
+                   Allow remote control from applications on this system - Yes\n 
+				   \n       
+3. Kodi->Setting->System->Display.      Delay after change of refresh rate - 0.2 seconds\n 
+  .  .  .  .Kodi->Setting->System->Audio->Play Gui Sounds - No\n 
+  .  .  .  .Kodi->Setting->System->Addons->Set Unknown Sources (if required)\n 
+\n				   			   
+4. Install some Kodi video addons such as the free Nasa TV in the Kodi gui and check the video plays without prompts in Kodi.\n
+\n
+5. Optionally install and open the YouTube addon in Kodi, and sign up for an API key. Enter this in the MythApps setting menu instead of Kodi and click save. - https://www.linuxbabe.com/raspberry-pi/kodi-youtube \n 
+Open the addon in Kodi and navigate to:  .  . YouTube settings->MPEG-DASH->MPEG-DASH - Yes\n
+  .  .  .  .  .  .  .  .  . .  .  .  .  .  .  .  .  .  .  .  .  .  . .  .  .  .  . .  .YouTube settings->MPEG-DASH->Video quality adaptive (WEBM/VP9) - (to enable 4k)\n
+  .  .  .  .  .  .  .  .  . .  .  .  .  .  .  .  .  .  .  .  .  .  . .  .  .  .  . .  .YouTube settings->Folders->Quick Search (Incognito)\n
+\n
+6. Setup Searching. Each App has a search url and is autodiscovered in the settings menu after opening each app once from MythApps home screen. Some search url's may need to be disabled.\n
+\n
+WHAT IS MYTHAPPS?\n
+MythApps is a wrapper that gives the illusion of Kodi plugins running natively from MythTV. Apps will comply with the Mythtv theming and remote commands.\n 
+Kodi has a json API that allows remote control and to query the GUI. MythApps interprets this into its own GUI. Videos are played in the Kodi Video Player \n 
+with some skinning tricks to make it feel like a native application.\n 
+\n 
+TIPS\n
+Tested on mythbuntu skin.\n
+If you search in the home screen, this will search all apps. Recommended to open the App and then search to get search results just from one App.\n
+F2 will toggle fullscreen. F3 will temporarily stop Kodi from auto minimizing.\n 		
+            </value>
+		</textarea>
+	</window>
+</mythuitheme>
