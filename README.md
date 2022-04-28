@@ -113,3 +113,5 @@ This will generate the changes across all themes to help increase maintainabilit
 If submitting a patch and need a fix for a specific app, please use feature detection or alternatively a settings that can be enabled/disabled to fix a bug in a specific app.
 Please note, MythApps is a wrapper of the Kodi JSON user interface and with the exception of the Wikipedia search suggestions, does not communicate with any external internet services or APIs.
 The media is opened and decoded in an external video player.
+
+Please report any bugs on this Github page and pull requests are welcome.
