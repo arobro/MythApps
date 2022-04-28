@@ -63,6 +63,9 @@ Also find 'BUILD_PLUGINS=0' and change to 'BUILD_PLUGINS=1'.
 Make sure to enable websockets:
 gedit android/packaging/android/makelibs.sh
 uncommment '#SKIPS="$SKIPS -skip qtwebsockets"' to 'SKIPS="$SKIPS -skip qtwebsockets"'.
+
+May need to fix export path: <br />
+export PKG_CONFIG_PATH=/home/ubuntu/Desktop/build/android/packaging/android/libsinstall/lib/pkgconfig
 	
 #### MythApp Services
 You can compile using Android Studio or a prebuild MythApp Services apk. <br />
