@@ -9,7 +9,7 @@ Kodi has a JSON API that allows remote control and to query the GUI. MythApps in
 # FEATURES
 Supports 4K \
 Kodi has a very large library of Apps. \
-Consistent inferface and MythTV theming. \
+Consistent interface and MythTV theming. \
 Global search on home screen or specifc search when in a directory. \
 Play local media not on the mythtv backend. \
 MythTV remote support. \
