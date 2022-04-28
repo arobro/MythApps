@@ -35,7 +35,7 @@ Edit mainmenu.xml and add in the below code: gedit /usr/local/share/mythtv/theme
 
 ### Android
 1. Use prebuilt mythtv apk with MythApps or compile mythtv with the MythApps plugins.
-2. You will need to install an addional apk called MythApp Services.
+2. You will need to install an additional apk called MythApp Services.
 
 
 Compile: https://www.mythtv.org/wiki/MythTV_on_Android and make sure to use https://github.com/MythTV/packaging.git
