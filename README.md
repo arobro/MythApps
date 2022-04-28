@@ -11,8 +11,8 @@ Supports 4K \
 Kodi has a very large library of Apps. \
 Consistent inferface and MythTV theming. \
 Global search on home screen or specifc search when in a directory. \
-Play local media not on the mythtv backend.
-MythTV remote support.
+Play local media not on the mythtv backend. \
+MythTV remote support. \
 Kodi supports L1 DRM on Android, L3 on Linux and Windows.
  
 # HOW TO INSTALL
