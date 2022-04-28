@@ -2,11 +2,6 @@ include ( ../../mythconfig.mak )
 include ( ../../settings.pro )
 include ( ../../programs-libs.pro )
 
-android {
-	LIBS += -L/home/ubuntu/Desktop/build/android/packaging/android/libsinstall64/qt/lib/ -lQt5WebSockets_arm64-v8a
-	INCLUDEPATH += /home/ubuntu/Desktop/build/android/packaging/android/libs64/qt-everywhere-src-5.15.3/qtwebsockets/include
-}
-
 QT += network sql xml widgets websockets
 
 TEMPLATE = lib

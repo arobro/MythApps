@@ -1,0 +1,54 @@
+From a9efc7f312c39815b5ef893a2f14a4e274157f63 Mon Sep 17 00:00:00 2001
+Message-Id: <a9efc7f312c39815b5ef893a2f14a4e274157f63.1651129241.git.>
+From: arobro <>
+Date: Thu, 28 Apr 2022 19:00:26 +1200
+Subject: [PATCH] mythapps
+
+---
+ android/makelibs.sh  | 2 +-
+ android/mythbuild.sh | 9 ++++++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/android/makelibs.sh b/android/makelibs.sh
+index e030c51..563a30a 100755
+--- a/android/makelibs.sh
++++ b/android/makelibs.sh
+@@ -2764,7 +2764,7 @@ configure_qt5() {
+ 	SKIPS="$SKIPS -skip qtwebchannel"
+ 	SKIPS="$SKIPS -skip qtwebengine"
+ 	SKIPS="$SKIPS -skip qtwebglplugin"
+-	SKIPS="$SKIPS -skip qtwebsockets"
++	#SKIPS="$SKIPS -skip qtwebsockets"
+ 	SKIPS="$SKIPS -skip qtwebview"
+ 	SKIPS="$SKIPS -skip qtwinextras"
+ 	SKIPS="$SKIPS -skip qtx11extras"
+diff --git a/android/mythbuild.sh b/android/mythbuild.sh
+index 8307ce5..3dc03f5 100755
+--- a/android/mythbuild.sh
++++ b/android/mythbuild.sh
+@@ -5,7 +5,7 @@ ARM64=0
+ source android-utilities/setenv.sh
+ 
+ SHADOW_BUILD=0
+-BUILD_PLUGINS=0
++BUILD_PLUGINS=1
+ 
+ export ANDROID_NDK_ROOT=$ANDROID_NDK
+ 
+@@ -271,6 +271,13 @@ function bundle_apk() {
+ 			cp "$i" "$MYTHINSTALLROOT/libs/$ANDROID_TARGET_ARCH/"
+ 		fi
+ 	done
++
++	export MYTHDIR="$(dirname -- $MYTHINSTALLROOT)"
++	cp "$MYTHINSTALLROOT/lib/mythtv/plugins/libmythpluginmythapps.so" "$MYTHINSTALLROOT/libs/$ANDROID_TARGET_ARCH/libmythpluginmythapps.so"
++	cp -R "$MYTHDIR/build/mythplugins/mythapps/theme/default/" "$MYTHINSTALLROOT/share/mythtv/themes/"
++	cp "$MYTHDIR/build/mythplugins/mythapps/mainmenu.xml" "$MYTHINSTALLROOT/share/mythtv/themes/defaultmenu/mainmenu.xml"
++	cp "$MYTHINSTALLROOT/qt/lib/libQt5WebSockets_armeabi-v7a.so" "$MYTHINSTALLROOT/libs/$ANDROID_TARGET_ARCH/libQt5WebSockets_armeabi-v7a.so"
++		
+ 	VERSIONNAME=$(date +"%F" | tr -d '-')-$BUNDLE_NAME-$(grep "define MYTH_SOURCE_VERSION" libs/libmythbase/version.h | cut -d' ' -f 3 | tr -d '"')
+         # TODO: Eventually do something reasonable with versionCode.
+ 	VERSIONCODE=1
+-- 
+2.25.1
+

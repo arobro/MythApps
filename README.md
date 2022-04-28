@@ -38,35 +38,11 @@ Edit mainmenu.xml and add in the below code: gedit /usr/local/share/mythtv/theme
 2. You will need to install an addional apk called MythApp Services.
 
 
-Compile: https://www.mythtv.org/wiki/MythTV_on_Android
+Compile: https://www.mythtv.org/wiki/MythTV_on_Android and make sure to use https://github.com/MythTV/packaging.git
 
-gedit android/packaging/android/mythbuild.sh \
-Find 'function bundle_apk()' and then after 'done', paste in the following changes to add mythapps.so into the apk file.
+Apply android.patch under the MythApps directory.
+Under the MythPlugins directory, add  SUBDIRS += mythapps to packaging/android/build/mythplugins/config.pro
 
-function bundle_apk() { \
-	# plugins are not automatically installed so copy them \
-	for i in $MYTHINSTALLROOT/lib/libmythpluginmyth{archive,netvision,news,browser,game,music,zoneminder}.so \
-......... \
-	done \
-CHANGES:<br />   	
-cp "/home/ubuntu/Desktop/build/android/packaging/android/build64/mythplugins/mythapps/mythapps/libmythpluginmythapps.so" "$MYTHINSTALLROOT/libs/$ANDROID_TARGET_ARCH/libmythpluginmythapps.so" <br />
-<br />
-cp -R "/home/ubuntu/Desktop/build/android/packaging/android/build64/mythplugins/mythapps/theme/default/"  "/home/ubuntu/Desktop/build/android/packaging/android/build64/mythtv/themes/" <br />	
-<br />
-cp "/home/ubuntu/Desktop/build/android/packaging/android/build64/mythplugins/mythapps/mainmenu.xml" "/home/ubuntu/Desktop/build/android/packaging/android/build64/mythtv/themes/defaultmenu/mainmenu.xml" <br />
-<br />
-cp "/home/ubuntu/Desktop/build/android/packaging/android/libsinstall64/qt/lib/libQt5WebSockets_arm64-v8a.so" "$MYTHINSTALLROOT/libs/$ANDROID_TARGET_ARCH/libQt5WebSockets_arm64-v8a.so" <br />
-
-
-Also find 'BUILD_PLUGINS=0' and change to 'BUILD_PLUGINS=1'.
-
-Make sure to enable websockets:
-gedit android/packaging/android/makelibs.sh
-uncommment '#SKIPS="$SKIPS -skip qtwebsockets"' to 'SKIPS="$SKIPS -skip qtwebsockets"'.
-
-May need to fix export path: <br />
-export PKG_CONFIG_PATH=/home/ubuntu/Desktop/build/android/packaging/android/libsinstall/lib/pkgconfig
-	
 #### MythApp Services
 You can compile using Android Studio or a prebuild MythApp Services apk. <br />
 MythApp Services apk - mythapps/MythAppsServices/app/build/intermediates/apk/debug/app-debug.apk

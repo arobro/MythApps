@@ -225,6 +225,7 @@ class MythApps : public MythScreenType {
     void returnFocus();
     void setButtonWatched(bool watched);
     void addToPreviouslyPlayed();
+    void openBrowser(QString website);
 
     // music app
     int m_currentMusicButton = 0;

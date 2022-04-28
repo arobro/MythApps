@@ -45,6 +45,4 @@ bool isSettingsDialog(QString systemCurrentWindow);
 
 QString getWebSiteDomain(QString websiteUrl);
 
-void openBrowser(QString website);
-
 #endif

@@ -2708,3 +2708,24 @@ void MythApps::addToPreviouslyPlayed() {
 
 /** \brief display the options menu when the Android menu button is clicked*/
 void MythApps::androidMenuBtnSlot() { showOptionsMenu(); }
+
+/** \brief open the web browser
+ * 	\param websiteUrl url of the website */
+void MythApps::openBrowser(QString website) {
+#ifdef __ANDROID__
+    if (!website.contains("http")) {
+        website = "http://" + website;
+    }
+    controls->androidAppSwitch(website);
+#elif _WIN32
+    system("start msedge " + website.toLocal8Bit());
+#else
+    if (system("command -v chromium >/dev/null 2>&1 || { exit 1; }") == 0) {
+        system("chromium -kiosk " + website.toLocal8Bit() + " &");
+    } else if (system("command -v firefox >/dev/null 2>&1 || { exit 1; }") == 0) {
+        system("firefox --kiosk " + website.toLocal8Bit() + " &");
+    } else {
+        system("sensible-browser" + website.toLocal8Bit() + " &");
+    }
+#endif
+}
