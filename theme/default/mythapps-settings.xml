@@ -757,12 +757,12 @@
 		<button name="ResetImages" from="basebutton">
 			<position>285,647</position>
 			<value>Clear Images</value>
-		</button>						
-</group>	
+		</button>
 		<button name="ResetSearchList" from="basebutton">
 			<position>885,140</position>
 			<value>Remove All</value>
-		</button>	
+		</button>							
+</group>	
 		<shape name="shapeHelp">
 			<area>1%,150,98%,98%</area>
 			<type>roundbox</type>
