@@ -118,3 +118,11 @@ Please note, MythApps is a wrapper of the Kodi JSON user interface and with the 
 The media is opened and decoded in an external video player.
 
 Please report any bugs on this Github page and pull requests are welcome.
+
+# DEPENDENCIES #
+ libqt5websockets5  <br />
+ kodi  <br />
+ nc  <br />
+ kodi-send  <br />
+ xdotool  <br />
+ vnstat  <br />
