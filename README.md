@@ -129,9 +129,7 @@ Please report any bugs on this Github page and pull requests are welcome.
  xdotool  <br />
  vnstat  <br />
  
- # DEPENDENCIES #
- 
- TROUBLESHOOTING  <br />
+ # TROUBLESHOOTING  #
 1.	Can you log into http://127.0.0.1:8080 in a web browser? <br />
 No? You need to install Kodi and enable the web interface. <br />
 2.	Have you installed a video addon in Kodi and played a video in Kodi? <br />
