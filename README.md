@@ -128,3 +128,16 @@ Please report any bugs on this Github page and pull requests are welcome.
  nc  <br />
  xdotool  <br />
  vnstat  <br />
+ 
+ # DEPENDENCIES #
+ 
+ TROUBLESHOOTING  <br />
+1.	Can you log into http://127.0.0.1:8080 in a web browser? <br />
+No? You need to install Kodi and enable the web interface. <br />
+2.	Have you installed a video addon in Kodi and played a video in Kodi? <br />
+3.	Are you getting unwanted prompts such as asking for the video quality? <br />
+Most addons will have a setting not to prompt for video quality. <br />
+4.	Confirm all dependencies are installed by opening the settings menu (m key).  <br />
+5.	Run mythfrontend from a terminal, optionally with logging. mythfrontend --loglevel debug
+
+
