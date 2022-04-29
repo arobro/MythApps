@@ -5,6 +5,7 @@ Kodi has a JSON API that allows remote control and to query the GUI. MythApps in
 # SCREENSHOTS
 ![Screenshot](preview.png)
 ![Screenshot](preview_search_results.png)
+![Screenshot](preview_settings_pause_finishedPlaying.png)
 
 # FEATURES
 Supports 4K \
@@ -121,8 +122,9 @@ Please report any bugs on this Github page and pull requests are welcome.
 
 # DEPENDENCIES #
  libqt5websockets5  <br />
+ libqt5websockets5-dev  <br />
  kodi  <br />
- nc  <br />
  kodi-send  <br />
+ nc  <br />
  xdotool  <br />
  vnstat  <br />
