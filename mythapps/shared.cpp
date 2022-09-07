@@ -238,4 +238,13 @@ QString getWebSiteDomain(QString websiteUrl) {
     return domain;
 }
 
+/** \brief is x11 or wayland? */
+bool isX11() {
+    QString compositorType = QString::fromLocal8Bit(qgetenv("$XDG_SESSION_TYPE").constData() );
+    if(compositorType.compare("x11") == 0){
+		return true;
+	}
+    return false;
+}
+
 

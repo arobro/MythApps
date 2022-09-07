@@ -1636,8 +1636,9 @@ void MythApps::goMinimize(bool fullscreenCheck) {
     SetActiveWindow(FindWindow(NULL, kodi_wchar2));
 #else
     delayMilli(150);
-    system("timeout 2 xdotool search --onlyvisible --classname --sync Kodi "
-           "windowminimize");
+    if(isX11()){
+		system("timeout 2 xdotool search --onlyvisible --classname --sync Kodi windowminimize");
+	}
     system("kodi-send -a \"Minimize\"");
 #endif
 }
