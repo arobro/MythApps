@@ -1,5 +1,5 @@
 #include "controls.h"
-#include <mythcontext.h>
+#include <libmyth/mythcontext.h>
 #include <mythdirs.h>
 
 /** \param m_username Kodi username

@@ -1,6 +1,6 @@
 #include "shared.h"
 #include <QDir>
-#include <mythcontext.h>
+#include <libmyth/mythcontext.h>
 #include <sstream>
 
 /** \brief  helper function that converts parameters into an ugly delimited string. Todo: Should be either a class or list.

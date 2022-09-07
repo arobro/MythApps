@@ -1,5 +1,5 @@
 // MythTV headers
-#include <mythcontext.h>
+#include <libmyth/mythcontext.h>
 
 // MythApps headers
 #include "programLink.h"

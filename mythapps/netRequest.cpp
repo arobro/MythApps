@@ -1,7 +1,7 @@
 #include "netRequest.h"
 #include "shared.h"
 
-#include <mythcontext.h>
+#include <libmyth/mythcontext.h>
 
 /** \param m_username Kodi username
  *  \param m_password Kodi password

@@ -8,7 +8,7 @@
 #include <QtNetwork/QNetworkReply>
 
 #include "shared.h"
-#include <mythcontext.h>
+#include <libmyth/mythcontext.h>
 #include <regex>
 
 /** \param m_username Kodi username

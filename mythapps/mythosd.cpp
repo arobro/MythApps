@@ -1,5 +1,5 @@
 // MythTV headers
-#include <mythcontext.h>
+#include <libmyth/mythcontext.h>
 #include <mythdbcon.h>
 #include <mythmainwindow.h>
 #include <mythuibuttonlist.h>

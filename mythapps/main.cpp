@@ -1,6 +1,6 @@
 // MythTV headers
 #include "mythuistatetracker.h"
-#include <mythcontext.h>
+#include <libmyth/mythcontext.h>
 #include <mythmainwindow.h>
 #include <mythplugin.h>
 #include <mythpluginapi.h>
