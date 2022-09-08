@@ -1,13 +1,13 @@
 // MythTV headers
-#include "mythuistatetracker.h"
+#include "libmythui/mythuistatetracker.h"
 #include <libmyth/mythcontext.h>
-#include <mythdialogbox.h>
-#include <mythdirs.h>
-#include <mythmainwindow.h>
-#include <mythprogressdialog.h>
-#include <mythuibutton.h>
-#include <mythuiimage.h>
-#include <mythuitext.h>
+#include <libmythui/mythdialogbox.h>
+#include <libmythbase/mythdirs.h>
+#include <libmythui/mythmainwindow.h>
+#include <libmythui/mythprogressdialog.h>
+#include <libmythui/mythuibutton.h>
+#include <libmythui/mythuiimage.h>
+#include <libmythui/mythuitext.h>
 
 // QT headers
 #include <QCoreApplication>
@@ -22,7 +22,7 @@
 #include "music_functions.cpp"
 #include "mythapps.h"
 #include "mythinput.h"
-#include "mythlogging.h"
+#include "libmythbase/mythlogging.h"
 #include "mythosd.h"
 #include "mythsettings.h"
 #include "searchSuggestions.h"

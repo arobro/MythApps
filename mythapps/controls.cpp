@@ -1,6 +1,6 @@
 #include "controls.h"
 #include <libmyth/mythcontext.h>
-#include <mythdirs.h>
+#include <libmythbase/mythdirs.h>
 
 /** \param m_username Kodi username
  *  \param m_password Kodi password

@@ -1,10 +1,10 @@
 // MythTV headers
-#include <mythscreentype.h>
-#include <mythuibutton.h>
-#include <mythuibuttonlist.h>
-#include <mythuicheckbox.h>
-#include <mythuishape.h>
-#include <mythuitextedit.h>
+#include <libmythui/mythscreentype.h>
+#include <libmythui/mythuibutton.h>
+#include <libmythui/mythuibuttonlist.h>
+#include <libmythui/mythuicheckbox.h>
+#include <libmythui/mythuishape.h>
+#include <libmythui/mythuitextedit.h>
 
 class MythSettingsPriv;
 

@@ -10,10 +10,6 @@ TARGET = mythapps
 target.path = $${LIBDIR}/mythtv/plugins
 INSTALLS += target
 
-INCLUDEPATH += $${PREFIX}/include/mythtv
-INCLUDEPATH += $${PREFIX}/include/mythtv/libmythui
-INCLUDEPATH += $${PREFIX}/include/mythtv/libmythbase
-
 installfiles.path = $${PREFIX}/share/mythtv/mythapps
 installfiles.files = mythapps-ui.xml
 

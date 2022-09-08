@@ -1,8 +1,8 @@
 // MythTV headers
-#include <mythscreentype.h>
-#include <mythuibutton.h>
-#include <mythuicheckbox.h>
-#include <mythuitextedit.h>
+#include <libmythui/mythscreentype.h>
+#include <libmythui/mythuibutton.h>
+#include <libmythui/mythuicheckbox.h>
+#include <libmythui/mythuitextedit.h>
 
 /** \class MythOSD
  *  \brief Creates a pause on screen display. */

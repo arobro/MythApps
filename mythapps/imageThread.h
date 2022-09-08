@@ -8,7 +8,7 @@
 #include <QThread>
 
 #include "netRequest.h"
-#include <mythuibuttonlist.h>
+#include <libmythui/mythuibuttonlist.h>
 
 /** \class ImageThread
  *  \brief Downloads and processes an image thumbnail into an image button. This can be multithreaded*/

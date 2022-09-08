@@ -1,7 +1,7 @@
 // MythTV headers
-#include <mythscreentype.h>
-#include <mythuibutton.h>
-#include <mythuitextedit.h>
+#include <libmythui/mythscreentype.h>
+#include <libmythui/mythuibutton.h>
+#include <libmythui/mythuitextedit.h>
 
 /** \class MythInput
  *  \brief Inputbox. Can also take a password */

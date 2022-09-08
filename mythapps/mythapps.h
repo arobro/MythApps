@@ -2,11 +2,11 @@
 #define MYTHKODI_H
 
 // MythTV headers
-#include <mythscreentype.h>
-#include <mythuibutton.h>
-#include <mythuibuttonlist.h>
-#include <mythuiprogressbar.h>
-#include <mythuishape.h>
+#include <libmythui/mythscreentype.h>
+#include <libmythui/mythuibutton.h>
+#include <libmythui/mythuibuttonlist.h>
+#include <libmythui/mythuiprogressbar.h>
+#include <libmythui/mythuishape.h>
 
 // QT headers
 #include <QApplication>

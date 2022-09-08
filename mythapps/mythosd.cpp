@@ -1,10 +1,10 @@
 // MythTV headers
 #include <libmyth/mythcontext.h>
-#include <mythdbcon.h>
-#include <mythmainwindow.h>
-#include <mythuibuttonlist.h>
-#include <mythuicheckbox.h>
-#include <mythuitext.h>
+#include <libmythbase/mythdbcon.h>
+#include <libmythui/mythmainwindow.h>
+#include <libmythui/mythuibuttonlist.h>
+#include <libmythui/mythuicheckbox.h>
+#include <libmythui/mythuitext.h>
 
 #include "mythosd.h"
 
