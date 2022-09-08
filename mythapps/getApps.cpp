@@ -143,7 +143,9 @@ void GetApps::displayWebsiteBookmarks() {
     if (kodiWeb.contains("~")) {
         QStringList kodiWebList = kodiWeb.split("~");
 
-        foreach (QString website, kodiWebList) { displayBookmark(website); }
+        foreach (QString website, kodiWebList) {
+            displayBookmark(website);
+        }
     }
     LOG(VB_GENERAL, LOG_DEBUG, "displayWebsiteBookmarks() end");
 }

@@ -187,13 +187,37 @@ bool MythSettings::Create() // _videoUrl,_seek
     } else {
         mCommand = mCommand + tr(" kodi-send not found,");
     }
-    if(isX11()){
-		if (system("command -v xdotool >/dev/null 2>&1 || { exit 1; }") == 0) {
-			mCommand = mCommand + tr(" xdotool Installed,");
-		} else {
-			mCommand = mCommand + tr(" xdotool not found,");
-		}
-	}
+    if (isX11()) {
+        if (system("command -v xdotool >/dev/null 2>&1 || { exit 1; }") == 0) {
+            mCommand = mCommand + tr(" xdotool Installed,");
+        } else {
+            mCommand = mCommand + tr(" xdotool not found,");
+        }
+    } else if (isGnome()) {
+        system("command -v git >/dev/null 2>&1 || { exit 1; }")
+
+            if (QFile(QDir::homePath() + "/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de/extension.js").exists()) {
+            system("gnome-extensions enable activate-window-by-title@lucaswerkmeister.de");
+
+            if (system("gnome-extensions show activate-window-by-title@lucaswerkmeister.de | grep -c ENABLED") == 0) {
+                mCommand = mCommand + tr(" activate-window Installed,");
+            } else {
+                mCommand = mCommand + tr(" Logout to enable activate-window,");
+            }
+        }
+        else {
+            mCommand = mCommand + tr("gnome activate-window-by-title not installed,");
+
+            if (system("command -v git >/dev/null 2>&1 || { exit 1; }") == 0) {
+            } else {
+                mCommand = mCommand + tr(" git not found,");
+            }
+            system("mkdir -p ~/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de");
+            system("cd ~/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de && git clone https://github.com/lucaswerkmeister/activate-window-by-title . ");
+        }
+    } else {
+        mCommand = mCommand + tr(" Please use Gnome or X11");
+    }
     if (system("command -v vnstat >/dev/null 2>&1 || { exit 1; }") == 0) {
         mCommand = mCommand + tr(" vnstat Installed");
     } else {

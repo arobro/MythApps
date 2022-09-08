@@ -316,9 +316,9 @@ bool MythApps::Create() {
         LOG(VB_GENERAL, LOG_INFO, "Using mythapps-ui.720.xml");
     }
 
-    if (!foundtheme){
+    if (!foundtheme) {
         return false;
-	}
+    }
 
     bool err = false;
     UIUtilE::Assign(this, m_plot, "plot", &err);
@@ -1117,7 +1117,9 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
     if (overrideCurrentSearchUrl.compare("") != 0) {
         fetchSearch(overrideCurrentSearchUrl);
     } else if (isHome) {
-        foreach (QString search, searchListLink->getListEnabled()) { fetchSearch(search); } // fetch all search results for all apps.
+        foreach (QString search, searchListLink->getListEnabled()) {
+            fetchSearch(search);
+        } // fetch all search results for all apps.
     } else {
         fetchSearch(currentSearchUrl); // fetch all search results for the current app.
     }
@@ -1444,7 +1446,9 @@ void MythApps::removeCurrentUrlFromList() {
 /** \brief go back in the file browser. previousURL is a list of directories the user has clicked on */
 void MythApps::goBack() {
     LOG(VB_GENERAL, LOG_DEBUG, "goBack() Start");
-    foreach (QString item, previousURL) { LOG(VB_GENERAL, LOG_DEBUG, "-" + friendlyUrl(item)); }
+    foreach (QString item, previousURL) {
+        LOG(VB_GENERAL, LOG_DEBUG, "-" + friendlyUrl(item));
+    }
 
     searchNoDuplicateCheck = QStringList();
 
@@ -1636,9 +1640,9 @@ void MythApps::goMinimize(bool fullscreenCheck) {
     SetActiveWindow(FindWindow(NULL, kodi_wchar2));
 #else
     delayMilli(150);
-    if(isX11()){
-		system("timeout 2 xdotool search --onlyvisible --classname --sync Kodi windowminimize");
-	}
+    if (isX11()) {
+        system("timeout 2 xdotool search --onlyvisible --classname --sync Kodi windowminimize");
+    }
     system("kodi-send -a \"Minimize\"");
 #endif
 }

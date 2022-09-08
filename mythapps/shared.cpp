@@ -240,11 +240,18 @@ QString getWebSiteDomain(QString websiteUrl) {
 
 /** \brief is x11 or wayland? */
 bool isX11() {
-    QString compositorType = QString::fromLocal8Bit(qgetenv("$XDG_SESSION_TYPE").constData() );
-    if(compositorType.compare("x11") == 0){
-		return true;
-	}
+    QString compositorType = QString::fromLocal8Bit(qgetenv("$XDG_SESSION_TYPE").constData());
+    if (compositorType.compare("x11") == 0) {
+        return true;
+    }
     return false;
 }
 
-
+/** \brief is gnome? */
+bool isGnome() {
+    QString compositorType = QString::fromLocal8Bit(qgetenv("$XDG_CURRENT_DESKTOP").constData());
+    if (compositorType.contains("GNOME", Qt::CaseInsensitive) == 0) {
+        return true;
+    }
+    return false;
+}

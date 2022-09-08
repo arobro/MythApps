@@ -127,7 +127,9 @@ void ProgramLink::append(QString currentselectionDetails) {
 /** \brief Save the favourite/'program link' to the mythtv database */
 void ProgramLink::saveList() {
     QString allList = "";
-    foreach (QString l, LinkDataList) { allList = allList + l + QString("~~"); }
+    foreach (QString l, LinkDataList) {
+        allList = allList + l + QString("~~");
+    }
     if (remote) {
         gCoreContext->SaveSettingOnHost(linkName, allList, gCoreContext->GetMasterHostName());
     } else {

@@ -45,5 +45,6 @@ bool isSettingsDialog(QString systemCurrentWindow);
 
 QString getWebSiteDomain(QString websiteUrl);
 bool isX11();
+bool isGnome();
 
 #endif
