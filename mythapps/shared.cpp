@@ -255,3 +255,11 @@ bool isGnome() {
     }
     return false;
 }
+
+/** \brief is gnome? */
+bool isGnomeWayland() {
+    if (isGnome() && !isX11()) {
+        return true;
+    }
+    return false;
+}

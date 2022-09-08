@@ -1602,21 +1602,31 @@ void MythApps::goFullscreen() {
     ShowWindow(FindWindow(NULL, kodi_wchar), SW_SHOWMAXIMIZED);
     delayMilli(100);
     toggleFullscreen();
-#else
-    for (int i = 0; i < 2; i++) {
-        if (controls->isFullscreen().compare("1")) { // fullscreen toggle from fullscreen to window mode and then full screen to bring kodi to the front of mythtv.
-            delayMilli(50);
-            toggleFullscreen();
-            delayMilli(20);
-            toggleFullscreen();
-        } else { // window
+#else // linux
+    if (isGnomeWayland()) { // use activate-window-by-title
+        system("gdbus call --session --dest org.gnome.Shell --object-path /de/lucaswerkmeister/ActivateWindowByTitle"
+               " --method de.lucaswerkmeister.ActivateWindowByTitle.activateBySubstring 'Kodi'");
+        if (!controls->isFullscreenBool()) {
+            delayMilli(350);
             toggleFullscreen();
         }
-        delayMilli(100);
-        if (controls->isFullscreenBool()) {
-            break;
-        } else {
-            delayMilli(200);
+
+    } else { // X11
+        for (int i = 0; i < 2; i++) {
+            if (controls->isFullscreen().compare("1")) { // fullscreen toggle from fullscreen to window mode and then full screen to bring kodi to the front of mythtv.
+                delayMilli(50);
+                toggleFullscreen();
+                delayMilli(20);
+                toggleFullscreen();
+            } else { // window
+                toggleFullscreen();
+            }
+            delayMilli(100);
+            if (controls->isFullscreenBool()) {
+                break;
+            } else {
+                delayMilli(200);
+            }
         }
     }
 #endif
@@ -1627,7 +1637,7 @@ void MythApps::goMinimize(bool fullscreenCheck) {
     if (!allowAutoMinimize) {
         return;
     }
-    if (fullscreenCheck) {
+    if (fullscreenCheck && !isGnomeWayland()) {
         if (controls->isFullscreenBool()) {
             toggleFullscreen();
         }

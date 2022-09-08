@@ -92,6 +92,14 @@ If you search in the home screen, this will search all apps. Recommended to open
 F2 will toggle fullscreen. <br />
 F3 will temporarily stop Kodi from auto minimizing. 		
 
+## Wayland
+Wayland works with GNOME only and requires the activate-window-by-title extension. <br />
+This should be installed automatically when entering the setting menu for the first time, <br />
+but will require a logoff. You can check if this is setup correctly by running (1 should be retunred): <br />
+"gnome-extensions show activate-window-by-title@lucaswerkmeister.de | grep -c ENABLED"<br />
+<br />
+https://github.com/lucaswerkmeister/activate-window-by-title<br />
+
 # DEVELOPER
 While MythApps is stable for me, Please note this is a new plugin under developement.
 
@@ -126,7 +134,7 @@ Please report any bugs on this Github page and pull requests are welcome.
  kodi  <br />
  kodi-send  <br />
  nc  <br />
- xdotool  <br />
+ xdotool (X11 only) <br />
  vnstat  <br />
  
  # TROUBLESHOOTING  #
@@ -136,6 +144,8 @@ No? You need to install Kodi and enable the web interface. <br />
 3.	Are you getting unwanted prompts such as asking for the video quality? <br />
 Most addons will have a setting not to prompt for video quality. <br />
 4.	Confirm all dependencies are installed by opening the settings menu (m key).  <br />
-5.	Run mythfrontend from a terminal, optionally with logging. mythfrontend --loglevel debug
+5.	Run mythfrontend from a terminal, optionally with logging. mythfrontend --loglevel debug  <br />
+6. 	Are you running Wayland without GNOME? Try X11. Check with echo $XDG_SESSION_TYPE.
+
 
 
