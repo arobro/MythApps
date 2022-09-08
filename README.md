@@ -95,7 +95,7 @@ F3 will temporarily stop Kodi from auto minimizing.
 ## Wayland
 Wayland works with GNOME only and requires the activate-window-by-title extension. <br />
 This should be installed automatically when entering the setting menu for the first time, <br />
-but will require a logoff. You can check if this is setup correctly by running (1 should be retunred): <br />
+but will require a logoff. You can check if this is setup correctly by running: (1 should be returned) <br />
 "gnome-extensions show activate-window-by-title@lucaswerkmeister.de | grep -c ENABLED"<br />
 <br />
 https://github.com/lucaswerkmeister/activate-window-by-title<br />
