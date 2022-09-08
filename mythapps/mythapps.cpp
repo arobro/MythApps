@@ -1632,7 +1632,7 @@ void MythApps::goFullscreen() {
 #endif
 }
 
-/** \brief minimizes kodi by toggling out of fullscreen and usinga xdotool command. Suggested to call multible times for reliability incase kodi drops a request */
+/** \brief minimizes kodi by toggling out of fullscreen and using xdotool command. Suggested to call multible times for reliability incase kodi drops a request */
 void MythApps::goMinimize(bool fullscreenCheck) {
     if (!allowAutoMinimize) {
         return;
