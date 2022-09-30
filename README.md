@@ -28,10 +28,11 @@ qmake\
 sudo make install
 
 You may need to copy the theme files from mythtv/mythplugins/mythapps/theme/default to /usr/local/share/mythtv/themes/default \
-Edit mainmenu.xml and add in the below code: gedit /usr/local/share/mythtv/themes/defaultmenu/mainmenu.xml 
+\
+Add MythApps to menu by running 'addMythAppsToMenu.sh' or add in the below code: gedit /usr/local/share/mythtv/themes/defaultmenu/library.xml 
 
 \<button\> \
-<\type\>MENU_MythApps\</type\> \
+<type\>MENU_MythApps\</type\> \
 \<text>Myth Apps</text\> \
 \<action\>PLUGIN mythapps\</action\> \
 \</button\>
