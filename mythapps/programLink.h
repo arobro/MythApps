@@ -4,38 +4,40 @@
 #include <QString>
 #include <QStringList>
 
+#include "container.h"
+
 class ProgramLink {
   public:
     ProgramLink(QString linkName, bool _remote, bool _mostRecentOnly);
 
     QString getListSize();
     int getListSizeEnabled();
-    QStringList getList();
+
+    QList<FileFolderContainer> getList();
     QStringList getListEnabled();
 
-    bool contains(QString currentselectionDetails);
-    void removeOne(QString currentselectionDetails);
-    void append(QString currentselectionDetails);
+    bool contains(QString url);
+    bool containsLike(QString url);
+    QString findSearchUrl(QString url);
 
-    void listRemove(QString selectionDetails);
-    void load();
+    void append(FileFolderContainer fileFolderContainerTemp);
+    void appendSearchUrl(QString currentSearchUrl);
 
-    void sort();
+    void listRemove(FileFolderContainer fileFolderContainerTemp);
 
-    bool isPinnedToHome(QString currentselectionDetails);
-    void removeFromHomeScreen(QString currentselectionDetails);
-    void addToHomeScreen(QString currentselectionDetails);
+    bool isPinnedToHome(FileFolderContainer fileFolderContainerTemp);
+    void removeFromHomeScreen(FileFolderContainer fileFolderContainerTemp);
+    void addToHomeScreen(FileFolderContainer fileFolderContainerTemp);
+
     QString getUnWatchedSize();
 
   private:
-    QString listRemoveIfContains(QString line);
+    QList<FileFolderContainer> LinkDataList;
 
-    QStringList LinkDataList;
     QString linkName;
     bool remote;
     bool mostRecentOnly;
-    int listSizeEnabled = 0;
 
-    void saveList();
+    FileFolderContainer fileFolderContainer;
 };
 #endif

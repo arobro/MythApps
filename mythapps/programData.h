@@ -1,8 +1,12 @@
 #ifndef ProgramData_h
 #define ProgramData_h
 
+#include <QDebug>
 #include <QString>
 #include <QStringList>
+#include <QVariant>
+
+#include "container.h"
 
 /** \class ProgramData
  *  \brief makes the deliminated data format attached to the button clicked/hover events easy to read */
@@ -19,7 +23,6 @@ class ProgramData {
     bool hasPlotandImageUrl();
     bool hasSeek();
     QString getSeek();
-    bool hasPlotText = false;
     bool hasPlot();
     QString getFilePathParam();
 
@@ -38,12 +41,18 @@ class ProgramData {
     bool hasUnwatchedList();
     bool hasVideos();
 
+    void set(QString label, QString data);
+    bool isEmpty();
+    FileFolderContainer get();
+    QString getUrl();
+    void resetSeek();
+    void setSeek(QString seek);
+    void setUnWatched();
+
   private:
-    QString filePathParam;
-    QString plot;
-    QString imageUrl;
-    QString play;
-    QString seek;
     bool plotandImageUrl = false;
+    bool hasPlotText = false;
+
+    FileFolderContainer fileFolderContainer;
 };
 #endif

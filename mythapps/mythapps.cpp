@@ -1,8 +1,8 @@
 // MythTV headers
 #include "libmythui/mythuistatetracker.h"
 #include <libmyth/mythcontext.h>
-#include <libmythui/mythdialogbox.h>
 #include <libmythbase/mythdirs.h>
+#include <libmythui/mythdialogbox.h>
 #include <libmythui/mythmainwindow.h>
 #include <libmythui/mythprogressdialog.h>
 #include <libmythui/mythuibutton.h>
@@ -19,10 +19,10 @@
 
 // MythApps headers
 #include "imageThread.h"
+#include "libmythbase/mythlogging.h"
 #include "music_functions.cpp"
 #include "mythapps.h"
 #include "mythinput.h"
-#include "libmythbase/mythlogging.h"
 #include "mythosd.h"
 #include "mythsettings.h"
 #include "searchSuggestions.h"
@@ -127,6 +127,8 @@ MythApps::~MythApps() {
     delete m_filterOptionsList;
     delete m_playlistVertical;
     delete m_androidMenuBtn;
+    delete currentselectionDetails;
+    delete lastPlayedDetails;
     // music app
     delete m_textSong;
     delete m_textArtist;
@@ -246,44 +248,9 @@ void MythApps::exitToMainMenuSleepTimerReset() {
     }
 }
 
-/** \brief Creates a setting in the MythTv Database table if it doesn't exist
- *  \param settingName Setting Name
- *  \param settingValue Default setting value. Can be a string or boolean.
- *  \param remote Is the setting a backend or local setting*/
-template <typename T> void MythApps::createSetting(QString settingName, T settingValue, bool remote) {
-    if (remote) {
-        if (gCoreContext->GetSettingOnHost(settingName, gCoreContext->GetMasterHostName()).isEmpty()) {
-            gCoreContext->SaveSettingOnHost(settingName, QString(settingValue), gCoreContext->GetMasterHostName());
-        }
-    } else {
-        if (gCoreContext->GetSetting(settingName).isEmpty()) {
-            gCoreContext->SaveSetting(settingName, settingValue);
-        }
-    }
-}
-
 /** \brief create the main screen and initialize the setting and state*/
 bool MythApps::Create() {
     LOG(VB_GENERAL, LOG_INFO, "Opening MythApp");
-    createSetting("MythAppsusername", "kodi", false);
-    createSetting("MythAppspassword", "kodi", false);
-    createSetting("MythAppsip", "127.0.0.1", false);
-    createSetting("MythAppsport", "8080", false);
-    createSetting("MythAppsmyVideo", true, false);
-    createSetting("MythAppsCloseOnExit", true, false);
-    createSetting("MythAppsSearchList", "", false);
-    createSetting("MythAppsInternalMute", true, false);
-    createSetting("MythAppsInternalVol", true, false);
-    createSetting("MythAppsInternalRemote", true, false);
-    createSetting("MythAppsMusic", true, false);
-    createSetting("MythAppsAppPass", "", true);
-    createSetting("MythAppsYTapi", "", true);
-    createSetting("MythAppsYTID", "", true);
-    createSetting("MythAppsYTCS", "", true);
-    createSetting("MythAppsCustomSearchSuggestUrl", "", true);
-    createSetting("MythAppsPreviouslyPlayed", "", true);
-    createSetting("MythAppsPreviouslyPlayedExclude", "be/play/?video_id=~", true);
-    createSetting("MythAppsShowsAZfolderNames", "TV Shows~", true);
 
     username = QString(gCoreContext->GetSetting("MythAppsusername"));
     password = QString(gCoreContext->GetSetting("MythAppspassword"));
@@ -407,11 +374,13 @@ bool MythApps::Create() {
     back_filename = createImageCachePath("ma_mv_gallery_dir_up.png");
     ma_tv_filename = createImageCachePath("ma_tv.png");
 
-    previouslyPlayedLink = new ProgramLink("mythappsPreviouslyPlayed", true, false); // load previously played videos
-    favLink = new ProgramLink("mythappsAllFavourites", true, false);                 // load Favourites
-    watchedLink = new ProgramLink("mythappsAllWatched", true, false);                // load Watched List
-    searchListLink = new ProgramLink("MythAppsSearchList", false, false);            // load Search Sources
-    searchListLink->sort();
+    previouslyPlayedLink = new ProgramLink("previouslyPlayed", true, false); // load previously played videos
+    favLink = new ProgramLink("allFavourites", true, false);                 // load Favourites
+    watchedLink = new ProgramLink("allWatched", true, false);                // load Watched List
+    searchListLink = new ProgramLink("searchList", false, false);            // load Search Sources
+
+    currentselectionDetails = new ProgramData("");
+    lastPlayedDetails = new ProgramData("");
 
     m_streamDetailsbackground->Hide();
 
@@ -764,7 +733,9 @@ int MythApps::getThreadCount() {
         }
         if (thread->isFinished()) {
             thread->quit();
-            imageThreadList.removeAt(imageThreadListCount);
+            if (imageThreadListCount < imageThreadList.count()) {
+                imageThreadList.removeAt(imageThreadListCount);
+            }
         }
         imageThreadListCount++;
     }
@@ -898,15 +869,16 @@ void MythApps::loadImage(MythUIButtonList *mythUIButtonList, QString name, QStri
         return;
     }
 
-    QString playUrl = getParm(setdata, 0);
-    if (previouslyPlayedLink->contains(playUrl) and !isHome) { // disable on home screen
-        item->SetText(name, "buttontextWatched");              // set the image title / name
+    ProgramData *programDataTemp = new ProgramData(setdata);
+    if (previouslyPlayedLink->contains(programDataTemp->getUrl()) and !isHome) { // disable on home screen
+        item->SetText(name, "buttontextWatched");                                // set the image title / name
     } else {
         item->SetText(name, "buttontext2"); // set the image title / name
     }
 
     QString imageLocation = getStandarizedImagePath(thumbnailPath);
-    QString appIcon = getStandarizedImagePath(apps->getLocationFromUrlAddress(setdata.split('~').at(0)));
+    QString appIcon = getStandarizedImagePath(apps->getLocationFromUrlAddress(programDataTemp->getUrl()));
+    delete programDataTemp;
 
     // to speedup the loading, save the parameters in a list. When the image is
     // displayed onscreen, the parameters are used to create a thread to display
@@ -1387,8 +1359,7 @@ void MythApps::discoverSearchURLs(QString label, QString file) {
     QString searchUrl;
     QString searchUrl2;
 
-    if (!QListContains(searchListLink->getList(), file)) { // if search url not discovered,
-
+    if (!searchListLink->containsLike(file)) { // if search url not discovered,
         if (label.compare("Search") == 0) {
             searchUrl = file;                       // url to send the search request.
             QString newSearch = getNewSearch(file); // some apps require a second search url to receive the search request
@@ -1403,7 +1374,7 @@ void MythApps::discoverSearchURLs(QString label, QString file) {
     }
 
     if (label.compare("Search") == 0 || label.compare("Quick Search (Incognito)") == 0) { // if app has a search feature, display the search box
-        currentSearchUrl = QListSearch(searchListLink->getList(), file);
+        currentSearchUrl = searchListLink->findSearchUrl(file);
         toggleSearchVisible(true);
     }
 
@@ -1417,7 +1388,7 @@ void MythApps::discoverSearchURLs(QString label, QString file) {
     // save the currentSearchUrl for the global search
     if (!currentSearchUrl.contains("channel_id")) { // work-a-round for yt plugin when browsing subfolders after searching
         if (!searchUrl.isNull()) {
-            searchListLink->append(currentSearchUrl); // save search source
+            searchListLink->appendSearchUrl(currentSearchUrl); // save search source
         }
 
         if (label.compare(searchText) == 0) {
@@ -1576,7 +1547,7 @@ void MythApps::goFullscreen() {
     if (musicOpen) {
         controls->activateWindow("visualer");
     } else {
-        controls->activateWindow("screensaver"); // hides the kodi gui
+        // controls->activateWindow("screensaver"); // hides the kodi gui (may be unstable?)
     }
 
     minimizeTimer->stop();      // stops minimizing kodi
@@ -1934,9 +1905,7 @@ bool MythApps::appsCallbackPlugins(ProgramData *programData, MythUIButtonListIte
     previousURL.append(fileURL);
 
     if (programData->isPlayRequest()) {
-        if (programData->hasPlotandImageUrl()) {
-            lastPlayedDetails = getLabel(item) + "~" + fileURL + "~" + programData->getPlot() + "~" + programData->getImageUrl();
-        }
+        lastPlayedDetails->set(getLabel(item), fileURL + "~" + programData->getPlot() + "~" + programData->getImageUrl() + "~play");
 
         QString seek = "00:00:00"; // default no seek
         if (programData->hasSeek()) {
@@ -1954,24 +1923,17 @@ bool MythApps::appsCallbackPlugins(ProgramData *programData, MythUIButtonListIte
  \param  item - the mythui button */
 void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
     m_title->SetText(removeBBCode(item->GetText("buttontext2")));
-    currentselectionDetails = "";
 
     ProgramData *programData = new ProgramData(item->GetData().toString());
 
     if (programData->hasPlotandImageUrl()) {
-        currentselectionDetails = getLabel(item) + "~" + item->GetData().toString();
-
-        if (currentselectionDetails.endsWith("~", Qt::CaseInsensitive)) {
-            currentselectionDetails.remove(currentselectionDetails.length() - 1, 1); // removes the last character
-        }
+        currentselectionDetails->set(getLabel(item), item->GetData().toString());
     }
 
     m_plot->SetText("");
 
     if (programData->getPlot().size() > 30) {
-        QString playUrl = getParm(item->GetData().toString(), 0);
-
-        if (previouslyPlayedLink->contains(playUrl)) {
+        if (previouslyPlayedLink->contains(programData->getUrl())) {
             isPreviouslyPlayed = true;
         } else {
             isPreviouslyPlayed = false;
@@ -2189,34 +2151,13 @@ void MythApps::loadFavourites(bool home) {
         isHome = false;
     }
 
-    favLink->load(); // reload incase another host has changed the state.
-
-    QListIterator<QString> favourite(favLink->getList());
-    favourite.toBack();
-    while (favourite.hasPrevious()) {
-        QStringList favouriteItem = favourite.previous().split("~");
-
-        if (favouriteItem.size() > 3) {
-            QString label = favouriteItem.at(0);
-
-            QString url = favouriteItem.at(1);
-            QString plot = favouriteItem.at(2);
-            QString image = favouriteItem.at(3);
-
-            if (plot.contains("(On Home Screen) ")) {
-            } else if (home) {
-                continue;
-            }
-
-            bool play = false;
-            if (favouriteItem.size() > 4) {
-                if (favouriteItem.at(4).compare("play") == 0) {
-                    play = true;
-                }
-            }
-
-            loadProgram(label, createProgramData(url, plot, image, play, ""), image, false);
+    Q_FOREACH (const FileFolderContainer &favourite, favLink->getList()) {
+        if (favourite.pinnedToHome) {
+        } else if (home) {
+            continue;
         }
+
+        loadProgram(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image, false);
     }
 }
 
@@ -2226,7 +2167,6 @@ void MythApps::loadWatched(bool unwatched) {
     m_fileListGrid->Reset();
     loadBackButton();
     toggleSearchVisible(false);
-    watchedLink->load(); // reload incase another host has changed the state.
 
     if (unwatched) {
         previousURL.append("Unwatched");
@@ -2234,32 +2174,17 @@ void MythApps::loadWatched(bool unwatched) {
         loadImage(m_fileListGrid, QString(tr("Unwatched") + watchedLink->getUnWatchedSize()), QString("Unwatched~Unwatched"), recent_filename);
     }
 
-    QListIterator<QString> watched(watchedLink->getList());
-    watched.toBack();
-    while (watched.hasPrevious()) {
-        QStringList watchedItem = watched.previous().split("~");
+    Q_FOREACH (const FileFolderContainer &watched, watchedLink->getList()) {
 
-        if (watchedItem.size() > 5) {
-            QString label = watchedItem.at(0);
-            QString url = watchedItem.at(1);
-            QString plot = watchedItem.at(2);
-            QString image = watchedItem.at(3);
-
-            bool play = false;
-            if (watchedItem.at(4).compare("play") == 0) {
-                play = true;
-            }
-
-            QString seek = watchedItem.at(5);
-            if (seek.compare("false") == 0 and !unwatched) {
-                seek = "";
-                continue;
-            } else if (!seek.compare("false") == 0 and unwatched) {
-                continue;
-            }
-
-            loadProgram(label, createProgramData(url, plot, image, play, seek), image, false);
+        QString seek = watched.seek;
+        if (seek.compare("false") == 0 and !unwatched) {
+            seek = "";
+            continue;
+        } else if (!seek.compare("false") == 0 and unwatched) {
+            continue;
         }
+
+        loadProgram(watched.title, createProgramData(watched.url, watched.plot, watched.image, watched.autoPlay, seek), watched.image, false);
     }
 }
 
@@ -2317,27 +2242,28 @@ void MythApps::showOptionsMenu() {
         popupStack->AddScreen(m_menuPopup);
         m_menuPopup->SetReturnEvent(this, tr("options"));
 
-        if (currentselectionDetails.compare("") != 0) {
-            if (favLink->contains(currentselectionDetails)) {
+        if (!currentselectionDetails->isEmpty()) {
+
+            if (favLink->contains(currentselectionDetails->getUrl())) {
                 m_menuPopup->AddButton(tr("Remove Selection from Favourites"));
             } else {
                 m_menuPopup->AddButton(tr("Add Selection to Favourites"));
             }
 
-            if (favLink->isPinnedToHome(currentselectionDetails)) {
+            if (favLink->isPinnedToHome(currentselectionDetails->get())) {
                 m_menuPopup->AddButton(tr("Remove Selection from Home Screen"));
-            } else if (favLink->contains(currentselectionDetails) and isFavouritesOpen) {
+            } else if (favLink->contains(currentselectionDetails->getUrl()) and isFavouritesOpen) {
                 m_menuPopup->AddButton(tr("Pin Selection to Home Screen"));
             }
 
-            if (watchedLink->contains(currentselectionDetails)) {
+            if (watchedLink->contains(currentselectionDetails->getUrl())) {
                 m_menuPopup->AddButton(tr("Remove from Watch List"));
             } else if (isPreviouslyPlayed) {
                 m_menuPopup->AddButton(tr("Clear Previously Played"));
-                if (currentselectionDetails.contains("~play")) {
+                if (currentselectionDetails->isPlayRequest()) {
                     m_menuPopup->AddButton(tr("Add to Watch List for Later Viewing"));
                 }
-            } else if (currentselectionDetails.contains("~play")) {
+            } else if (currentselectionDetails->isPlayRequest()) {
                 m_menuPopup->AddButton(tr("Add to Watch List for Later Viewing"));
             }
         }
@@ -2380,8 +2306,7 @@ void MythApps::customEvent(QEvent *event) {
                 dir.removeRecursively();
                 createDirectoryIfDoesNotExist(globalPathprefix + "00cache/");
             } else if (resulttext == tr("Clear Previously Played")) {
-                QString playUrl = getParm(currentselectionDetails, 1);
-                previouslyPlayedLink->removeOne(playUrl);
+                previouslyPlayedLink->listRemove(currentselectionDetails->get());
                 setButtonWatched(false);
                 refreshFileListGridSelection();
             } else if (resulttext == tr("Remove all tracks from playlist")) {
@@ -2394,23 +2319,23 @@ void MythApps::customEvent(QEvent *event) {
             } else if (resulttext == tr("Exit to MythTV Menu")) {
                 niceClose(false);
             } else if (resulttext == tr("Add Selection to Favourites")) {
-                if (currentselectionDetails.contains("~play~")) { // remove seek time when saving to favourites
-                    currentselectionDetails = currentselectionDetails.mid(0, currentselectionDetails.indexOf("~play~"));
+                if (currentselectionDetails->isPlayRequest()) { // remove seek time when saving to favourites
+                    currentselectionDetails->resetSeek();
                 }
-                favLink->append(currentselectionDetails); // add to favourites
+                favLink->append(currentselectionDetails->get()); // add to favourites
             } else if (resulttext == tr("Remove Selection from Favourites")) {
-                if (favLink->contains(currentselectionDetails)) {
-                    favLink->removeOne(currentselectionDetails); // Remove from favourite
+                if (favLink->contains(currentselectionDetails->getUrl())) {
+                    favLink->listRemove(currentselectionDetails->get()); // Remove from favourite
                     reload();
                 }
             } else if (resulttext == tr("Remove Selection from Home Screen")) {
-                favLink->removeFromHomeScreen(currentselectionDetails);
+                favLink->removeFromHomeScreen(currentselectionDetails->get());
                 reload();
             } else if (resulttext == tr("Pin Selection to Home Screen")) {
-                favLink->addToHomeScreen(currentselectionDetails);
+                favLink->addToHomeScreen(currentselectionDetails->get());
                 reload();
             } else if (resulttext == tr("Remove from Watch List")) {
-                watchedLink->listRemove(currentselectionDetails);
+                watchedLink->listRemove(currentselectionDetails->get());
 
                 m_fileListGrid->Reset();
                 loadBackButton();
@@ -2427,15 +2352,12 @@ void MythApps::customEvent(QEvent *event) {
             } else if (resulttext == tr("Exit to Menu")) {
                 resetScreenshot();
             } else if (resulttext == tr("Save Position to Watch List and Exit to Menu")) {
-                watchedLink->append(lastPlayedDetails + "~play~" + getPlayBackTimeString());
+                lastPlayedDetails->setSeek(getPlayBackTimeString());
+                watchedLink->append(lastPlayedDetails->get());
                 resetScreenshot();
                 addToPreviouslyPlayed();
             } else if (resulttext == tr("Keep Watching")) {
-                QStringList watchedItem = lastPlayedDetails.split("~");
-                if (watchedItem.size() > 1) {
-                    QString url = watchedItem.at(1);
-                    play_Kodi(url, getPlayBackTimeString());
-                }
+                play_Kodi(lastPlayedDetails->getUrl(), getPlayBackTimeString());
             } else if (resulttext == tr("Exit to MythTV Menu")) {
                 niceClose(false);
             } else {
@@ -2472,9 +2394,10 @@ void MythApps::refreshFileListGridSelection() {
 /** \brief add to the watched list as unwatched for later viewing  */
 void MythApps::addToUnWatchedList(bool menu) {
     LOG(VB_GENERAL, LOG_INFO, "addToUnWatchedList");
-    if (currentselectionDetails.contains("~play")) {
-        if (!watchedLink->contains(currentselectionDetails)) {
-            watchedLink->append(currentselectionDetails + "~false");
+    if (currentselectionDetails->isPlayRequest()) {
+        if (!watchedLink->contains(currentselectionDetails->getUrl())) {
+            currentselectionDetails->setUnWatched();
+            watchedLink->append(currentselectionDetails->get());
             if (menu) {
                 createAutoClosingBusyDialog(tr("Added to Watch List for Later Viewing"), 3);
             }
@@ -2509,7 +2432,6 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
     vnstatFile.close();
 
     play(mediaLocation); // play the media
-    lastMediaLocation = mediaLocation;
 
     QTime dieTime = QTime::currentTime().addSecs(9); // check the media is playing
     while (isPlaying(0) == 0) {
@@ -2540,7 +2462,7 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
         if (!takeScreenshot()) { // take a screenshot and retry if black screen
             delay(3);
             if (!takeScreenshot()) { // use thumbnail instead
-                m_screenshotMainQimage.load(getStandarizedImagePath(getParm(lastPlayedDetails, 3)) + ".processed");
+                m_screenshotMainQimage.load(getStandarizedImagePath(lastPlayedDetails->getImageUrl()) + ".processed");
             }
         }
 
@@ -2567,7 +2489,7 @@ void MythApps::createPlayBackMenu() {
         popupStack->AddScreen(m_menuPopup);
         m_menuPopup->SetReturnEvent(this, "watchList");
 
-        if (!previouslyPlayedLink->contains(lastMediaLocation) and !excludePreviouslyPlayed(lastMediaLocation)) {
+        if (!previouslyPlayedLink->contains(lastPlayedDetails->getUrl()) and !excludePreviouslyPlayed(lastPlayedDetails->getUrl())) {
             m_menuPopup->AddButton(tr("Flag as Watched and Exit to Menu"));
         }
         m_menuPopup->AddButton(tr("Exit to Menu"));
@@ -2716,7 +2638,7 @@ void MythApps::setButtonWatched(bool watched) {
 
 /** \brief add the previosulyPlayed Video to the previouslyPlayedLink. Used for watched/played flag shown in the gui with the green text colour on the button*/
 void MythApps::addToPreviouslyPlayed() {
-    previouslyPlayedLink->append(lastMediaLocation);
+    previouslyPlayedLink->append(lastPlayedDetails->get());
     setButtonWatched(true);
     refreshFileListGridSelection();
 }

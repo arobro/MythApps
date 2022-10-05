@@ -40,7 +40,6 @@ QString removeTrailingChar(QString text, QChar characterToRemove);
 bool overrideAppAZSearch(QString appHash);
 bool excludePreviouslyPlayed(QString lastMediaLocation);
 
-QString getParm(QString string, int position);
 bool isSettingsDialog(QString systemCurrentWindow);
 
 QString getWebSiteDomain(QString websiteUrl);

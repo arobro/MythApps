@@ -202,18 +202,6 @@ bool excludePreviouslyPlayed(QString lastMediaLocation) {
     return false;
 }
 
-/** \brief get the parameter from a deliminated string by position.
- *  \param string string deliminated with tilder
- *  \param position position of the requested parameter
- *  \return corresponding parameter */
-QString getParm(QString string, int position) {
-    QStringList stringList = string.split("~");
-    if (stringList.size() >= position) {
-        return stringList.at(position);
-    }
-    return "";
-}
-
 /** \brief is the settings dialog open in Kodi? */
 bool isSettingsDialog(QString systemCurrentWindow) {
     if (systemCurrentWindow.compare("Add-on settings") == 0 || systemCurrentWindow.compare("Select dialog") == 0) {

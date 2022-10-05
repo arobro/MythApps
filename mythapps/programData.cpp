@@ -1,60 +1,26 @@
 #include "programData.h"
 
-ProgramData::ProgramData(QString setData) {
-    QStringList paramsList = setData.split('~');
-    filePathParam = paramsList.at(0); // filepath
-
-    if (paramsList.size() > 1) { // plot or app name
-        hasPlotText = true;
-        plot = paramsList.at(1);
-    } else {
-        plot = "";
-    }
-
-    if (paramsList.size() > 2) { // image
-        imageUrl = paramsList.at(2);
-        plotandImageUrl = true;
-    } else {
-        imageUrl = "";
-    }
-
-    if (paramsList.size() > 3) { // play. Is it a video or directory. optional parameter
-        play = paramsList.at(3);
-    } else {
-        play = ""; // directory
-    }
-
-    if (paramsList.size() > 4) { // seek time. optional parameter
-        seek = paramsList.at(4);
-    } else {
-        seek = ""; // no seek
-    }
-}
+ProgramData::ProgramData(QString setData) { set("", setData); }
 
 /** \brief is the folder a video or a directory?
  * \return can the folder be played? */
-bool ProgramData::isPlayRequest() {
-    if (play.compare("play") == 0) {
-        return true;
-    }
-    return false;
-}
+bool ProgramData::isPlayRequest() { return fileFolderContainer.autoPlay; }
 
 /** \brief get the plot
  * \return plot or sometimes app name */
-QString ProgramData::getPlot() { return plot; }
+QString ProgramData::getPlot() { return fileFolderContainer.plot; }
 
 /** \brief get the image url
  * \return image url*/
-QString ProgramData::getImageUrl() { return imageUrl; }
+QString ProgramData::getImageUrl() { return fileFolderContainer.image; }
 
 /** \brief get the seek time. optional parameter
  * \return seek time */
-QString ProgramData::getSeek() { return seek; }
+QString ProgramData::getSeek() { return fileFolderContainer.seek; }
 
 /** \brief get the entire deliminated string
  * \return entire deliminated string */
-QString ProgramData::getFilePathParam() { return filePathParam; }
+QString ProgramData::getFilePathParam() { return fileFolderContainer.url; }
 
 /** \brief does a plot and image url exist?
  * \return if it exists */
@@ -63,7 +29,7 @@ bool ProgramData::hasPlotandImageUrl() { return plotandImageUrl; }
 /** \brief does a seek value exist?
  * \return if it exists */
 bool ProgramData::hasSeek() {
-    if (seek.compare("") == 0) {
+    if (fileFolderContainer.seek.compare("") == 0) {
         return false;
     }
     return true;
@@ -189,3 +155,60 @@ bool ProgramData::hasVideos() {
     }
     return false;
 }
+
+/** \brief set the program data
+ * 	\param label title of the program data
+ * 	\param data all program data  */
+void ProgramData::set(QString label, QString data) {
+    fileFolderContainer.url = "";
+    fileFolderContainer.plot = "";
+    fileFolderContainer.image = "";
+    fileFolderContainer.autoPlay = false;
+    fileFolderContainer.seek = "";
+
+    fileFolderContainer.title = label;
+
+    QStringList paramsList = data.split('~');
+    fileFolderContainer.url = paramsList.at(0); // filepath
+
+    if (paramsList.size() > 1) { // plot or app name
+        fileFolderContainer.plot = paramsList.at(1);
+        hasPlotText = true;
+    }
+
+    if (paramsList.size() > 2) { // image
+        fileFolderContainer.image = paramsList.at(2);
+        plotandImageUrl = true;
+    }
+
+    if (paramsList.size() > 3) {
+        if (paramsList.at(3).compare("play") == 0) {
+            fileFolderContainer.autoPlay = true;
+        }
+    }
+
+    if (paramsList.size() > 4) { // seek time. optional parameter
+        fileFolderContainer.seek = paramsList.at(4);
+    }
+}
+
+/** \brief is the program data empty?
+ * \return is the program data (url) empty? */
+bool ProgramData::isEmpty() { return fileFolderContainer.url.isEmpty(); }
+
+/** \brief get all the program data
+ * \return FileFolderContainer of the program data */
+FileFolderContainer ProgramData::get() { return fileFolderContainer; }
+
+/** \brief get the program data url
+ * \return url */
+QString ProgramData::getUrl() { return fileFolderContainer.url; }
+
+/** \brief reset the seek amount to zero*/
+void ProgramData::resetSeek() { fileFolderContainer.seek = ""; }
+
+/** \brief set the seek amount*/
+void ProgramData::setSeek(QString seek) { fileFolderContainer.seek = seek; }
+
+/** \brief set the un watched flag in program data*/
+void ProgramData::setUnWatched() { fileFolderContainer.seek = "false"; }

@@ -121,18 +121,22 @@ bool MythSettings::Create() // _videoUrl,_seek
 
     SetFocusWidget(m_settingUser);
 
-    QStringList allSearchList = gCoreContext->GetSetting("MythAppsSearchList").split("~~");
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("SELECT url,enabled FROM mythconverg.mythapps_programlink where type = 'searchList'");
 
-    foreach (QString search, allSearchList) {
-        if (!search.compare("") == 0) {
-            if (!search.compare("") == 0) {
-                auto *item = new MythUIButtonListItem(m_searchSourcesList, search);
-                item->SetData(search);
-                if (search.contains("!")) {
-                    item->SetText("");
-                    item->SetText(search.replace("!", ""), "buttontext2");
-                }
-            }
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not load sites from DB", query);
+    }
+
+    while (query.next()) {
+        QString search = query.value(0).toString();
+        bool enabled = query.value(1).toBool();
+
+        auto *item = new MythUIButtonListItem(m_searchSourcesList, search);
+        item->SetData(search);
+        if (!enabled) {
+            item->SetText("");
+            item->SetText(search, "buttontext2");
         }
     }
 
@@ -378,7 +382,14 @@ void MythSettings::button_ResetImageCache() {
     dir.removeRecursively();
 }
 
-void MythSettings::button_ResetSearchList() { m_searchSourcesList->Reset(); }
+void MythSettings::button_ResetSearchList() {
+    m_searchSourcesList->Reset();
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("DELETE FROM mythconverg.mythapps_programlink WHERE type = 'MythAppsSearchList'");
+    if (!query.exec() || !query.isActive()) {
+        MythDB::DBError("mythapps: delete searchlist from db", query);
+    }
+}
 
 QString MythSettings::savedWebSite(QString website) {
     NetRequest *netRequest = new NetRequest("", "", "", "", false);
@@ -390,6 +401,7 @@ QString MythSettings::savedWebSite(QString website) {
 void MythSettings::button_save() {
     if (m_saveBtn->GetText().compare("Save") == 0) {
         save();
+        Close();
     } else {
         togglePage();
     }
@@ -441,11 +453,23 @@ void MythSettings::save() {
     gCoreContext->SaveSettingOnHost("MythAppsYTID", m_YTid->GetText(), backendHostName);
     gCoreContext->SaveSettingOnHost("MythAppsYTCS", m_YTcs->GetText(), backendHostName);
 
-    QString allList = "";
     for (int i = 0; i < m_searchSourcesList->GetCount(); i++) {
-        allList = allList + m_searchSourcesList->GetItemAt(i)->GetData().toString() + QString("~~");
+        QString isEnabled;
+        if (m_searchSourcesList->GetItemAt(i)->GetText("buttontext2").isEmpty()) {
+            isEnabled = "1";
+        } else {
+            isEnabled = "0";
+        }
+
+        MSqlQuery query(MSqlQuery::InitCon());
+        query.prepare("UPDATE mythapps_programlink SET enabled = :ENABLED WHERE type = 'MythAppsSearchList' AND url = :URL");
+        query.bindValue(":ENABLED", isEnabled);
+        query.bindValue(":URL", m_searchSourcesList->GetItemAt(i)->GetData().toString());
+
+        if (!query.exec()) {
+            MythDB::DBError(LOG_ERR + "Could not update SearchList in DB", query);
+        }
     }
-    gCoreContext->SaveSetting("MythAppsSearchList", allList);
 
     if (m_YTapi->GetText().length() > 5) { // update the api config file if a value is entered
         QString apiYTJson = QString("{\"keys\":{\"developer\":{},\"personal\":{\"api_key\": \"") + m_YTapi->GetText() + QString("\",\"client_id\": \"") + m_YTid->GetText() +
@@ -473,14 +497,11 @@ void MythSettings::save() {
 }
 
 void MythSettings::m_searchListCallback(MythUIButtonListItem *item) {
-    if (item->GetData().toString().contains("!")) {
-        item->SetData(item->GetData().toString().replace("!", ""));
-
+    if (item->GetText("buttontext2").isEmpty()) {
+        item->SetText(item->GetData().toString(), "buttontext2");
+        item->SetText("");
+    } else {
         item->SetText("", "buttontext2");
         item->SetText(item->GetData().toString());
-    } else {
-        item->SetText("");
-        item->SetText(item->GetData().toString().replace("!", ""), "buttontext2");
-        item->SetData("!" + item->GetData().toString());
     }
 }

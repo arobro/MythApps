@@ -7,198 +7,257 @@
 
 /** \class ProgramLink
  *  \brief Find, Add and remove program links such as favourites, watchlist, previously played & search List */
+
 ProgramLink::ProgramLink(QString _linkName, bool _remote, bool _mostRecentOnly) {
     linkName = _linkName;
     remote = _remote;
     mostRecentOnly = _mostRecentOnly;
-
-    load();
-}
-
-/** \brief Load the links from the database into a map */
-void ProgramLink::load() {
-    QString programLinkDatabaseString;
-    if (remote) {
-        programLinkDatabaseString = gCoreContext->GetSettingOnHost(linkName, gCoreContext->GetMasterHostName());
-    } else {
-        programLinkDatabaseString = gCoreContext->GetSetting(linkName);
-    }
-
-    QStringList programLinkDatabase = programLinkDatabaseString.split("~~");
-    LinkDataList.clear();
-
-    foreach (QString link, programLinkDatabase) {
-        if (!link.compare("") == 0) {
-            LinkDataList.append(link);
-            listSizeEnabled++;
-        }
-    }
-
-    // remove if more than 30 items
-    bool updatedlist = false;
-    while (mostRecentOnly and listSizeEnabled > 30) {
-        LinkDataList.takeFirst();
-        listSizeEnabled--;
-        updatedlist = true;
-    }
-
-    if (updatedlist) {
-        saveList();
-    }
 }
 
 /** \brief How many favourites/'program links' are there?
  *  \return number of program links */
-QString ProgramLink::getListSize() { return " (" + QString::number(LinkDataList.size()) + ")"; }
+QString ProgramLink::getListSize() {
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE");
+    query.bindValue(":TYPE", linkName);
+
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
+    }
+
+    return " (" + QString::number(query.size()) + ")";
+}
 
 /** \brief How many favourites/'program links' are there that are enabled?
  *  \return number of enabled program links */
-int ProgramLink::getListSizeEnabled() { return listSizeEnabled; }
+int ProgramLink::getListSizeEnabled() { return getListEnabled().size(); }
 
 /** \brief Returns a list of all the favourites/'program links'
- *  \return favourites/'program links' */
-QStringList ProgramLink::getList() { return LinkDataList; }
+ *  \return list of favourites/'program links in a fileFolderContainer' */
+QList<FileFolderContainer> ProgramLink::getList() {
+    QString programLinkDatabaseString("");
+    if (!remote) {
+        programLinkDatabaseString = "AND hostname = :HOSTNAME;";
+    }
 
-/** \brief Returns a list of all the enabled favourites/'program links'
- *  \return enabled favourites/'program links' */
+    LinkDataList.clear();
+
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("SELECT title,url,plot,image,autoPlay,seek,pinnedToHome FROM mythapps_programlink WHERE type = :TYPE " + programLinkDatabaseString);
+    query.bindValue(":TYPE", linkName);
+    query.bindValue(":HOSTNAME", gCoreContext->GetHostName());
+
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
+    }
+
+    int count = 0;
+    while (query.next()) {
+        count++;
+
+        if (mostRecentOnly and count > 30) {
+            break;
+        }
+
+        FileFolderContainer fileFolderContainerTemp;
+        fileFolderContainerTemp.title = query.value(0).toString();
+        fileFolderContainerTemp.url = query.value(1).toString();
+        fileFolderContainerTemp.plot = query.value(2).toString();
+        fileFolderContainerTemp.image = query.value(3).toString();
+        fileFolderContainerTemp.autoPlay = query.value(4).toBool();
+        fileFolderContainerTemp.seek = query.value(5).toString();
+        fileFolderContainerTemp.pinnedToHome = query.value(6).toBool();
+
+        LinkDataList.append(fileFolderContainerTemp);
+    }
+
+    return LinkDataList;
+}
+
+/** \brief Returns a list of all the enabled searchlist links'
+ *  \return enabled searchlist links' */
 QStringList ProgramLink::getListEnabled() {
     QStringList enabledList;
 
-    foreach (QString listItem, LinkDataList) {
-        if (!listItem.contains("!")) {
-            enabledList.append(listItem);
-        }
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("SELECT url FROM mythapps_programlink  WHERE type = :TYPE AND enabled = 1");
+    query.bindValue(":TYPE", linkName);
+
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
+    }
+    while (query.next()) {
+        enabledList.append(query.value(0).toString());
     }
     return enabledList;
 }
 
 /** \brief Does the favourite/'program link exist in the mythtv database
- * 	\param currentselectionDetails data of the favourite/'program link'
+ * 	\param url url of the favourite/'program link'
  *  \return if the favourite/'program link exist*/
-bool ProgramLink::contains(QString currentselectionDetails) {
-    if (LinkDataList.contains(currentselectionDetails)) {
+bool ProgramLink::contains(QString url) {
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND url = :URL");
+    query.bindValue(":TYPE", linkName);
+    query.bindValue(":URL", url);
+
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
+    }
+
+    if (query.size() > 0) {
         return true;
     }
     return false;
 }
 
-/** \brief Remove a favourite/'program link' from the mythtv database
- * 	\param currentselectionDetails remove by data of the favourite/'program
- * link' */
-void ProgramLink::removeOne(QString currentselectionDetails) {
-    LinkDataList.removeOne(currentselectionDetails);
-    saveList();
+/** \brief Does part of the favourite/'program link exist in the mythtv database
+ * 	\param url url of the favourite/'program link'
+ *  \return if the favourite/'program link exist*/
+bool ProgramLink::containsLike(QString url) {
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND url LIKE '" + url + "%'");
+    query.bindValue(":TYPE", linkName);
+
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
+    }
+
+    if (query.size() > 0) {
+        return true;
+    }
+    return false;
 }
 
-/** \brief Remove a favourite/'program link' from the mythtv database
- * 	\param line remove if contains data in the favourite/'program link' */
-QString ProgramLink::listRemoveIfContains(QString line) {
-    int lineCount = 0;
-    QString removedList = "";
+/** \brief find the enabled search url from a base url
+ * 	\param url base url of the favourite/'program link'
+ *  \return search url*/
+QString ProgramLink::findSearchUrl(QString url) {
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("SELECT url FROM mythapps_programlink  WHERE type = :TYPE AND enabled = 1 AND url LIKE '" + url + "%'");
+    query.bindValue(":TYPE", linkName);
 
-    foreach (QString l, LinkDataList) {
-        if (l.split(",").at(0).compare(line) == 0) {
-            removedList = l;
-            LinkDataList.removeAt(lineCount);
-        }
-        lineCount++;
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
     }
-    return removedList;
+    while (query.next()) {
+        return query.value(0).toString();
+    }
+    return "";
 }
 
 /** \brief Add a favourite/'program link' to the mythtv database
- * 	\param currentselectionDetails data of the favourite/'program link' */
-void ProgramLink::append(QString currentselectionDetails) {
-    // replace search link with incognito search link if discovered
-    if (currentselectionDetails.compare("?incognito=True")) {
-        QString baseUrl = currentselectionDetails;
-        baseUrl.replace("?incognito=True", "");
+ * 	\param fileFolderContainerTemp program data of the favourite/'program link' */
+void ProgramLink::append(FileFolderContainer fileFolderContainerTemp) {
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("INSERT INTO mythapps_programlink (type,title,url,plot,image,autoPlay,seek,pinnedToHome,hostname,enabled) "
+                  " VALUES( :TYPE, :TITLE, :URL, :PLOT, :IMAGE, :AUTOPLAY, :SEEK, :PINNEDTOHOME, :HOSTNAME, :ENABLED);");
+    query.bindValue(":TYPE", linkName);
+    query.bindValue(":TITLE", fileFolderContainerTemp.title);
+    query.bindValue(":URL", fileFolderContainerTemp.url);
+    query.bindValue(":PLOT", fileFolderContainerTemp.plot);
+    query.bindValue(":IMAGE", fileFolderContainerTemp.image);
+    query.bindValue(":AUTOPLAY", fileFolderContainerTemp.autoPlay);
+    query.bindValue(":SEEK", fileFolderContainerTemp.seek);
+    query.bindValue(":PINNEDTOHOME", false);
+    query.bindValue(":ENABLED", true);
 
-        QString listItem = listRemoveIfContains(baseUrl);
-        if (!listItem.isEmpty()) {
-            LinkDataList.append("!" + listItem);
-        }
-    }
-
-    LinkDataList.append(currentselectionDetails);
-    saveList();
-}
-
-/** \brief Save the favourite/'program link' to the mythtv database */
-void ProgramLink::saveList() {
-    QString allList = "";
-    foreach (QString l, LinkDataList) {
-        allList = allList + l + QString("~~");
-    }
     if (remote) {
-        gCoreContext->SaveSettingOnHost(linkName, allList, gCoreContext->GetMasterHostName());
+        query.bindValue(":HOSTNAME", "");
     } else {
-        gCoreContext->SaveSetting(linkName, allList);
+        query.bindValue(":HOSTNAME", gCoreContext->GetHostName());
+    }
+
+    if (!query.exec() || !query.isActive()) {
+        MythDB::DBError("mythapps: inserting in DB", query);
     }
 }
-/** \brief Removes the favourite/'program link' by VALUE from the mythtv
- * database \param selectionDetails remove by data of the favourite/'program
- * link' \return string of item removed */
-void ProgramLink::listRemove(QString selectionDetails) {
-    QList selectionDetailsList = selectionDetails.split("~");
 
-    foreach (QString l, LinkDataList) {
-        if (l.contains(friendlyUrl(selectionDetailsList.at(1)))) {
-            LinkDataList.removeOne(l);
+/** \brief Add a search url to the mythtv database
+ * 	\param currentSearchUrl current search url */
+void ProgramLink::appendSearchUrl(QString currentSearchUrl) {
+    FileFolderContainer fileFolderContainerTemp;
+    fileFolderContainerTemp.url = currentSearchUrl;
+    fileFolderContainerTemp.autoPlay = false;
+
+    // replace search link with incognito search link if discovered
+    if (fileFolderContainerTemp.url.compare("?incognito=True")) {
+        QString baseUrl = fileFolderContainerTemp.url.replace("?incognito=True", "");
+        if (getListEnabled().contains(baseUrl)) { // update base url to disabled
+            MSqlQuery query(MSqlQuery::InitCon());
+            query.prepare("UPDATE mythapps_programlink SET enabled = false WHERE type = 'searchList' AND url = :URL");
+            query.bindValue(":URL", baseUrl);
+            query.exec();
         }
     }
-    saveList();
 }
 
-/** \brief Sort the favourite/'program links' */
-void ProgramLink::sort() { LinkDataList.sort(); }
+/** \brief Removes the favourite/'program link' by URL from the mythtv database
+ *  \param fileFolderContainerTemp program data container*/
+void ProgramLink::listRemove(FileFolderContainer fileFolderContainerTemp) {
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("DELETE FROM mythconverg.mythapps_programlink WHERE type = :TYPE AND url = :URL;");
+    query.bindValue(":TYPE", linkName);
+    query.bindValue(":URL", fileFolderContainerTemp.url);
+    if (!query.exec() || !query.isActive()) {
+        MythDB::DBError("mythapps: delete from db", query);
+    }
+}
 
 /** \brief is the program link pinned to the home screen?
- * 	\param currentselectionDetails data of the favourite/'program link'
+ *  \param fileFolderContainerTemp program data container
  *  \return is the program link pinned to the home screen?  */
-bool ProgramLink::isPinnedToHome(QString currentselectionDetails) {
-    if (currentselectionDetails.contains("(On Home Screen) ")) {
+bool ProgramLink::isPinnedToHome(FileFolderContainer fileFolderContainerTemp) {
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND url = :URL AND pinnedToHome = true;");
+    query.bindValue(":TYPE", linkName);
+    query.bindValue(":URL", fileFolderContainerTemp.url);
+
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not find isPinnedToHome in DB", query);
+    }
+
+    if (query.size() > 0) {
         return true;
     }
     return false;
 }
 
 /** \brief remove the program link from the home screen
- * 	\param currentselectionDetails data of the favourite/'program link'  */
-void ProgramLink::removeFromHomeScreen(QString currentselectionDetails) {
-    int pos = LinkDataList.indexOf(currentselectionDetails);
-    LinkDataList[pos] = currentselectionDetails.replace("(On Home Screen) ", "");
+ *  \param fileFolderContainerTemp program data container  */
+void ProgramLink::removeFromHomeScreen(FileFolderContainer fileFolderContainerTemp) {
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("UPDATE mythapps_programlink SET pinnedToHome = false WHERE type = :TYPE AND url = :URL AND pinnedToHome = true;");
+    query.bindValue(":TYPE", linkName);
+    query.bindValue(":URL", fileFolderContainerTemp.url);
 
-    saveList();
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not update isPinnedToHome in DB", query);
+    }
 }
 
 /** \brief add the program link from the home screen
- * 	\param currentselectionDetails data of the favourite/'program link'  */
-void ProgramLink::addToHomeScreen(QString currentselectionDetails) {
-    int pos = LinkDataList.indexOf(currentselectionDetails);
+ *  \param fileFolderContainerTemp program data container */
+void ProgramLink::addToHomeScreen(FileFolderContainer fileFolderContainerTemp) {
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("UPDATE mythapps_programlink SET pinnedToHome = true WHERE type = :TYPE AND url = :URL AND pinnedToHome = false;");
+    query.bindValue(":TYPE", linkName);
+    query.bindValue(":URL", fileFolderContainerTemp.url);
 
-    QStringList currentselectionDetailsList = currentselectionDetails.split("~");
-    QString plot = currentselectionDetailsList.at(2);
-    currentselectionDetailsList[2] = "(On Home Screen) " + plot;
-    LinkDataList[pos] = currentselectionDetailsList.join("~");
-    saveList();
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not update isPinnedToHome in DB", query);
+    }
 }
 
 /** \brief get the unwatched size. (seek is false)  */
 QString ProgramLink::getUnWatchedSize() {
-    int count = 0;
-    QListIterator<QString> watched(getList());
-    watched.toBack();
-    while (watched.hasPrevious()) {
-        QStringList watchedItem = watched.previous().split("~");
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND seek = 'false'");
+    query.bindValue(":TYPE", linkName);
 
-        if (watchedItem.size() > 5) {
-            QString seek = watchedItem.at(5);
-            if (!seek.compare("false") == 0) {
-                continue;
-            }
-            count++;
-        }
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
     }
-    return " (" + QString::number(count) + ")";
+
+    return " (" + QString::number(query.size()) + ")";
 }

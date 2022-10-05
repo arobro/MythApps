@@ -1,12 +1,13 @@
 // MythTV headers
 #include "libmythui/mythuistatetracker.h"
 #include <libmyth/mythcontext.h>
-#include <libmythui/mythmainwindow.h>
 #include <libmythbase/mythplugin.h>
 #include <libmythbase/mythpluginapi.h>
 #include <libmythbase/mythversion.h>
+#include <libmythui/mythmainwindow.h>
 
 #include "mythapps.h"
+#include "mythappsdbcheck.h"
 #include "mythsettings.h"
 
 static int RunMythApps(void) {
@@ -59,6 +60,12 @@ static void setupKeys(void) {
 
 int mythplugin_init(const char *libversion) {
     if (!MythCoreContext::TestPluginVersion("mythapps", libversion, MYTH_BINARY_VERSION)) {
+        return -1;
+    }
+
+    gCoreContext->ActivateSettingsCache(false);
+    if (!UpgradeMythAppsDatabaseSchema()) {
+        LOG(VB_GENERAL, LOG_ERR, "Couldn't upgrade database to new schema, exiting.");
         return -1;
     }
 

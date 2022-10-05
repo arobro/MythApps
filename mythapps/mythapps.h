@@ -20,6 +20,7 @@
 #include <QtWebSockets/QWebSocket>
 
 // MythApps headers
+#include "container.h"
 #include "controls.h"
 #include "getApps.h"
 #include "imageThread.h"
@@ -59,8 +60,8 @@ class MythApps : public MythScreenType {
     MythUIButton *m_androidMenuBtn;
 
     QString globalPathprefix;             /*!< cache path mythapps uses to store images in */
-    QString currentselectionDetails = ""; /*!< deliminated string of current selection in the file browser */
-    QString lastPlayedDetails = "";       /*!< deliminated string of the last media played. used by the watch list feature */
+    ProgramData *currentselectionDetails; /*!<  current selection in the file browser */
+    ProgramData *lastPlayedDetails;       /*!< last media played. used by the watch list feature */
 
     QTimer *exitToMainMenuSleepTimer; /*!< return to main menu after inactivty for power save. */
     QTimer *searchTimer;
@@ -90,8 +91,7 @@ class MythApps : public MythScreenType {
 
     QString searchText = ""; /*!< text entered into the search box */
     QStringList searchSubFoldersList;
-    QString streamDetails;          /*!< stream details from the previosuly played video */
-    QString lastMediaLocation = ""; /*!< url of the last media played */
+    QString streamDetails; /*!< stream details from the previosuly played video */
 
     QString searchStartLeter = "";
     QStringList showsAZfolderNames;
@@ -117,7 +117,6 @@ class MythApps : public MythScreenType {
     void toggleSearchVisible(bool visible);
     void setSearchButtonListVisible(bool visible);
     void exitToMainMenuSleepTimerReset();
-    template <typename T> void createSetting(QString settingName, T settingValue, bool remote);
     QStringList searchNoDuplicateCheck;
 
     void sortProgram();
