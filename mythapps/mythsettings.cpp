@@ -472,27 +472,12 @@ void MythSettings::save() {
     }
 
     if (m_YTapi->GetText().length() > 5) { // update the api config file if a value is entered
-        QString apiYTJson = QString("{\"keys\":{\"developer\":{},\"personal\":{\"api_key\": \"") + m_YTapi->GetText() + QString("\",\"client_id\": \"") + m_YTid->GetText() +
-                            QString("\",\"client_secret\":\"") + m_YTcs->GetText() + QString("\"}}}");
-
 #ifdef _WIN32
-        QString appfilePath(QDir().homePath() + "/AppData/Roaming/Kodi/userdata/addon_data/");
+        updateApikey(QDir().homePath() + "/AppData/Roaming/Kodi/userdata/addon_data/"));
 #else
-        QString appfilePath(QDir().homePath() + "/.kodi/userdata/addon_data/");
+        updateApikey(QDir().homePath() + "/.kodi/userdata/addon_data/");
+        updateApikey(QDir().homePath() + "/.var/app/tv.kodi.Kodi/data/userdata/addon_data/"); //flatpak
 #endif
-
-        // search directories for the .json config file and update the api keys if found
-        QDirIterator it(appfilePath, QStringList() << "api_keys.json", QDir::Files, QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            QFile jsonFile(it.next());
-            jsonFile.remove();
-            if (jsonFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                jsonFile.write(apiYTJson.toUtf8());
-            }
-            jsonFile.close();
-            Close();
-            break;
-        }
     }
 }
 
@@ -503,5 +488,23 @@ void MythSettings::m_searchListCallback(MythUIButtonListItem *item) {
     } else {
         item->SetText("", "buttontext2");
         item->SetText(item->GetData().toString());
+    }
+}
+
+/** \brief search directories for the .json config file and update the api keys if found */
+void MythSettings::updateApikey(QString appfilePath) {
+    QString apiYTJson = QString("{\"keys\":{\"developer\":{},\"personal\":{\"api_key\": \"") + m_YTapi->GetText() + QString("\",\"client_id\": \"") + m_YTid->GetText() +
+                        QString("\",\"client_secret\":\"") + m_YTcs->GetText() + QString("\"}}}");
+                        
+    QDirIterator it(appfilePath, QStringList() << "api_keys.json", QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        QFile jsonFile(it.next());
+        jsonFile.remove();
+        if (jsonFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            jsonFile.write(apiYTJson.toUtf8());
+        }
+        jsonFile.close();
+        Close();
+        break;
     }
 }

@@ -69,6 +69,7 @@ class MythSettings : public MythScreenType {
 
     void togglePage();
     void save();
+    void updateApikey(QString appfilePath);
 
   private slots:
     void m_searchListCallback(MythUIButtonListItem *item);

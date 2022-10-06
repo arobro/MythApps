@@ -332,11 +332,14 @@ bool MythApps::Create() {
     system("tasklist /nh /fi \"imagename eq kodi.exe\" | find /i \"kodi.exe\" > "
            "nul || (start kodi_start.cmd)");
 #else
-    if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0) {
-        system("export LIRC_SOCKET_PATH=\"/\";if ! pgrep -x kodi > /dev/null; then "
-               "kodi & fi;");
-    } else {
-        system("if ! pgrep -x kodi > /dev/null; then kodi & fi;");
+    if (system("command -v kodi >/dev/null 2>&1 || { exit 1; }") == 0) { // kodi found
+        if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0) {
+            system("export LIRC_SOCKET_PATH=\"/\";if ! pgrep -x kodi > /dev/null; then kodi & fi;");
+        } else {
+            system("if ! pgrep -x kodi > /dev/null; then kodi & fi;");
+        }
+    } else { // try flatpak kodi
+        system("flatpak run tv.kodi.Kodi");
     }
 #endif
 
@@ -1548,6 +1551,8 @@ void MythApps::goFullscreen() {
         controls->activateWindow("visualer");
     } else {
         // controls->activateWindow("screensaver"); // hides the kodi gui (may be unstable?)
+
+        controls->activateWindow("screensaver"); // hides the kodi gui (may be unstable?)
     }
 
     minimizeTimer->stop();      // stops minimizing kodi
