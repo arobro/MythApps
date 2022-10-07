@@ -25,6 +25,7 @@ class Controls {
     Controls(QString m_username, QString m_password, QString m_ip, QString m_port);
     ~Controls();
 
+    void startKodiIfNotRunning();
     void seek(int hours, int minutes, int seconds);
 
     void showOSD();

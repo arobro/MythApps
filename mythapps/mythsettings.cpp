@@ -476,7 +476,7 @@ void MythSettings::save() {
         updateApikey(QDir().homePath() + "/AppData/Roaming/Kodi/userdata/addon_data/"));
 #else
         updateApikey(QDir().homePath() + "/.kodi/userdata/addon_data/");
-        updateApikey(QDir().homePath() + "/.var/app/tv.kodi.Kodi/data/userdata/addon_data/"); //flatpak
+        updateApikey(QDir().homePath() + "/.var/app/tv.kodi.Kodi/data/userdata/addon_data/"); // flatpak
 #endif
     }
 }
@@ -495,7 +495,7 @@ void MythSettings::m_searchListCallback(MythUIButtonListItem *item) {
 void MythSettings::updateApikey(QString appfilePath) {
     QString apiYTJson = QString("{\"keys\":{\"developer\":{},\"personal\":{\"api_key\": \"") + m_YTapi->GetText() + QString("\",\"client_id\": \"") + m_YTid->GetText() +
                         QString("\",\"client_secret\":\"") + m_YTcs->GetText() + QString("\"}}}");
-                        
+
     QDirIterator it(appfilePath, QStringList() << "api_keys.json", QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         QFile jsonFile(it.next());

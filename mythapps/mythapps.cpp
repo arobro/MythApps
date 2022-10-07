@@ -326,22 +326,7 @@ bool MythApps::Create() {
     connect(m_SearchTextEdit, SIGNAL(valueChanged()), this, SLOT(searchTextEditValueChanged()));
     connect(m_androidMenuBtn, SIGNAL(Clicked()), this, SLOT(androidMenuBtnSlot()));
 
-    // Start kodi if not running
-#ifdef __ANDROID__
-#elif _WIN32
-    system("tasklist /nh /fi \"imagename eq kodi.exe\" | find /i \"kodi.exe\" > "
-           "nul || (start kodi_start.cmd)");
-#else
-    if (system("command -v kodi >/dev/null 2>&1 || { exit 1; }") == 0) { // kodi found
-        if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0) {
-            system("export LIRC_SOCKET_PATH=\"/\";if ! pgrep -x kodi > /dev/null; then kodi & fi;");
-        } else {
-            system("if ! pgrep -x kodi > /dev/null; then kodi & fi;");
-        }
-    } else { // try flatpak kodi
-        system("flatpak run tv.kodi.Kodi");
-    }
-#endif
+    controls->startKodiIfNotRunning();
 
     for (int i = 0; i < 4; i++) {
         if (isKodiPingable(ip, port)) {

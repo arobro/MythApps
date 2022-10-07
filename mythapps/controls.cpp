@@ -12,6 +12,25 @@ Controls::~Controls() { delete netRequest; }
 /** \brief helper function for netRequest->requestUrl() */
 QString Controls::requestUrl(QJsonObject value) { return netRequest->requestUrl(value); }
 
+/** \brief Start kodi if not running */
+void Controls::startKodiIfNotRunning() {
+#ifdef __ANDROID__
+#elif _WIN32
+    system("tasklist /nh /fi \"imagename eq kodi.exe\" | find /i \"kodi.exe\" > "
+           "nul || (start kodi_start.cmd)");
+#else
+    QString kodiName = "kodi";
+    if (system("command -v kodi >/dev/null 2>&1 || { exit 1; }") != 0) { // kodi found
+        kodiName = "flatpak run tv.kodi.Kodi";                           // try flatpak kodi
+    }
+    if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0) {
+        system("export LIRC_SOCKET_PATH=\"/\";if ! pgrep -x kodi > /dev/null; then " + kodiName.toLocal8Bit() + " & fi;");
+    } else {
+        system("if ! pgrep -x kodi > /dev/null; then " + kodiName.toLocal8Bit() + " & fi;");
+    }
+#endif
+}
+
 /** \brief are any addons installed? */
 bool Controls::areAddonsInstalled() {
     QString answer = getAddons();
