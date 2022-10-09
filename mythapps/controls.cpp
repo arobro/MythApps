@@ -136,6 +136,15 @@ void Controls::seek(int hours, int minutes, int seconds) {
     fetchUrlJson("Player.Seek", paramsObj);
 }
 
+/** \brief seek to a set position */
+void Controls::seek(QString seekAmount) {
+    QStringList seekTime = seekAmount.split(":");
+    if (seekTime.size() >= 2) {
+        seek(seekTime.at(0).toInt(), seekTime.at(1).toInt(), seekTime.at(2).toInt()); // seek to timestamp
+        delay(2);
+    }
+}
+
 /** \brief active a window in Kodi
  *  \param window- name of window to active */
 void Controls::activateWindow(QString window) {

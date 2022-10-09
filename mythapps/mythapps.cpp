@@ -2433,12 +2433,10 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
         delay(1);
     }
 
-    if (isPlaying(0) == 1 and !seekAmount.compare("00:00:00") == 0) { // if playing and seek timestamp specified
-        QStringList seekTime = seekAmount.split(":");
-        if (seekTime.size() >= 2) {
+    if (!seekAmount.compare("00:00:00") == 0) { // if seek timestamp specified
+        if (isPlaying(0) == 1) {                // if playing
             if (connected == 2) {
-                controls->seek(seekTime.at(0).toInt(), seekTime.at(1).toInt(),
-                               seekTime.at(2).toInt()); // seek to timestamp
+                controls->seek(seekAmount); // seek to timestamp
                 delay(2);
             }
         }

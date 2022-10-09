@@ -30,6 +30,7 @@ class Controls {
     template <typename T> void setKodiSetting(QString SettingName, T SettingValue);
     QString fetchUrlJson(QString method, QJsonObject paramsObj = QJsonObject(), QJsonArray property = QJsonArray());
     void seek(int hours, int minutes, int seconds);
+    void seek(QString seekAmount);
 
     void showOSD();
     void showPlayerProcessInfo();
