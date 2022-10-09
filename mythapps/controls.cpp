@@ -141,7 +141,6 @@ void Controls::seek(QString seekAmount) {
     QStringList seekTime = seekAmount.split(":");
     if (seekTime.size() >= 2) {
         seek(seekTime.at(0).toInt(), seekTime.at(1).toInt(), seekTime.at(2).toInt()); // seek to timestamp
-        delay(2);
     }
 }
 
