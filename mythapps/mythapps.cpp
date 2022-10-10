@@ -2426,10 +2426,8 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
     play(mediaLocation); // play the media
 
     QTime dieTime = QTime::currentTime().addSecs(9); // check the media is playing
-    while (isPlaying(0) == 0) {
-        // not playing
-        if (QTime::currentTime() > dieTime) { // sanity check incase loop gets stuck
-                                              // for more than 9 seconds
+    while (isPlaying(0) == 0) {                      // not playing
+        if (QTime::currentTime() > dieTime) {        // sanity check incase loop gets stuck for more than 9 seconds
             break;
         }
         delay(1);
@@ -2457,11 +2455,7 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
         globalActivePlayer = controls->getActivePlayer();
         playbackTimer->start(1 * 1000);
 
-        streamDetails = "";
-        if (isPlaying(0) == 1) {
-            streamDetails = controls->getStreamDetailsAll(globalActivePlayer);
-        }
-
+        streamDetails = controls->getStreamDetailsAll(globalActivePlayer);
         system(QString("vnstat -tr 7 --json >>" + globalPathprefix + "/vnstat.txt").toLocal8Bit().constData());
     }
     LOG(VB_GENERAL, LOG_DEBUG, "play_Kodi() Finsihed");

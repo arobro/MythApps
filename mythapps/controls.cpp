@@ -497,6 +497,10 @@ QString Controls::getStreamDetailsAll(int playerId) {
     LOG(VB_GENERAL, LOG_DEBUG, "getStreamDetails()");
     QString answer = getStreamDetails(playerId);
 
+    if (answer.contains("error") || answer.contains("invaild")) {
+        return "";
+    }
+
     QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
     QJsonObject jObject = jsonDocument.object();
     QVariantMap mainMap = jObject.toVariantMap();
