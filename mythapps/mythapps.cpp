@@ -330,7 +330,7 @@ bool MythApps::Create() {
 
     for (int i = 0; i < 4; i++) {
         if (isKodiPingable(ip, port)) {
-            connected = 1;
+            controls->setConnected(1);
             break;
         } else {
             delay(1);
@@ -427,7 +427,7 @@ void MythApps::loadApps() {
     }
     musicOpen = false;
     m_filepath->SetText("");
-    if (connected == 1) {
+    if (controls->getConnected() == 1) {
         if (!controls->isUserNamePasswordCorrect()) {
             delayMilli(200); // retry incase slow to start
             if (!controls->isUserNamePasswordCorrect()) {
@@ -443,8 +443,8 @@ void MythApps::loadApps() {
         }
 
         isKodiConnectedTimer->start(10 * 1000);
-        connected = 2;
-    } else if (connected == 0) {
+        controls->setConnected(2);
+    } else if (controls->getConnected() == 0) {
         createAutoClosingBusyDialog(tr("Failed to Connect. Is Kodi installed/running with remote control enabled? (Setting m key)"), 6);
         openSettingTimer->start(200);
         return;
@@ -685,7 +685,7 @@ void MythApps::niceClose(bool forceClose) {
     LOG(VB_GENERAL, LOG_DEBUG, "niceClose()");
 
     if (forceClose) {
-        connected = 0;
+        controls->setConnected(0);
         delay(1);
     }
 
@@ -2435,13 +2435,13 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
 
     if (!seekAmount.compare("00:00:00") == 0) { // if seek timestamp specified
         if (isPlaying(0) == 1) {                // if playing
-            if (connected == 2) {
+            if (controls->getConnected() == 2) {
                 controls->seek(seekAmount); // seek to timestamp
                 delay(2);
             }
         }
     }
-    if (connected == 2) {
+    if (controls->getConnected() == 2) {
         handleDialogs(true);
 
         delayMilli(50);

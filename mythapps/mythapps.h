@@ -44,8 +44,6 @@ class MythApps : public MythScreenType {
 
   private:
     QWebSocket m_webSocket; /*!< used for messages recieved from Kodi via the websocket. */
-
-    int connected = 0; /*!< is kodi connected? 0 = not connected, 1 = connected, 2 = connected and authenticated*/
     MythUIText *m_filepath;
     MythUIText *m_plot;
     MythUIText *m_streamDetails;

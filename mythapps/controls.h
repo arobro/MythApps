@@ -84,6 +84,9 @@ class Controls {
     void inputActionHelper(QString action);
     bool androidAppSwitch(QString app);
 
+    void setConnected(int connectStatus);
+    int getConnected();
+
     // music
     void setCrossFade(int seconds);
     void setProjectM();
@@ -102,5 +105,6 @@ class Controls {
     NetRequest *netRequest;
     QString globalDuration;
     int FFspeed = 1;
+    int connected = 0; /*!< is kodi connected? 0 = not connected, 1 = connected, 2 = connected and authenticated*/
 };
 #endif

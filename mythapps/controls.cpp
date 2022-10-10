@@ -10,7 +10,12 @@ Controls::Controls(QString m_username, QString m_password, QString m_ip, QString
 Controls::~Controls() { delete netRequest; }
 
 /** \brief helper function for netRequest->requestUrl() */
-QString Controls::requestUrl(QJsonObject value) { return netRequest->requestUrl(value); }
+QString Controls::requestUrl(QJsonObject value) {
+    if (getConnected() == 0) {
+        return "Connection refused";
+    }
+    return netRequest->requestUrl(value);
+}
 
 /** \brief Start kodi if not running */
 void Controls::startKodiIfNotRunning() {
@@ -686,6 +691,19 @@ void Controls::inputActionHelper(QString action) {
     fetchUrlJson("Input.ExecuteAction", obj);
 }
 
+/** \brief switch between Kodi and MythTV on Android
+ * 	\param app name of app to switch to
+ *  \return is the helper switching app (mythapp services) running? */
+bool Controls::androidAppSwitch(QString app) { return netRequest->androidAppSwitch(app); }
+
+/** \brief set the connection status
+ * 	\param connectStatus the new connection status */
+void Controls::setConnected(int connectStatus) { connected = connectStatus; }
+
+/** \brief get the connection status
+ *  \return 0 = not connected, 1 = connected, 2 = connected and authenticated */
+int Controls::getConnected() { return connected; }
+
 // music
 
 /** \brief set the number of seconds for music crossfade */
@@ -769,8 +787,3 @@ void Controls::removeFromPlaylist(int inPlaylistPos) {
 
     fetchUrlJson("Playlist.Remove", paramsObj);
 }
-
-/** \brief switch between Kodi and MythTV on Android
- * 	\param app name of app to switch to
- *  \return is the helper switching app (mythapp services) running? */
-bool Controls::androidAppSwitch(QString app) { return netRequest->androidAppSwitch(app); }
