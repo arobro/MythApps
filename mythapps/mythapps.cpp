@@ -1624,9 +1624,13 @@ void MythApps::handleDialogs(bool forceFullScreenVideo) {
     QString systemCurrentWindow = controls->handleDialogs();
     LOG(VB_GENERAL, LOG_DEBUG, "handleDialogs() -" + systemCurrentWindow);
 
-    if (systemCurrentWindow.compare("Home") == 0 || forceFullScreenVideo) { // socket used as more efficient
+    if (systemCurrentWindow.compare("Home") == 0) { // socket used as more efficient
         m_webSocket.sendTextMessage(QString("{\"jsonrpc\": \"2.0\", \"method\": \"GUI.ActivateWindow\", "
                                             "\"params\": { \"window\": \"fullscreenvideo\" }, \"id\": \"1\"}"));
+    }
+
+    if (systemCurrentWindow.compare("Fullscreen OSD") == 0 and forceFullScreenVideo) {
+        controls->showOSD();
     }
 }
 
@@ -1691,8 +1695,6 @@ void MythApps::pauseToggle() {
     controls->pauseToggle(activePlayerStatus);
 
     if (!paused) {
-        controls->showOSD();
-        controls->showOSD();
         handleDialogs(true);
     }
     delayMilli(200); // button debounce
@@ -2442,8 +2444,6 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
         }
     }
     if (connected == 2) {
-        controls->showOSD();
-        controls->showOSD();
         handleDialogs(true);
 
         delayMilli(50);
