@@ -15,6 +15,7 @@
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QList>
+#include <QTime>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtWebSockets/QWebSocket>
@@ -216,7 +217,6 @@ class MythApps : public MythScreenType {
     QString ma_tv_filename;        /*!< stores physical image location for the corresponding button */
 
     QString createImageCachePath(QString imageFileName);
-    QString getStreamBitrate();
 
     void confirmDialog(QString description, QString type);
     void returnFocus();

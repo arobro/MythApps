@@ -6,8 +6,55 @@
  *  \param m_password Kodi password
  *  \param m_ip Kodi ip
  * 	\param m_port Kodi port */
-Controls::Controls(QString m_username, QString m_password, QString m_ip, QString m_port) { netRequest = new NetRequest(m_username, m_password, m_ip, m_port, false); }
-Controls::~Controls() { delete netRequest; }
+Controls::Controls(QString m_username, QString m_password, QString m_ip, QString m_port) {
+    netRequest = new NetRequest(m_username, m_password, m_ip, m_port, false);
+    eventClientIpAddress = CAddress(m_ip.toLocal8Bit().constData());
+}
+
+Controls::~Controls() {
+    if (eventClientConnected) {
+        CPacketBYE bye;
+        bye.Send(sockfd, eventClientIpAddress); //disconnect Kodi EventClient
+    }
+    delete netRequest;
+}
+
+/** \brief connect to kodi event client (remote control interface) if not connected */
+void Controls::checkEventClientConnected() {
+    if (!eventClientConnected) {
+        sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+        if (sockfd < 0) {
+            LOG(VB_GENERAL, LOG_ERR, "Error creating eventClient socket");
+            return;
+        }
+        eventClientIpAddress.Bind(sockfd);
+    }
+    eventClientConnected = true;
+}
+
+/** \brief minimizes kodi */
+void Controls::goMinimize() {
+    LOG(VB_GENERAL, LOG_INFO, "controls->goMinimize()");
+
+    checkEventClientConnected();
+    CPacketACTION action("Minimize");
+    action.Send(sockfd, eventClientIpAddress);
+}
+
+/** \brief toggle the player debug menu to show bitrate overlay 
+ *  \param doubleclick require the function to be called twice within one second. (used for double button press).*/
+void Controls::togglePlayerDebug(bool doubleclick) {
+    static QTime time = QTime(0, 0,0, 0);
+
+    if (!doubleclick || time > QTime::currentTime()) {
+        LOG(VB_GENERAL, LOG_DEBUG, "togglePlayerDebug() -playerdebug");
+
+        checkEventClientConnected();
+        CPacketACTION action("playerdebug", ACTION_BUTTON);
+        action.Send(sockfd, eventClientIpAddress);
+    }
+    time = QTime::currentTime().addSecs(1);
+}
 
 /** \brief helper function for netRequest->requestUrl() */
 QString Controls::requestUrl(QJsonObject value) {

@@ -186,11 +186,6 @@ bool MythSettings::Create() // _videoUrl,_seek
     } else {
         mCommand = mCommand + tr(" nc not found,");
     }
-    if (system("command -v kodi-send >/dev/null 2>&1 || { exit 1; }") == 0) {
-        mCommand = mCommand + tr(" kodi-send Installed,");
-    } else {
-        mCommand = mCommand + tr(" kodi-send not found,");
-    }
     if (isX11()) {
         if (system("command -v xdotool >/dev/null 2>&1 || { exit 1; }") == 0) {
             mCommand = mCommand + tr(" xdotool Installed,");
@@ -221,11 +216,6 @@ bool MythSettings::Create() // _videoUrl,_seek
         }
     } else {
         mCommand = mCommand + tr(" Please use Gnome or X11");
-    }
-    if (system("command -v vnstat >/dev/null 2>&1 || { exit 1; }") == 0) {
-        mCommand = mCommand + tr(" vnstat Installed");
-    } else {
-        mCommand = mCommand + tr(" vnstat not found");
     }
 
     m_commands->SetText(mCommand);

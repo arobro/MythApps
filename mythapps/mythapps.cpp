@@ -328,14 +328,14 @@ bool MythApps::Create() {
 
     controls->startKodiIfNotRunning();
 
-    for (int i = 0; i < 4; i++) {
+    QTime time = QTime::currentTime().addSecs(4);
+    while (time > QTime::currentTime()) {
         if (isKodiPingable(ip, port)) {
             controls->setConnected(1);
+            goMinimize(true);
             break;
-        } else {
-            delay(1);
         }
-        goMinimize(true);
+        delayMilli(50);
     }
 
     m_webSocket.open(QUrl("ws://" + ip + ":9090"));
@@ -539,12 +539,13 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             pauseToggle();
         } else if ((action == "DETAILS") and kodiPlayerOpen) {
             controls->showInfo();
+            controls->togglePlayerDebug(true); //requires double press
         } else if ((action == "DETAILS")) {
             if (m_streamDetailsbackground->IsVisible() == false) {
                 m_streamDetailsbackground->Show();
                 m_streamDetails->Show();
-                m_streamDetails->SetText(getStreamBitrate() + streamDetails);
-                LOG(VB_GENERAL, LOG_DEBUG, getStreamBitrate() + streamDetails);
+                m_streamDetails->SetText(streamDetails);
+                LOG(VB_GENERAL, LOG_DEBUG, streamDetails);
             } else {
                 m_streamDetailsbackground->Hide();
                 m_streamDetails->Hide();
@@ -1593,7 +1594,7 @@ void MythApps::goFullscreen() {
 #endif
 }
 
-/** \brief minimizes kodi by toggling out of fullscreen and using xdotool command. Suggested to call multible times for reliability incase kodi drops a request */
+/** \brief minimizes kodi by toggling out of fullscreen. Suggested to call multible times for reliability incase kodi drops a request */
 void MythApps::goMinimize(bool fullscreenCheck) {
     if (!allowAutoMinimize) {
         return;
@@ -1603,7 +1604,8 @@ void MythApps::goMinimize(bool fullscreenCheck) {
             toggleFullscreen();
         }
     }
-#ifdef _WIN32
+#ifdef __ANDROID__
+#elif _WIN32
     wchar_t kodi_wchar[] = L"Kodi";
     ShowWindow(FindWindow(NULL, kodi_wchar), SW_MINIMIZE);
     delayMilli(150);
@@ -1611,10 +1613,7 @@ void MythApps::goMinimize(bool fullscreenCheck) {
     SetActiveWindow(FindWindow(NULL, kodi_wchar2));
 #else
     delayMilli(150);
-    if (isX11()) {
-        system("timeout 2 xdotool search --onlyvisible --classname --sync Kodi windowminimize");
-    }
-    system("kodi-send -a \"Minimize\"");
+    controls->goMinimize();
 #endif
 }
 
@@ -1716,27 +1715,6 @@ void MythApps::unPause() {
         kodiPlayerOpen = true;
     }
     pauseToggle();
-}
-
-/** \brief get the stream bitrate. Uses thirdparty program vnstat */
-QString MythApps::getStreamBitrate() {
-    QFile vnstatFile(globalPathprefix + "vnstat.txt");
-    QString details = "";
-
-    if (vnstatFile.open(QIODevice::ReadOnly)) {
-        QString vnstat;
-        QTextStream in(&vnstatFile);
-        vnstat = vnstatFile.readAll();
-
-        QJsonDocument jsonDocument2 = QJsonDocument::fromJson(vnstat.toLocal8Bit().data());
-        QJsonObject jObject2 = jsonDocument2.object();
-        QVariantMap map9 = jObject2.toVariantMap();
-
-        QVariantMap map10 = map9["rx"].toMap();
-        details = "Bitrate: " + map10["ratestring"].toString();
-    }
-    vnstatFile.close();
-    return details;
 }
 
 /** \brief is the video playing? will retry if its not.
@@ -2418,11 +2396,6 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
     exitToMainMenuSleepTimer->stop();
 
     goFullscreen();
-
-    QFile vnstatFile(globalPathprefix + "/vnstat.txt"); // used to record bitrate
-    vnstatFile.remove();
-    vnstatFile.close();
-
     play(mediaLocation); // play the media
 
     QTime dieTime = QTime::currentTime().addSecs(9); // check the media is playing
@@ -2456,7 +2429,6 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
         playbackTimer->start(1 * 1000);
 
         streamDetails = controls->getStreamDetailsAll(globalActivePlayer);
-        system(QString("vnstat -tr 7 --json >>" + globalPathprefix + "/vnstat.txt").toLocal8Bit().constData());
     }
     LOG(VB_GENERAL, LOG_DEBUG, "play_Kodi() Finsihed");
 }

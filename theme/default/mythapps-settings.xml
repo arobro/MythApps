@@ -780,7 +780,7 @@ SETUP\n
 1. Install Kodi and the packages listed above. Recommended to use the offical Kodi Repo as it has DRM support - https://kodi.wiki/view/Official_Ubuntu_PPA. \n
 DRM - inputstream adaptive is required for 4k video and most popular streaming services. (subscription required) Recommended packages: kodi-inputstream-adaptive, kodi-visualization-projectm.\n   
   .  .  .  .sudo add-apt-repository ppa:team-xbmc/ppa; sudo apt-get update\n 
-  .  .  .  .sudo apt-get install kodi kodi-inputstream-adaptive kodi-visualization-projectm netcat-openbsd kodi-eventclients-kodi-send chromium-browser xdotool vnstat\n
+  .  .  .  .sudo apt-get install kodi kodi-inputstream-adaptive kodi-visualization-projectm netcat-openbsd chromium-browser xdotool\n
 \n
 2. Open Kodi. Enabled remote control via http in Kodi->Setting->Services->Control.     Allow Remote Control via HTTP - Yes.\n 
                    Require Aurthenitcation - Yes. Username / Password / Port (8080)\n 

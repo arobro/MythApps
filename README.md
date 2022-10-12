@@ -68,7 +68,7 @@ Recommended to use the offical Kodi Repo as it has DRM support - https://kodi.wi
 1. DRM - inputstream adaptive is required for 4k video and most popular streaming services. (subscription required)
 <br /> Recommended packages: kodi-inputstream-adaptive, kodi-visualization-projectm.  <br />
 sudo add-apt-repository ppa:team-xbmc/ppa; sudo apt-get update \
-sudo apt-get install kodi kodi-inputstream-adaptive kodi-visualization-projectm netcat-openbsd kodi-eventclients-kodi-send chromium-browser xdotool vnstat
+sudo apt-get install kodi kodi-inputstream-adaptive kodi-visualization-projectm netcat-openbsd chromium-browser xdotool
 
 2. Open Kodi. Enabled remote control via http in Kodi->Setting->Services->Control.     Allow Remote Control via HTTP - Yes. \
                    Require Aurthenitcation - Yes. Username / Password / Port (8080) \
@@ -133,10 +133,9 @@ Please report any bugs on this Github page and pull requests are welcome.
  libqt5websockets5  <br />
  libqt5websockets5-dev  <br />
  kodi  <br />
- kodi-send  <br />
  nc  <br />
  xdotool (X11 only) <br />
- vnstat  <br />
+ git (Wayland only) <br />
  
  # TROUBLESHOOTING  #
 1.	Can you log into http://127.0.0.1:8080 in a web browser? <br />

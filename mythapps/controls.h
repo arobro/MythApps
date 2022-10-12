@@ -11,11 +11,16 @@
 #include <QNetworkAccessManager>
 #include <QString>
 #include <QStringList>
+#include <QTime>
 #include <QUrlQuery>
 
 // MythApps headers
 #include "netRequest.h"
 #include "shared.h"
+
+// kodi events client
+#include "libs/xbmcclient.h"
+#include <sys/socket.h>
 
 /** \class Controls
  *  \brief Wraper between Myth Apps and the Kodi json api to control Kodi - https://kodi.wiki/view/JSON-RPC_API
@@ -33,6 +38,9 @@ class Controls {
     void seek(QString seekAmount);
 
     void showOSD();
+    void togglePlayerDebug(bool doubleclick);
+    void goMinimize();
+
     void showPlayerProcessInfo();
     void showInfo();
     void activateWindow(QString window);
@@ -101,10 +109,15 @@ class Controls {
     void removeFromPlaylist(int inPlaylistPos);
 
   private:
+    void checkEventClientConnected();
     void setTotalTime(QVariantMap map);
     NetRequest *netRequest;
     QString globalDuration;
     int FFspeed = 1;
     int connected = 0; /*!< is kodi connected? 0 = not connected, 1 = connected, 2 = connected and authenticated*/
+
+    CAddress eventClientIpAddress;
+    int sockfd;
+    bool eventClientConnected = false;
 };
 #endif
