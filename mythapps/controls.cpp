@@ -14,7 +14,7 @@ Controls::Controls(QString m_username, QString m_password, QString m_ip, QString
 Controls::~Controls() {
     if (eventClientConnected) {
         CPacketBYE bye;
-        bye.Send(sockfd, eventClientIpAddress); //disconnect Kodi EventClient
+        bye.Send(sockfd, eventClientIpAddress); // disconnect Kodi EventClient
     }
     delete netRequest;
 }
@@ -41,10 +41,10 @@ void Controls::goMinimize() {
     action.Send(sockfd, eventClientIpAddress);
 }
 
-/** \brief toggle the player debug menu to show bitrate overlay 
+/** \brief toggle the player debug menu to show bitrate overlay
  *  \param doubleclick require the function to be called twice within one second. (used for double button press).*/
 void Controls::togglePlayerDebug(bool doubleclick) {
-    static QTime time = QTime(0, 0,0, 0);
+    static QTime time = QTime(0, 0, 0, 0);
 
     if (!doubleclick || time > QTime::currentTime()) {
         LOG(VB_GENERAL, LOG_DEBUG, "togglePlayerDebug() -playerdebug");

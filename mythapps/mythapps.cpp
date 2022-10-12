@@ -539,7 +539,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             pauseToggle();
         } else if ((action == "DETAILS") and kodiPlayerOpen) {
             controls->showInfo();
-            controls->togglePlayerDebug(true); //requires double press
+            controls->togglePlayerDebug(true); // requires double press
         } else if ((action == "DETAILS")) {
             if (m_streamDetailsbackground->IsVisible() == false) {
                 m_streamDetailsbackground->Show();
