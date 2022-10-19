@@ -41,6 +41,13 @@ void Controls::goMinimize() {
     action.Send(sockfd, eventClientIpAddress);
 }
 
+/** \brief quit kodi */
+void Controls::quitKodi() {
+    checkEventClientConnected();
+    CPacketACTION action("Quit");
+    action.Send(sockfd, eventClientIpAddress);
+}
+
 /** \brief toggle the player debug menu to show bitrate overlay
  *  \param doubleclick require the function to be called twice within one second. (used for double button press).*/
 void Controls::togglePlayerDebug(bool doubleclick) {

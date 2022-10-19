@@ -40,6 +40,7 @@ class Controls {
     void showOSD();
     void togglePlayerDebug(bool doubleclick);
     void goMinimize();
+    void quitKodi();
 
     void showPlayerProcessInfo();
     void showInfo();

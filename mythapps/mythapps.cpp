@@ -691,13 +691,8 @@ void MythApps::niceClose(bool forceClose) {
     }
 
     if (gCoreContext->GetSetting("MythAppsCloseOnExit").compare("1") == 0 || forceClose) {
-
         if (!forceClose) {
-#ifdef _WIN32
-            system("taskkill /im kodi.exe");
-#else
-            system("kodi-send --action=\"Quit\"");
-#endif
+            controls->quitKodi();
         }
         delayMilli(150);
 #ifdef _WIN32
