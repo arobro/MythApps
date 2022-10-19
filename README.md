@@ -133,7 +133,6 @@ Please report any bugs on this Github page and pull requests are welcome.
  libqt5websockets5  <br />
  libqt5websockets5-dev  <br />
  kodi  <br />
- nc  <br />
  xdotool (X11 only) <br />
  git (Wayland only) <br />
  

@@ -231,7 +231,7 @@ int Controls::getVol() {
     QJsonObject paramsObj;
     paramsObj["properties"] = array;
 
-    fetchUrlJson("Application.SetVolume", paramsObj, array).toInt();
+    return fetchUrlJson("Application.SetVolume", paramsObj, array).toInt();
 }
 
 /** \brief close dialog if one pops up. e.g. for a subscription */

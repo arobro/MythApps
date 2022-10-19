@@ -181,11 +181,6 @@ bool MythSettings::Create() // _videoUrl,_seek
     } else {
         mCommand = mCommand + tr("Kodi not found,");
     }
-    if (system("command -v nc >/dev/null 2>&1 || { exit 1; }") == 0) {
-        mCommand = mCommand + tr(" nc Installed,");
-    } else {
-        mCommand = mCommand + tr(" nc not found,");
-    }
     if (isX11()) {
         if (system("command -v xdotool >/dev/null 2>&1 || { exit 1; }") == 0) {
             mCommand = mCommand + tr(" xdotool Installed,");

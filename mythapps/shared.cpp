@@ -1,6 +1,9 @@
 #include "shared.h"
-#include <QDir>
 #include <libmyth/mythcontext.h>
+
+#include <QDir>
+#include <QtNetwork/QTcpSocket>
+
 #include <sstream>
 
 /** \brief  helper function that converts parameters into an ugly delimited string. Todo: Should be either a class or list.
@@ -127,21 +130,15 @@ QString QListSearch(QList<QString> list, QString search) {
     return QString("");
 }
 
+/** \brief can Kodi be pinged? */
 bool isKodiPingable(QString ip, QString port) {
-#ifdef __ANDROID__
-    return true;
-#endif
+    QTcpSocket messenger;
+    messenger.connectToHost(ip, port.toInt());
 
-#ifdef _WIN32
-    int ping = system("powershell -command \"(New-Object System.Net.Sockets.TcpClient(" + ip.toLocal8Bit() + ", " + port.toLocal8Bit() + ") | Select -ExpandProperty Connected)\"");
-#else
-    int ping = system("nc -vz " + ip.toLocal8Bit() + " " + port.toLocal8Bit() + " > /dev/null 2>&1");
-#endif
-    if (!ping == 0) {
+    if (!messenger.waitForConnected(100)) {
         return false;
-    } else {
-        return true;
     }
+    return true;
 }
 
 /** \brief helper function to get the character from a set position for the rotate 13 function */
