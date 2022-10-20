@@ -344,7 +344,6 @@ class MythApps : public MythScreenType {
     MythUIButtonList *m_playlistVertical;
 
     QStringList previousURL;
-    QString currentURL;
 };
 
 #endif /* MYTHKODI_H */

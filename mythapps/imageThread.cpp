@@ -1,4 +1,5 @@
 #include "imageThread.h"
+#include "shared.h"
 
 // QT headers
 #include <QApplication>
@@ -20,10 +21,10 @@
  * 	\param m_port Kodi port
  * 	\param _fileListType what MythUIButtonList instance to render the image on */
 
-ImageThread::ImageThread(int _buttonPosition, QString _thumbnailPath, QString _encodedThumbnailPath, QString _fileName, QString _appIcon, QString _username, QString _password, QString _ip,
-                         QString _port, MythUIButtonList *_fileListType)
-    : buttonPosition(_buttonPosition), thumbnailPath(_thumbnailPath), encodedThumbnailPath(_encodedThumbnailPath), fileName(_fileName), appIcon(_appIcon), username(_username), password(_password),
-      ip(_ip), port(_port), fileListType(_fileListType) {}
+ImageThread::ImageThread(int _buttonPosition, QString _thumbnailPath, QString _fileName, QString _appIcon, QString _username, QString _password, QString _ip, QString _port,
+                         MythUIButtonList *_fileListType)
+    : buttonPosition(_buttonPosition), thumbnailPath(_thumbnailPath), fileName(_fileName), appIcon(_appIcon), username(_username), password(_password), ip(_ip), port(_port),
+      fileListType(_fileListType) {}
 
 /** \brief download and proccess the image if required. Emit the completed result */
 void ImageThread::startRead() {
@@ -31,20 +32,20 @@ void ImageThread::startRead() {
 
     nr = new NetRequest(username, password, ip, port, false);
     if (!QFileInfo::exists(this->fileName + ".processed")) {
-        downloadImage();
+        downloadAppIconImage();
         proccessImage();
     }
     delete nr;
     emit renderImage(buttonPosition, this->fileListType);
 }
 
-/** \brief the image using net request if required */
-void ImageThread::downloadImage() {
+/** \brief Download the app icon image using net request if required */
+void ImageThread::downloadAppIconImage() {
     if (this->fileName.compare(this->appIcon) == 0) { // if app icon, save it to overlay source on thumbnails
         if (!QFileInfo::exists(fileName)) {
             QFile file(fileName);
             file.open(QIODevice::WriteOnly);
-            file.write(nr->downloadImage(this->encodedThumbnailPath));
+            file.write(nr->downloadImage(urlencode(this->thumbnailPath), false));
             file.close();
         }
     }
@@ -57,7 +58,7 @@ void ImageThread::proccessImage() {
     if (QFileInfo::exists(this->fileName)) { // only for icons
         originalImage->load(this->fileName);
     } else { // all the thumbnails from Kodi
-        originalImage->loadFromData(nr->downloadImage(this->encodedThumbnailPath), "");
+        originalImage->loadFromData(nr->downloadImage(this->thumbnailPath, true), "");
     }
 
     QColor originalImageColor(originalImage->pixel(2, 2)); // get image colour

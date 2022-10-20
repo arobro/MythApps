@@ -1848,7 +1848,6 @@ bool MythApps::appsCallbackPlugins(ProgramData *programData, MythUIButtonListIte
 
     QString fileURL = friendlyUrl(programData->getFilePathParam());
     m_filepath->SetText(fileURL);
-    currentURL = urlencode(fileURL);
 
     if (!QString(programData->getFilePathParam().at(0)).compare("/") == 0) { // file system if first character is a slash
         fileURL = "plugin://" + fileURL;
@@ -1983,7 +1982,7 @@ void MythApps::displayImage(MythUIButtonListItem *item, MythUIButtonList *m_file
         int buttonPosition = m_fileList->GetItemPos(item);
 
         QThread *_thread = new QThread(); // create image thread in the imageThreadList pool to download / process the image.
-        ImageThread *_rdr = new ImageThread(buttonPosition, thumbnailPath, urlencode(thumbnailPath), fileName, fav_filename2, username, password, ip, port, m_fileList);
+        ImageThread *_rdr = new ImageThread(buttonPosition, thumbnailPath, fileName, fav_filename2, username, password, ip, port, m_fileList);
         _rdr->moveToThread(_thread);
         connect(_thread, &QThread::started, _rdr, &ImageThread::startRead);
         connect(_thread, &QThread::finished, _rdr, &ImageThread::deleteLater);

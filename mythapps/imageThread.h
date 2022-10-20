@@ -16,8 +16,8 @@ class ImageThread : public QObject {
     Q_OBJECT
 
   public:
-    explicit ImageThread(int buttonPosition, QString _thumbnailPath, QString _encodedThumbnailPath, QString _fileName, QString _appIcon, QString _username, QString _password, QString _ip,
-                         QString _port, MythUIButtonList *_fileListType);
+    explicit ImageThread(int buttonPosition, QString _thumbnailPath, QString _fileName, QString _appIcon, QString _username, QString _password, QString _ip, QString _port,
+                         MythUIButtonList *_fileListType);
 
   signals:
     void renderImage(int, MythUIButtonList *);
@@ -28,7 +28,6 @@ class ImageThread : public QObject {
   private:
     int buttonPosition;
     QString thumbnailPath;
-    QString encodedThumbnailPath;
     QString fileName;
     QString appIcon;
     QString username;
@@ -39,8 +38,8 @@ class ImageThread : public QObject {
 
     NetRequest *nr;
 
+    void downloadAppIconImage();
     void proccessImage();
-    void downloadImage();
 };
 
 #endif // MYTHREAD_H

@@ -22,7 +22,8 @@ class NetRequest {
     QString requestUrl(QJsonObject value);
     QString requestUrlSearch(QString NRmgr);
 
-    QByteArray downloadImage(QString imageUrl);
+    QByteArray downloadImage(QString imageUrl, bool tryDirectDownload);
+
     QString getFavIconUrl(QString websiteUrl);
     bool androidAppSwitch(QString app);
 

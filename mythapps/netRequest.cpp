@@ -96,13 +96,21 @@ QString NetRequest::requestUrlHelper(QNetworkReply *RUreply, QUrl qurl) {
 
 /** \brief download an image.
  * 	\param imageUrl image url to download
+ *  \param tryDirectDownload Download directly (faster) instead of via Kodi
  *  \return binary image object */
-QByteArray NetRequest::downloadImage(QString imageUrl) {
-    QUrl l_url("http://" + ip + ":" + port + "/image/" + imageUrl);
-    l_url.setUserName(username);
-    l_url.setPassword(password);
+QByteArray NetRequest::downloadImage(QString imageUrl, bool tryDirectDownload) {
+    QUrl l_url;
+
+    if (tryDirectDownload) {
+        l_url = urlDecode(imageUrl.replace("image://", ""));
+    } else {
+        l_url = "http://" + ip + ":" + port + "/image/" + imageUrl;
+        l_url.setUserName(username);
+        l_url.setPassword(password);
+    }
 
     QNetworkRequest l_req(l_url);
+    l_req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
     QNetworkReply *reply2 = NRmgr->get(l_req);
 
     QEventLoop l_event_loop; // wait if the requests has not yet returned.
@@ -112,7 +120,13 @@ QByteArray NetRequest::downloadImage(QString imageUrl) {
 
     reply2->disconnect();
     delete reply2;
-    return imageData;
+
+    // download image via Kodi if failed to download directly.
+    if (tryDirectDownload && imageData.size() < 300) {
+        return downloadImage(urlencode("image://" + imageUrl), false);
+    } else {
+        return imageData;
+    }
 }
 
 /** \brief download favourite icon for a website.
@@ -121,7 +135,7 @@ QByteArray NetRequest::downloadImage(QString imageUrl) {
 QString NetRequest::getFavIconUrl(QString websiteUrl) {
     QUrl l_url(websiteUrl);
     QNetworkRequest l_req(l_url);
-    l_req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+    l_req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
 
     QNetworkReply *reply2 = NRmgr->get(l_req);
     QEventLoop loop; // wait if the requests has not yet returned.
@@ -186,9 +200,7 @@ bool NetRequest::androidAppSwitch(QString app) {
     }
 
     if (!mythAppsServiceconnected) {
-        LOG(VB_GENERAL, LOG_INFO,
-            "NR->androidAppSwitch() MythApp Services apk not installed or "
-            "running.");
+        LOG(VB_GENERAL, LOG_INFO, "NR->androidAppSwitch() MythApp Services apk not installed or running.");
         return false;
     }
     m_webSocketNR.sendTextMessage(app);

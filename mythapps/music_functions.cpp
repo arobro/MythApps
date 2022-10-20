@@ -160,7 +160,7 @@ void MythApps::downloadImage(QString thumbnailPath) {
 
     NetRequest *nr = new NetRequest(username, password, ip, port, false);
     QImage image;
-    image.loadFromData(nr->downloadImage(urlencode(thumbnailPath)));
+    image.loadFromData(nr->downloadImage(urlencode(thumbnailPath), false));
     MythImage *m_image = GetPainter()->GetFormatImage();
     m_image->Assign(image);
     m_coverart->SetImage(m_image);

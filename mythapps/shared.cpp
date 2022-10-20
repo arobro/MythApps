@@ -5,6 +5,7 @@
 #include <QtNetwork/QTcpSocket>
 
 #include <sstream>
+#include <string>
 
 /** \brief  helper function that converts parameters into an ugly delimited string. Todo: Should be either a class or list.
  * \param   file - can be a directory or a video url.
@@ -100,6 +101,28 @@ QString urlencode(QString url) {
     }
 
     return QString::fromStdString(e.str());
+}
+
+QString urlDecode(QString url) {
+    std::string str = url.toStdString();
+    std::string ret;
+    char ch;
+    int i, ii, len = str.length();
+
+    for (i = 0; i < len; i++) {
+        if (str[i] != '%') {
+            if (str[i] == '+')
+                ret += ' ';
+            else
+                ret += str[i];
+        } else {
+            sscanf(str.substr(i + 1, 2).c_str(), "%x", &ii);
+            ch = static_cast<char>(ii);
+            ret += ch;
+            i = i + 2;
+        }
+    }
+    return QString::fromStdString(ret);
 }
 
 bool QListContains(QList<QString> list, QString search) {
