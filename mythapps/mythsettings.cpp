@@ -380,7 +380,7 @@ QString MythSettings::savedWebSite(QString website) {
     NetRequest *netRequest = new NetRequest("", "", "", "", false);
     QString favIconUrl = netRequest->getFavIconUrl(website);
 
-    return website + "|" + urlencode(favIconUrl) + "~";
+    return website + "|" + urlEncode(favIconUrl) + "~";
 }
 
 void MythSettings::button_save() {

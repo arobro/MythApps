@@ -102,7 +102,7 @@ QByteArray NetRequest::downloadImage(QString imageUrl, bool tryDirectDownload) {
     QUrl l_url;
 
     if (tryDirectDownload) {
-        l_url = urlDecode(imageUrl.replace("image://", ""));
+        l_url = urlDecode(removeTrailingChar(imageUrl,'/').replace("image://", ""));
     } else {
         l_url = "http://" + ip + ":" + port + "/image/" + imageUrl;
         l_url.setUserName(username);
@@ -123,7 +123,7 @@ QByteArray NetRequest::downloadImage(QString imageUrl, bool tryDirectDownload) {
 
     // download image via Kodi if failed to download directly.
     if (tryDirectDownload && imageData.size() < 300) {
-        return downloadImage(urlencode("image://" + imageUrl), false);
+        return downloadImage(urlEncode("image://" + imageUrl), false);
     } else {
         return imageData;
     }

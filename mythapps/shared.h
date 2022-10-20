@@ -23,7 +23,7 @@ QString friendlyUrl(QString url);
 void createDirectoryIfDoesNotExist(QString _dir);
 QString removeBBCode(QString text);
 
-QString urlencode(QString url);
+QString urlEncode(QString url);
 QString urlDecode(QString url);
 
 bool QListContains(QList<QString> list, QString search);

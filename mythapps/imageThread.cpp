@@ -45,7 +45,7 @@ void ImageThread::downloadAppIconImage() {
         if (!QFileInfo::exists(fileName)) {
             QFile file(fileName);
             file.open(QIODevice::WriteOnly);
-            file.write(nr->downloadImage(urlencode(this->thumbnailPath), false));
+            file.write(nr->downloadImage(urlEncode(this->thumbnailPath), false));
             file.close();
         }
     }

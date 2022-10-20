@@ -81,7 +81,7 @@ QString removeBBCode(QString text) {
 /** \brief  encode the url
  * \param   url the url
  * \return  encoded url */
-QString urlencode(QString url) {
+QString urlEncode(QString url) {
     std::string s = url.toStdString();
 
     static const char lookup[] = "0123456789abcdef";
@@ -103,6 +103,9 @@ QString urlencode(QString url) {
     return QString::fromStdString(e.str());
 }
 
+/** \brief  decode the url
+ * \param   url the url
+ * \return  decoded url */
 QString urlDecode(QString url) {
     std::string str = url.toStdString();
     std::string ret;
