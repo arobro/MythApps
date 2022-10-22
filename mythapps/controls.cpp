@@ -34,7 +34,7 @@ void Controls::checkEventClientConnected() {
 
 /** \brief minimizes kodi */
 void Controls::goMinimize() {
-    LOG(VB_GENERAL, LOG_INFO, "controls->goMinimize()");
+    LOG(VB_GENERAL, LOG_DEBUG, "controls->goMinimize()");
 
     checkEventClientConnected();
     CPacketACTION action("Minimize");
