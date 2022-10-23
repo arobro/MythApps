@@ -935,7 +935,7 @@ void MythApps::playbackTimerSlot() {
         playBackTimeMap["seconds"] = prevPlayBackTimeMap + 1;
     }
 
-    m_musicDuration->SetText(getPlayBackTimeString().replace("00:0", "") + " / " + controls->getGlobalDuration());
+    m_musicDuration->SetText(getPlayBackTimeString(false).replace("00:0", "") + " / " + playBackTimeMap["duration"].toString());
 
     count++;
     if (count == 4) {

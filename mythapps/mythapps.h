@@ -86,7 +86,7 @@ class MythApps : public MythScreenType {
 
     QList<QThread *> imageThreadList; /*!< thread pool */
     std::map<std::string, QStringList> ProgramMap;
-    QString getPlayBackTimeString();
+    QString getPlayBackTimeString(bool adjustEnd);
 
     QString searchText = ""; /*!< text entered into the search box */
     QStringList searchSubFoldersList;

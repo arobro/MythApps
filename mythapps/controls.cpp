@@ -441,26 +441,26 @@ QVariantMap Controls::getPlayBackTime(int playerid) {
 
     QVariantMap map2 = mainMap["result"].toMap();
 
-    setTotalTime(map2["totaltime"].toMap());
+    QVariantMap maptt = map2["totaltime"].toMap();
+    QTime totalTime;
+    totalTime.setHMS(maptt["hours"].toInt(), maptt["minutes"].toInt(), maptt["seconds"].toInt());
+    globalDuration = totalTime.toString("hh:mm:ss");
+    map2["duration"] = globalDuration;
+
+    QVariantMap mapct = map2["time"].toMap();
+    QTime currentTime = QTime();
+    currentTime.setHMS(mapct["hours"].toInt(), mapct["minutes"].toInt(), mapct["seconds"].toInt());
+
+    if (currentTime.addSecs(70) > totalTime) { // if less than 70 seconds of video remaining
+        videoNearEnd = true;
+    } else {
+        videoNearEnd = false;
+    }
+
     return map2;
 }
-/** \brief update the media total playing time into the globalDuration varible
- */
-void Controls::setTotalTime(QVariantMap map) {
-    QString minutes = map["minutes"].toString();
-    QString seconds = map["seconds"].toString();
 
-    if (minutes.size() == 1) {
-        minutes = "0" + minutes;
-    }
-    if (seconds.size() == 1) {
-        seconds = "0" + seconds;
-    }
-
-    globalDuration = minutes.rightJustified(2, '0') + ":" + seconds.rightJustified(2, '0');
-}
-
-QString Controls::getGlobalDuration() { return globalDuration; }
+bool Controls::isVideoNearEnd() { return videoNearEnd; }
 
 /** \brief close open dialogs in kodi */
 QString Controls::handleDialogs() {

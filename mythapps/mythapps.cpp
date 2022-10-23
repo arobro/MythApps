@@ -1488,8 +1488,9 @@ QVariantMap MythApps::getPlayBackTime(int playerid) {
     return map2;
 }
 
-/** \return the playback time of the playing media as a string */
-QString MythApps::getPlayBackTimeString() {
+/** \return the playback time of the playing media as a string 
+  * \param adjustEnd - return 0 if close to end of the video */
+QString MythApps::getPlayBackTimeString(bool adjustEnd) {
     QString playback = "00:00:00";
     if (!playBackTimeMap["hours"].isNull()) {
         QString hours = playBackTimeMap["hours"].toString();
@@ -1508,6 +1509,11 @@ QString MythApps::getPlayBackTimeString() {
 
         playback = hours + ":" + minutes + ":" + seconds;
     }
+
+    if (adjustEnd && controls->isVideoNearEnd()) {
+        return "00:00:00";
+    }
+
     return playback;
 }
 
@@ -2312,18 +2318,20 @@ void MythApps::customEvent(QEvent *event) {
         }
 
         if (resultid == "watchList") {
+            QString playBackTimeString = "00:00:00";
+
             if (resulttext == tr("Flag as Watched and Exit to Menu")) {
                 resetScreenshot();
                 addToPreviouslyPlayed();
             } else if (resulttext == tr("Exit to Menu")) {
                 resetScreenshot();
             } else if (resulttext == tr("Save Position to Watch List and Exit to Menu")) {
-                lastPlayedDetails->setSeek(getPlayBackTimeString());
+                lastPlayedDetails->setSeek(getPlayBackTimeString(true));
                 watchedLink->append(lastPlayedDetails->get());
                 resetScreenshot();
                 addToPreviouslyPlayed();
             } else if (resulttext == tr("Keep Watching")) {
-                play_Kodi(lastPlayedDetails->getUrl(), getPlayBackTimeString());
+                play_Kodi(lastPlayedDetails->getUrl(), getPlayBackTimeString(true));
             } else if (resulttext == tr("Exit to MythTV Menu")) {
                 niceClose(false);
             } else {
@@ -2492,7 +2500,7 @@ void MythApps::openOSD(QString screenType) {
 
         if (mythOSD->Create()) {
             mainStack->AddScreen(mythOSD);
-            mythOSD->setPlayBackTimeOSD(getPlayBackTimeString());
+            mythOSD->setPlayBackTimeOSD(getPlayBackTimeString(false));
             mythOSD->waitforKey();
             mythOSD->closeWindow();
         } else {

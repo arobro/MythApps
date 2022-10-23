@@ -71,8 +71,6 @@ class Controls {
     QString requestUrl(QJsonObject value);
     QVariantMap getPlayBackTime(int playerid);
 
-    QString getGlobalDuration();
-
     QString handleDialogs();
     void play(QString mediaLocation);
 
@@ -95,6 +93,7 @@ class Controls {
 
     void setConnected(int connectStatus);
     int getConnected();
+    bool isVideoNearEnd();
 
     // music
     void setCrossFade(int seconds);
@@ -111,7 +110,6 @@ class Controls {
 
   private:
     void checkEventClientConnected();
-    void setTotalTime(QVariantMap map);
     NetRequest *netRequest;
     QString globalDuration;
     int FFspeed = 1;
@@ -120,5 +118,6 @@ class Controls {
     CAddress eventClientIpAddress;
     int sockfd;
     bool eventClientConnected = false;
+    bool videoNearEnd = false;
 };
 #endif
