@@ -51,6 +51,7 @@ static void setupKeys(void) {
     REG_KEY("mythapps", "NEXTTRACK", QT_TRANSLATE_NOOP("MythControls", "Move to the next track"), ">,.,Z,End");
     REG_KEY("mythapps", "PREVTRACK", QT_TRANSLATE_NOOP("MythControls", "Move to the previous track"), ",,<,Q,Home");
     REG_KEY("mythapps", "TOGGLERECORD", QT_TRANSLATE_NOOP("MythControls", "Add to Watch List for later viewing"), "R");
+    REG_KEY("mythapps", "ShowVideoSettings", QT_TRANSLATE_NOOP("MythControls", "Show Video Settings"), "V");
     REG_KEY("mythapps", "FULLSCREEN", QT_TRANSLATE_NOOP("MythControls", "Toggle Fullscreen"), "F2");
     REG_KEY("mythapps", "MINIMIZE", QT_TRANSLATE_NOOP("MythControls", "Toggle Auto Minimize"), "F3");
     REG_KEY("mythapps", "CLOSE", QT_TRANSLATE_NOOP("MythControls", "Force Close and Return to Main Menu"), "Pause,F4");

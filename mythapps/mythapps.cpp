@@ -537,6 +537,8 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             stopPlayBack(); // Kodi player running. Lets stop
         } else if ((action == "PLAY" || action == "PAUSE") and (kodiPlayerOpen || musicOpen)) {
             pauseToggle();
+        } else if (action == "ShowVideoSettings" and kodiPlayerOpen) {
+            controls->activateWindow("osdvideosettings");
         } else if ((action == "DETAILS") and kodiPlayerOpen) {
             controls->showInfo();
             controls->togglePlayerDebug(true); // requires double press

@@ -102,7 +102,7 @@ QByteArray NetRequest::downloadImage(QString imageUrl, bool tryDirectDownload) {
     QUrl l_url;
 
     if (tryDirectDownload && imageUrl.contains("http")) {
-        l_url = urlDecode(removeTrailingChar(imageUrl,'/').replace("image://", ""));
+        l_url = urlDecode(removeTrailingChar(imageUrl, '/').replace("image://", ""));
     } else {
         l_url = "http://" + ip + ":" + port + "/image/" + imageUrl;
         l_url.setUserName(username);

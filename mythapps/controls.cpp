@@ -34,8 +34,6 @@ void Controls::checkEventClientConnected() {
 
 /** \brief minimizes kodi */
 void Controls::goMinimize() {
-    LOG(VB_GENERAL, LOG_DEBUG, "controls->goMinimize()");
-
     checkEventClientConnected();
     CPacketACTION action("Minimize");
     action.Send(sockfd, eventClientIpAddress);
