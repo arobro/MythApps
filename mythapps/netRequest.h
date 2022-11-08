@@ -20,7 +20,7 @@ class NetRequest {
     ~NetRequest();
 
     QString requestUrl(QJsonObject value);
-    QString requestUrlSearch(QString NRmgr);
+    QString requestUrlPublic(QString url, QString authorization);
 
     QByteArray downloadImage(QString imageUrl, bool tryDirectDownload);
 
@@ -34,7 +34,6 @@ class NetRequest {
     QString port;
     QString globalDuration = "";
 
-    QNetworkRequest request;
     QString contentsGlobal = "";
 
     QNetworkAccessManager *NRmgr;

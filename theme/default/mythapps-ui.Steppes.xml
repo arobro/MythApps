@@ -29,45 +29,59 @@
 			<value></value>
 		</textarea>
 		
-		<textedit name="SearchTextEdit">
+		<group name="searchBox">
 			<area>60,16,447,45</area><!--720!!<area>60,16,292,45</area>!!-->
-			<statetype name="background">
-				<state name="active">
-					<shape name="backgroundSearch1">
-						<area>0,0,447,45</area><!--720!!<area>0,0,292,45</area>!!-->
-						<type>roundbox</type>
-						<fill color="#808080" />
-						<cornerradius>6</cornerradius>
-					</shape>
-				</state>
-				<state name="selected">
-					<shape name="backgroundSearch2">
-						<area>0,0,447,45</area><!--720!!<area>0,0,292,45</area>!!-->
-						<type>roundbox</type>
-						<fill style="gradient">
-							<gradient start="#52CA38" end="#349838" alpha="255" />
-						</fill>
-						<cornerradius>6</cornerradius>
-					</shape>
-				</state>
-				<state name="inactive">
-					<shape name="backgroundSearch1">
-						<area>0,0,447,45</area><!--720!!<area>0,0,292,45</area>!!-->
-						<type>roundbox</type>
-						<fill color="#808080" />
-						<cornerradius>6</cornerradius>
-					</shape>
-				</state>
-			</statetype>
-			<imagetype name="cursor">
-				<filename>cursor.png</filename>
-			</imagetype>
-			<textarea name="text">
-				<area>7,0,447,45</area>
-				<font>basesmallblack</font>
+			<textedit name="SearchTextEdit">	
+				<statetype name="background">
+					<state name="active">
+						<shape name="backgroundSearch1">
+							<area>0,0,447,45</area><!--720!!<area>0,0,292,45</area>!!-->
+							<type>roundbox</type>
+							<fill color="#808080" />
+							<cornerradius>6</cornerradius>
+						</shape>
+					</state>
+					<state name="selected">
+						<shape name="backgroundSearch2">
+							<area>0,0,447,45</area><!--720!!<area>0,0,292,45</area>!!-->
+							<type>roundbox</type>
+							<fill style="gradient">
+								<gradient start="#52CA38" end="#349838" alpha="255" />
+							</fill>
+							<cornerradius>6</cornerradius>
+						</shape>
+					</state>
+					<state name="inactive">
+						<shape name="backgroundSearch1">
+							<area>0,0,447,45</area><!--720!!<area>0,0,292,45</area>!!-->
+							<type>roundbox</type>
+							<fill color="#808080" />
+							<cornerradius>6</cornerradius>
+						</shape>
+					</state>
+				</statetype>
+				<imagetype name="cursor">
+					<filename>cursor.png</filename>
+				</imagetype>
+				<textarea name="text">
+					<area>10,3,400,45</area>
+					<font>basesmallblack</font>
+					<value></value>
+				</textarea>
+				<imagetype name="search_icon">
+					<area>410,7,30,30</area><!--720!!<area>260,7,30,30</area>!!-->
+					<filename>ma_search2.png</filename>
+				</imagetype>
+			</textedit>
+			<textarea name="SearchTextEditBackgroundText">
+				<area>10,4,447,45</area><!--720!!<area>10,4,292,45</area>!!-->
+				<alpha>50</alpha>
+				<font>basesmall</font>
 				<value></value>
 			</textarea>
-		</textedit>
+			
+		</group>
+		
 		<buttonlist name="fileListGrid" from="basebuttonlist">
 			<area>15,130,1900,100%</area><!--720!!<area>15,130,1350,70%</area>!!-->
 			<layout>grid</layout>
@@ -637,8 +651,13 @@
 								<gradient start="#505050" end="#000000" alpha="255" direction="vertical"  />
 							</fill>
 						</shape>
+						<imagetype name="search_icon">
+							<area>410,15,30,30</area><!--720!!<area>260,15,30,30</area>!!-->
+							<filename>ma_search3.png</filename>
+							<alpha>130</alpha>
+						</imagetype>
 						<textarea name="buttontext2">
-							<area>30,0,100%,100%</area>
+							<area>30,0,95%,100%</area>
 							<align>left,vcenter</align>
 							<font>basesmall</font>
 							<alpha>170</alpha>
@@ -651,8 +670,12 @@
 								<gradient start="#52CA38" end="#349838" alpha="255" direction="vertical"  />
 							</fill>
 						</shape>
+						<imagetype name="search_icon">
+							<area>410,15,30,30</area><!--720!!<area>260,15,30,30</area>!!-->
+							<filename>ma_search2.png</filename>
+						</imagetype>
 						<textarea name="buttontext2">
-							<area>30,0,100%,100%</area>
+							<area>30,0,95%,100%</area>
 							<align>left,vcenter</align>
 							<font>basesmall</font>
 							<alpha>170</alpha>
@@ -666,7 +689,7 @@
 							</fill>
 						</shape>
 						<textarea name="buttontext2">
-							<area>30,0,100%,100%</area>
+							<area>30,0,95%,100%</area>
 							<align>left,vcenter</align>
 							<font>basesmall</font>
 							<alpha>170</alpha>
@@ -686,6 +709,86 @@
 			</buttonlist>
 		</group>
 		
+		<group name="searchSettingsGroup">	
+			<area>0,0,100%,100%</area><!--720!!<area>0,0,67%,100%</area>!!-->
+			<shape name="searchSettingsBackground">
+				<area>32%,59%,51%,60%</area><!--720!!<area>32%,39%,52%,37%</area>!!-->
+				<type>roundbox</type>
+				<fill color="#000000" alpha="150" />
+				<line color="#222222" alpha="170" width="2" />
+				<cornerradius>18</cornerradius>
+			</shape>
+			<buttonlist name="searchSettingsButtonList" from="basebuttonlist">
+				<area>33%,60%,50%,60%</area><!--720!!<area>33%,40%,50%,60%</area>!!--> 
+				<layout>>vertical</layout>
+				<spacing>3</spacing>
+				<scrollstyle>free</scrollstyle>
+				<arrange>Fixed</arrange>
+				<align>left</align>						
+				<buttonarea>0,0,100%,100%</buttonarea>
+				<statetype name="buttonitem">
+					<state name="active">
+						<textarea name="buttontext">
+							<area>50,0,100%,42</area>
+							<align>left,vcenter</align>
+							<font>basesmallgrey</font>
+							<alpha>250</alpha>
+						</textarea>
+						<textarea name="buttontext2">
+							<area>50,0,90%,42</area>
+							<align>right,vcenter</align>
+							<font>basesmallgreybold</font>
+							<alpha>250</alpha>
+						</textarea>
+					</state>
+					<state name="selectedactive" from="active">
+						<shape name="item">
+							<area>0,0,99%,45</area>
+							<type>roundbox</type>
+							<cornerradius>25</cornerradius>
+							<fill color="#666666" alpha="50" />
+							<line color="#FFFFFF" alpha="0" width="0" />
+						</shape>
+						<textarea name="buttontext">
+							<area>50,0,100%,42</area>
+							<align>left,vcenter</align>
+							<font>basesmallgrey</font>
+							<alpha>200</alpha>
+						</textarea>
+						<textarea name="buttontext2">
+							<area>50,0,90%,42</area>
+							<align>right,vcenter</align>
+							<font>basesmallgreybold</font>
+							<alpha>200</alpha>
+						</textarea>
+					</state>
+					<state name="selectedinactive" from="active">
+						<textarea name="buttontext">
+							<area>50,0,100%,42</area>
+							<align>left,vcenter</align>
+							<font>basesmallgrey</font>
+							<alpha>200</alpha>
+						</textarea>
+						<textarea name="buttontext2">
+							<area>50,0,90%,42</area>
+							<align>right,vcenter</align>
+							<font>basesmallgreybold</font>
+							<alpha>200</alpha>
+						</textarea>
+					</state>
+					<statetype name="upscrollarrow">
+						<position>2500,50%</position>
+						<state type="off"></state>
+						<state type="full"></state>
+					</statetype>
+					<statetype name="downscrollarrow">
+						<position>2500,50%</position>
+						<state type="off"></state>
+						<state type="full"></state>
+					</statetype>
+				</statetype>
+			</buttonlist>
+		</group>
 		
 		<imagetype name="screenshotImageMain">
 			<area>0,0,1920,1080</area>
@@ -728,6 +831,5 @@
 				</value>
 			</textarea>
 		</group>
-		
 	</window>
 </mythuitheme>

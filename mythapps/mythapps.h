@@ -21,12 +21,14 @@
 #include <QtWebSockets/QWebSocket>
 
 // MythApps headers
+#include "browser.h"
 #include "container.h"
 #include "controls.h"
 #include "getApps.h"
 #include "imageThread.h"
 #include "programData.h"
 #include "programLink.h"
+#include "ytCustomApp.h"
 
 class MythDialogBox;
 
@@ -51,10 +53,12 @@ class MythApps : public MythScreenType {
     MythUIShape *m_streamDetailsbackground;
     MythUIText *m_title;
     MythUITextEdit *m_SearchTextEdit;
+    MythUIText *m_SearchTextEditBackgroundText;
     MythUIImage *m_screenshotMainMythImage; /*!< used to create thumbnail for pause menu */
     QImage m_screenshotMainQimage;          /*!< used to create thumbnail for pause menu */
     MythUIImage *m_loaderImage;
     MythUIType *m_searchButtonListGroup;
+    MythUIType *m_searchSettingsGroup;
     MythUIType *m_help;
     MythUIButton *m_androidMenuBtn;
 
@@ -69,6 +73,7 @@ class MythApps : public MythScreenType {
     QTimer *hintTimer;            /*!< stops any hung searchs */
     QTimer *musicBarOnStopTimer;  /*!< update the music bar status */
     QTimer *searchSuggestTimer;   /*!< micro singleshot timer to delay the search suggestions after keypress. */
+    QTimer *searchFocusTimer;     /*!< micro singleshot timer to update the focus. */
     QTimer *isKodiConnectedTimer; /*!< pings Kodi to check connection is still alive */
     QTimer *nextPageTimer;        /*!< micro singleshot timer to load any next pages. Stops race conditions with multithreaded code. */
     QTimer *openSettingTimer;     /*!< micro singleshot timer to delay opening setting. */
@@ -100,7 +105,7 @@ class MythApps : public MythScreenType {
     bool isHome = true;      /*!< is the file browser on the home screen? */
     bool kodiPlayerOpen = false;
     bool musicOpen = false;        /*!< is the music player open? */
-    bool browserOpen = false;      /*!< is the web browser open? */
+    bool ytNativeOpen = false;     /*!< is ytNative open? */
     bool pausedMenu = false;       /*!< is the pause menu open? */
     bool isFavouritesOpen = false; /*!< is the favourites app open? */
     bool allowAutoMinimize = true; /*!< is auto minimizing kodi enabled? */
@@ -116,6 +121,8 @@ class MythApps : public MythScreenType {
     void toggleSearchVisible(bool visible);
     void setSearchButtonListVisible(bool visible);
     void exitToMainMenuSleepTimerReset();
+    void makeSearchTextEditEmpty();
+    void showSearchTextEditBackgroundText();
     QStringList searchNoDuplicateCheck;
 
     void sortProgram();
@@ -127,6 +134,7 @@ class MythApps : public MythScreenType {
     void loadFavourites(bool home);
     void loadWatched(bool unwatched);
     void loadVideos();
+    void loadYTNative(QString searchString, QString directory);
     void loadShowsAZ();
     void loadBackButtonIfRequired(bool m_loadBackButton);
     bool loadAZSearch(QString hash);
@@ -144,7 +152,6 @@ class MythApps : public MythScreenType {
 
     void openOSD(QString screenType);
     void unPause();
-    void updateBrowserOpenStatus();
     bool takeScreenshot();
     void resetScreenshot();
     void inputSendText(QString text);
@@ -171,7 +178,8 @@ class MythApps : public MythScreenType {
 
     void ReplyFinishedFileBrowser(QNetworkReply *reply);
     void requestFileBrowser(QString url, QStringList previousSearches, bool loadBackButton, QString itemData);
-    bool appsCallbackPlugins(ProgramData *programData, MythUIButtonListItem *item);
+    bool appsCallbackPlugins(ProgramData *programData, QString label, QString data);
+    void appsCallback(QString label, QString data, bool allowBack = true);
     void waitforRequests();
     void downloadImage(QString thumbnailPath);
     void displayImage(MythUIButtonListItem *item, MythUIButtonList *m_fileList);
@@ -204,17 +212,19 @@ class MythApps : public MythScreenType {
     GetApps *apps;
     Controls *controls;
 
-    QString fav_filename;          /*!< stores physical image location for the corresponding button */
-    QString mm_albums_filename;    /*!< stores physical image location for the corresponding button */
-    QString mm_alltracks_filename; /*!< stores physical image location for the corresponding button */
-    QString mm_artists_filename;   /*!< stores physical image location for the corresponding button */
-    QString mm_genres_filename;    /*!< stores physical image location for the corresponding button */
-    QString mm_playlist_filename;  /*!< stores physical image location for the corresponding button */
-    QString recent_filename;       /*!< stores physical image location for the corresponding button */
-    QString videos_filename;       /*!< stores physical image location for the corresponding button */
-    QString music_filename;        /*!< stores physical image location for the corresponding button */
-    QString back_filename;         /*!< stores physical image location for the corresponding button */
-    QString ma_tv_filename;        /*!< stores physical image location for the corresponding button */
+    QString fav_icon;          /*!< stores physical image location for the corresponding button */
+    QString mm_albums_icon;    /*!< stores physical image location for the corresponding button */
+    QString mm_alltracks_icon; /*!< stores physical image location for the corresponding button */
+    QString mm_artists_icon;   /*!< stores physical image location for the corresponding button */
+    QString mm_genres_icon;    /*!< stores physical image location for the corresponding button */
+    QString mm_playlist_icon;  /*!< stores physical image location for the corresponding button */
+    QString recent_icon;       /*!< stores physical image location for the corresponding button */
+    QString videos_icon;       /*!< stores physical image location for the corresponding button */
+    QString music_icon;        /*!< stores physical image location for the corresponding button */
+    QString back_icon;         /*!< stores physical image location for the corresponding button */
+    QString ma_tv_icon;        /*!< stores physical image location for the corresponding button */
+    QString ma_popular_icon;   /*!< stores physical image location for the corresponding button */
+    QString ma_search_icon;    /*!< stores physical image location for the corresponding button */
 
     QString createImageCachePath(QString imageFileName);
 
@@ -222,7 +232,8 @@ class MythApps : public MythScreenType {
     void returnFocus();
     void setButtonWatched(bool watched);
     void addToPreviouslyPlayed();
-    void openBrowser(QString website);
+
+    Browser *browser;
 
     // music app
     int m_currentMusicButton = 0;
@@ -296,7 +307,9 @@ class MythApps : public MythScreenType {
     void addToPlaylistClickedCallback(MythUIButtonListItem *item);
     void selectSearchList(MythUIButtonListItem *item);
     void clickedSearchList(MythUIButtonListItem *item);
+    void searchSettingsClicked(MythUIButtonListItem *item);
     void searchTextEditValueChanged();
+    void searchTextEditLosingFocus();
     void runMythSettingsSlot();
     void androidMenuBtnSlot();
 
@@ -314,6 +327,7 @@ class MythApps : public MythScreenType {
     void hintTimerSlot();
     void musicBarOnStopTimerSlot();
     void searchSuggestTimerSlot();
+    void searchFocusTimerSlot();
     void isKodiConnectedSlot();
     void nextPageTimerSlot();
 
@@ -321,10 +335,7 @@ class MythApps : public MythScreenType {
 
   public slots:
     void handleImageSlot(int, MythUIButtonList *);
-
-  signals:
-    void startWork();
-    void stopWork();
+    void setFocusWidgetSlot(QString);
 
   protected:
     void createBusyDialog(const QString &title);
@@ -336,6 +347,7 @@ class MythApps : public MythScreenType {
     MythUIImage *m_thumbnailImage{nullptr};
     MythUIButtonList *m_fileListGrid;
     MythUIButtonList *m_searchButtonList;
+    MythUIButtonList *m_searchSettingsButtonList;
 
     MythUIButtonList *m_fileListMusicGrid;
     MythUIButtonList *m_fileListSongs;
@@ -343,7 +355,11 @@ class MythApps : public MythScreenType {
     MythUIButtonList *m_filterOptionsList;
     MythUIButtonList *m_playlistVertical;
 
-    QStringList previousURL;
+    QList<QStringList> previousListItem;
+
+    ytCustomApp *ytNative;
+    bool ytNativeEnabled = false;
+    QString firstDirectoryName;
 };
 
 #endif /* MYTHKODI_H */

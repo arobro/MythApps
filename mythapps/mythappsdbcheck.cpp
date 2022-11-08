@@ -51,6 +51,7 @@ bool UpgradeMythAppsDatabaseSchema(void) {
     createSetting("MythAppsCustomSearchSuggestUrl", "", true);
     createSetting("MythAppsPreviouslyPlayedExclude", "be/play/?video_id=~", true);
     createSetting("MythAppsShowsAZfolderNames", "TV Shows~", true);
+    createSetting("MythAppsYTnative", true, false);
 
     QString dbver = gCoreContext->GetSetting("MythAppsDBSchemaVer");
 

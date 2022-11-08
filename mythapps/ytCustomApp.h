@@ -1,0 +1,66 @@
+#ifndef ytCustomApp_h
+#define ytCustomApp_h
+
+// MythApps headers
+#include "browser.h"
+#include "netRequest.h"
+#include "shared.h"
+
+// MythTV headers
+#include <libmythui/mythuibuttonlist.h>
+
+/** \class YT
+ *  \brief */
+
+class ytCustomApp {
+  public:
+    ytCustomApp(QString m_username, QString m_password, QString m_ip, QString m_port, MythUIButtonList *m_searchSettingsButtonList, MythUIType *m_searchSettingsGroup, Browser *m_browser);
+
+    QString getKodiYTPlayUrl();
+    QString getKodiYTPluginDomain();
+    void setKodiYTProgramData(QString pd);
+
+    QString getYTnativeProgramData();
+    QString getKodiYTProgramData();
+
+    QString getKodiYTPluginAppName();
+    QString getAppIcon();
+
+    QList<QStringList> getLoadProgramList(QString searchText, QString directory);
+    void searchSettingsClicked(MythUIButtonListItem *item);
+    void setSearchSettingsGroupVisibilty(bool visible);
+    bool openInBrowserIfRequired(QString filePathParam);
+
+  private:
+    QList<QVariant> getVideos(QString searchText, QString directory);
+    QStringList getlist(int currentPos, bool foward);
+    QString translateWordtoRFC3339Date(QString date);
+
+    NetRequest *netRequest;
+
+    QString ytApi;
+    QString ytID;
+    QString kodiYTProgramData;
+    QString kodiYTPluginDomain;
+    QString kodiYTPluginIcon;
+    MythUIType *searchSettingsGroup;
+
+    QString sortBy;
+    QString videodDuration;
+    QString type;
+    QString eventType;
+    bool useBrowserPlayer;
+
+    MythUIButtonListItem *dateBetween;
+    MythUIButtonListItem *datePublishedBefore;
+
+    QString dateBetweenUrlBuilder;
+    QString datePublishedBeforeUrlBuilder;
+
+    QStringList masterDateListdateBetween;
+    QStringList masterDateListPublishedBefore;
+    Browser *browser;
+    QString converKodiYTURLtoBrowserUrl(QString url);
+    QString getAPIBaseUrl();
+};
+#endif

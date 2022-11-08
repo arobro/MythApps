@@ -728,30 +728,30 @@ void MythApps::loadMusicSetup() {
     m_playlistVertical->Reset();
 
     auto *item0 = new MythUIButtonListItem(m_filterGrid, "");
-    item0->SetImage(mm_alltracks_filename.replace("file://", ""));
+    item0->SetImage(mm_alltracks_icon.replace("file://", ""));
     item0->SetData("alltracks");
     auto *item1 = new MythUIButtonListItem(m_filterGrid, "");
-    item1->SetImage(mm_artists_filename.replace("file://", ""));
+    item1->SetImage(mm_artists_icon.replace("file://", ""));
     item1->SetData("artists");
     auto *item2 = new MythUIButtonListItem(m_filterGrid, "");
-    item2->SetImage(mm_albums_filename.replace("file://", ""));
+    item2->SetImage(mm_albums_icon.replace("file://", ""));
     item2->SetData("albums");
     auto *item3 = new MythUIButtonListItem(m_filterGrid, "");
-    item3->SetImage(mm_genres_filename.replace("file://", ""));
+    item3->SetImage(mm_genres_icon.replace("file://", ""));
     item3->SetData("genres");
 
     auto *itemI = new MythUIButtonListItem(m_filterGrid, "");
     itemI->SetData("BlankR");
 
     auto *item4 = new MythUIButtonListItem(m_filterGrid, "");
-    item4->SetImage(mm_artists_filename.replace("file://", ""));
+    item4->SetImage(mm_artists_icon.replace("file://", ""));
     item4->SetData("artists2");
     auto *item5 = new MythUIButtonListItem(m_filterGrid, "");
-    item5->SetImage(mm_albums_filename.replace("file://", ""));
+    item5->SetImage(mm_albums_icon.replace("file://", ""));
     item5->SetData("albums2");
 
     auto *item6 = new MythUIButtonListItem(m_filterGrid, "");
-    item6->SetImage(mm_playlist_filename.replace("file://", ""));
+    item6->SetImage(mm_playlist_icon.replace("file://", ""));
     item6->SetData("playlists");
 
     auto *itemII = new MythUIButtonListItem(m_filterGrid, "");

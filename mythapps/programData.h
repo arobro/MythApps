@@ -13,7 +13,7 @@
 
 class ProgramData {
   public:
-    ProgramData(QString setData);
+    ProgramData(QString label, QString setData);
 
     QString createData(QString file, QString plot, QString thumbnail, bool play, QString seek);
 
@@ -41,6 +41,9 @@ class ProgramData {
     bool hasUnwatchedList();
     bool hasVideos();
 
+    bool hasYTnative();
+    QString getWebPage();
+
     void set(QString label, QString data);
     bool isEmpty();
     FileFolderContainer get();
@@ -49,9 +52,14 @@ class ProgramData {
     void setSeek(QString seek);
     void setUnWatched();
 
+    bool isYTWrappedApp();
+    void setFirstDirectory(bool m_FirstDirectory);
+    QString getAppName(QString currentFirstDirectoryName);
+
   private:
     bool plotandImageUrl = false;
     bool hasPlotText = false;
+    bool firstDirectory = false;
 
     FileFolderContainer fileFolderContainer;
 };

@@ -274,3 +274,11 @@ bool isGnomeWayland() {
     }
     return false;
 }
+
+/** \brief Activate the window. Wayland on Linux only.
+ * \param windowName the name of the window to activate */
+void activateWindowWayland(QString windowName) {
+    system("gdbus call --session --dest org.gnome.Shell --object-path /de/lucaswerkmeister/ActivateWindowByTitle"
+           " --method de.lucaswerkmeister.ActivateWindowByTitle.activateBySubstring '" +
+           windowName.toLocal8Bit() + "'");
+}

@@ -22,10 +22,15 @@ NetRequest::~NetRequest() {
     delete NRmgr;
 }
 
-/** \brief helper function to send and receive the search suggestion url without authentication
- *  \param searchSuggestUrl - external url to send the request to */
-QString NetRequest::requestUrlSearch(QString searchSuggestUrl) {
-    QUrl qurl(searchSuggestUrl);
+/** \brief helper function to send and receive any public urls without opional authentication
+ *  \param url - external url to send the request to */
+QString NetRequest::requestUrlPublic(QString url, QString authorization) {
+    QUrl qurl(url);
+    QNetworkRequest request;
+
+    if (!authorization.isEmpty()) {
+        request.setRawHeader("Authorization", authorization.toLocal8Bit().toBase64());
+    }
 
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setUrl(qurl);
@@ -41,6 +46,7 @@ QString NetRequest::requestUrl(QJsonObject value) {
     qurl.setUserName(username);
     qurl.setPassword(password);
 
+    QNetworkRequest request;
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setUrl(qurl);
 

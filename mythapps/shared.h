@@ -48,4 +48,6 @@ bool isX11();
 bool isGnome();
 bool isGnomeWayland();
 
+void activateWindowWayland(QString windowName);
+
 #endif

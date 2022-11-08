@@ -27,7 +27,7 @@ SearchSuggestions::SearchSuggestions() {
  *  \return list of search suggestions */
 QStringList SearchSuggestions::getSuggestions(QString search) {
     QStringList suggestions;
-    QString response = netRequestSearchSuggestions->requestUrlSearch(customSearchSuggestUrl + search);
+    QString response = netRequestSearchSuggestions->requestUrlPublic(customSearchSuggestUrl + search, "");
 
     QXmlStreamReader xml(response);
 

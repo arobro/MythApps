@@ -1,6 +1,17 @@
 #include "programData.h"
 
-ProgramData::ProgramData(QString setData) { set("", setData); }
+ProgramData::ProgramData(QString label, QString setData) { set(label, setData); }
+
+/** \brief set wheather this is the first directory? */
+void ProgramData::setFirstDirectory(bool m_FirstDirectory) { firstDirectory = m_FirstDirectory; }
+
+/** \brief get the name of the app by using the first directory name? */
+QString ProgramData::getAppName(QString currentFirstDirectoryName) {
+    if (firstDirectory) {
+        return fileFolderContainer.title;
+    }
+    return currentFirstDirectoryName;
+}
 
 /** \brief is the folder a video or a directory?
  * \return can the folder be played? */
@@ -18,8 +29,8 @@ QString ProgramData::getImageUrl() { return fileFolderContainer.image; }
  * \return seek time */
 QString ProgramData::getSeek() { return fileFolderContainer.seek; }
 
-/** \brief get the entire deliminated string
- * \return entire deliminated string */
+/** \brief get the url
+ * \return url */
 QString ProgramData::getFilePathParam() { return fileFolderContainer.url; }
 
 /** \brief does a plot and image url exist?
@@ -51,7 +62,7 @@ bool ProgramData::hasBack() {
 /** \brief is the folder an app called artists?
  * \return is the corresponding folder type? */
 bool ProgramData::hasArtists() {
-    if (getFilePathParam().compare(QString("artists")) == 0) {
+    if (getFilePathParam().compare("artists") == 0) {
         return true;
     }
     return false;
@@ -60,7 +71,7 @@ bool ProgramData::hasArtists() {
 /** \brief is the folder an app called albums?
  * \return is the corresponding folder type? */
 bool ProgramData::haAlbums() {
-    if (getFilePathParam().compare(QString("albums")) == 0) {
+    if (getFilePathParam().compare("albums") == 0) {
         return true;
     }
     return false;
@@ -69,7 +80,7 @@ bool ProgramData::haAlbums() {
 /** \brief is the folder an app called genres?
  * \return is the corresponding folder type? */
 bool ProgramData::hasGenres() {
-    if (getFilePathParam().compare(QString("genres")) == 0) {
+    if (getFilePathParam().compare("genres") == 0) {
         return true;
     }
     return false;
@@ -78,7 +89,7 @@ bool ProgramData::hasGenres() {
 /** \brief is the folder an app called playlists?
  * \return is the corresponding folder type? */
 bool ProgramData::hasPlaylists() {
-    if (getFilePathParam().compare(QString("playlists")) == 0) {
+    if (getFilePathParam().compare("playlists") == 0) {
         return true;
     }
     return false;
@@ -87,7 +98,7 @@ bool ProgramData::hasPlaylists() {
 /** \brief is the folder an app called web?
  * \return is the corresponding folder type? */
 bool ProgramData::hasWeb() {
-    if (getPlot().compare(QString("web")) == 0) {
+    if (getPlot().compare("web") == 0) {
         return true;
     }
     return false;
@@ -96,7 +107,7 @@ bool ProgramData::hasWeb() {
 /** \brief is the folder an app called Favourites?
  * \return is the corresponding folder type? */
 bool ProgramData::hasFavourites() {
-    if (getPlot().compare(QString("Favourites")) == 0) {
+    if (getPlot().compare("Favourites") == 0) {
         return true;
     }
     return false;
@@ -114,7 +125,7 @@ bool ProgramData::hasShowsAZ() {
 /** \brief is the folder an app called searchShowsAZ?
  * \return is the corresponding folder type? */
 bool ProgramData::hasSearchShowsAZ() {
-    if (getPlot().compare(QString("searchShowsAZ")) == 0) {
+    if (getPlot().compare("searchShowsAZ") == 0) {
         return true;
     }
     return false;
@@ -123,7 +134,7 @@ bool ProgramData::hasSearchShowsAZ() {
 /** \brief is the folder an app called Music?
  * \return is the corresponding folder type? */
 bool ProgramData::hasMusic() {
-    if (getPlot().compare(QString("Music")) == 0) {
+    if (getPlot().compare("Music") == 0) {
         return true;
     }
     return false;
@@ -132,7 +143,7 @@ bool ProgramData::hasMusic() {
 /** \brief is the folder an app called Watched List?
  * \return is the corresponding folder type? */
 bool ProgramData::hasWatchedList() {
-    if (getPlot().compare(QString("Watched List")) == 0) {
+    if (getPlot().compare("Watched List") == 0) {
         return true;
     }
     return false;
@@ -141,7 +152,7 @@ bool ProgramData::hasWatchedList() {
 /** \brief is the folder an app called Unwatched?
  * \return is the corresponding folder type? */
 bool ProgramData::hasUnwatchedList() {
-    if (getPlot().compare(QString("Unwatched")) == 0) {
+    if (getPlot().compare("Unwatched") == 0) {
         return true;
     }
     return false;
@@ -150,11 +161,20 @@ bool ProgramData::hasUnwatchedList() {
 /** \brief is the folder an app called Back?
  * \return is the corresponding folder Videos? */
 bool ProgramData::hasVideos() {
-    if (getPlot().compare(QString("Videos")) == 0) {
+    if (getPlot().compare("Videos") == 0) {
         return true;
     }
     return false;
 }
+
+bool ProgramData::hasYTnative() {
+    if (getFilePathParam().startsWith("YTNative")) {
+        return true;
+    }
+    return false;
+}
+
+QString ProgramData::getWebPage() { return getFilePathParam().replace("browser://", ""); }
 
 /** \brief set the program data
  * 	\param label title of the program data
@@ -212,3 +232,5 @@ void ProgramData::setSeek(QString seek) { fileFolderContainer.seek = seek; }
 
 /** \brief set the un watched flag in program data*/
 void ProgramData::setUnWatched() { fileFolderContainer.seek = "false"; }
+
+bool ProgramData::isYTWrappedApp() { return (fileFolderContainer.title.compare("Wrapped App") == 0); }
