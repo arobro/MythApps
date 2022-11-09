@@ -542,7 +542,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
 
         } else if ((action == "FULLSCREEN")) { // generic key events
             toggleFullscreen();
-            createAutoClosingBusyDialog(tr("Toggling Fullscreen"), 3);
+            createAutoClosingBusyDialog(tr("Toggling Fullscreen"), 2, false);
         } else if ((action == "MINIMIZE")) {
             toggleAutoMinimize();
 
@@ -760,11 +760,11 @@ void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath)
  * \param thumbnailPath
  * \param mythUIButtonList The button to load the image*/
 void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath, MythUIButtonList *mythUIButtonList) {
-	// should ytNative be enabled?
-	if (ytNativeEnabled && name.compare(ytNative->getKodiYTPluginAppName()) == 0) {
-		ytNative->setKodiYTProgramData(setdata);
+    // should ytNative be enabled?
+    if (ytNativeEnabled && name.compare(ytNative->getKodiYTPluginAppName()) == 0) {
+        ytNative->setKodiYTProgramData(setdata);
         setdata = ytNative->getYTnativeProgramData();
-	}
+    }
 
     static int count = 0;
     int max = 6;
@@ -934,11 +934,17 @@ void MythApps::selectSearchList(MythUIButtonListItem *item) {
 
 /** \brief  creates a text dialog that auto closes
  *  \param  dialogTex to display onscreen
- *  \param  delaySeconds seconds to autoclose */
-void MythApps::createAutoClosingBusyDialog(QString dialogText, int delaySeconds) {
+ *  \param  delaySeconds seconds to autoclose
+ *  \param  wait should the dialog block code from running?*/
+void MythApps::createAutoClosingBusyDialog(QString dialogText, int delaySeconds, bool wait) {
     createBusyDialog(dialogText);
-    delay(delaySeconds);
-    closeBusyDialog();
+    if (wait) {
+        delay(delaySeconds);
+        closeBusyDialog();
+    } else {
+        searchTimer->stop();
+        searchTimer->start(delaySeconds * 1000);
+    }
 }
 
 /** \brief clicked callback for the search list. */
@@ -1134,9 +1140,9 @@ void MythApps::fetchSearch(QString searchUrl) {
 /** \brief toggle showing and hiding hidden folders such as login, logout etc*/
 void MythApps::toggleHiddenFolders() {
     if (enableHiddenFolders) {
-        createAutoClosingBusyDialog(tr("Hiding Folders"), 3);
+        createAutoClosingBusyDialog(tr("Hiding Folders"), 3, false);
     } else {
-        createAutoClosingBusyDialog(tr("Showing Hidden Folders"), 3);
+        createAutoClosingBusyDialog(tr("Showing Hidden Folders"), 2, false);
     }
     enableHiddenFolders = !enableHiddenFolders;
     refreshPage(false);
@@ -1148,7 +1154,7 @@ void MythApps::toggleAutoMinimize() {
     if (allowAutoMinimize) {
         createAutoClosingBusyDialog(tr("Auto Minimize On"), 3);
     } else {
-        createAutoClosingBusyDialog(tr("Warning - Auto Minimize Off"), 3);
+        createAutoClosingBusyDialog(tr("Warning - Auto Minimize Off"), 2);
         goFullscreen();
         toggleFullscreen();
         controls->activateWindow("home");
@@ -1450,7 +1456,7 @@ void MythApps::refreshPage(bool enableDialog) {
 
     if (previousListItem.size() > 0 || isHome) {
         if (enableDialog) {
-            createAutoClosingBusyDialog(tr("Refreshing Page"), 3);
+            createAutoClosingBusyDialog(tr("Refreshing Page"), 2, false);
         }
         if (isHome) {
             controls->getAddons(true);

@@ -125,7 +125,7 @@ class MythApps : public MythScreenType {
 
     void showOptionsMenu();
     void goBack();
-    void createAutoClosingBusyDialog(QString dialogText, int delaySeconds);
+    void createAutoClosingBusyDialog(QString dialogText, int delaySeconds, bool wait = true);
     void refreshPage(bool enableDialog);
 
     void loadFavourites(bool home);
