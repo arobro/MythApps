@@ -97,7 +97,6 @@ MythApps::~MythApps() {
     openSettingTimer->disconnect();
     managerFileBrowser->disconnect();
 
-    delete apps;
     delete controls;
     delete m_filepath;
     delete m_plot;
@@ -265,10 +264,9 @@ bool MythApps::Create() {
     ip = QString(gCoreContext->GetSetting("MythAppsip"));
     port = QString(gCoreContext->GetSetting("MythAppsport"));
 
-    apps = new GetApps(username, password, ip, port);
-    connect(apps, SIGNAL(loadProgramSignal(QString, QString, QString, bool)), this, SLOT(loadProgramSlot(QString, QString, QString, bool)));
-
     controls = new Controls(username, password, ip, port);
+    connect(controls, SIGNAL(loadProgramSignal(QString, QString, QString, bool)), this, SLOT(loadProgramSlot(QString, QString, QString, bool)));
+
     showsAZfolderNames = gCoreContext->GetSettingOnHost("MythAppsShowsAZfolderNames", gCoreContext->GetMasterHostName()).split("~");
 
     browser = new Browser(controls);
@@ -369,8 +367,6 @@ bool MythApps::Create() {
 
     m_webSocket.open(QUrl("ws://" + ip + ":9090"));
 
-    loadApps();
-
     // Setup cache directories
     globalPathprefix = GetConfDir();
     createDirectoryIfDoesNotExist(globalPathprefix);
@@ -402,6 +398,8 @@ bool MythApps::Create() {
     lastPlayedDetails = new ProgramData("", "");
 
     m_streamDetailsbackground->Hide();
+
+    loadApps();
 
 #ifdef _WIN32
     delayMilli(400);
@@ -485,8 +483,21 @@ void MythApps::loadApps() {
         return;
     }
 
-    apps->loadAll();
+    // load the favourites and watch list before sorting
+    loadImage(m_fileListGrid, QString(tr("Favourites") + favLink->getListSize()), QString("Favourites~Favourites"), fav_icon);
+    loadImage(m_fileListGrid, QString(tr("Watched List") + watchedLink->getListSize()), QString("Watched List~Watched List"), recent_icon);
+
+    controls->loadAddons();
     SetFocusWidget(m_fileListGrid); // set the focus to the file list grid
+
+    // load the my videos and my music after sorting if enabled
+    if (gCoreContext->GetSetting("MythAppsmyVideo").compare("1") == 0) {
+        loadImage(m_fileListGrid, tr("My Videos"), QString("Videos~Videos"), videos_icon);
+    }
+    if (gCoreContext->GetSetting("MythAppsMusic").compare("1") == 0) {
+        loadImage(m_fileListGrid, tr("Music"), QString("Music~Music"), music_icon);
+    }
+    loadFavourites(true);
 
     LOG(VB_GENERAL, LOG_DEBUG, "loadApps() Finished");
 }
@@ -758,83 +769,27 @@ void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath,
 
     waitForThreads(512); // wait if there are too many threads running to avoid crashs
 
-    if (appDir) {
-        // load apps in alphabetical order
-        QStringList pgList; // convert to a list and then map for sorting
-        pgList.append(setdata);
-        pgList.append(thumbnailPath);
+    count++;
 
-        ProgramMap[name.toLocal8Bit().constData()] = pgList;
-        sortProgram(); // sort apps in alphabetical order
+    if (count == max) {
+        count = 0;
+    }
+
+    if (name.compare("split") == 0) {
+        // split will load the image on a new line. Used heavily in music.
+        int maxCalc = (max - (count - 1));
+        if (maxCalc == max + 1) {
+            maxCalc = 1;
+        }
+
+        for (int i = 0; i < maxCalc; i++) {
+            loadImage(mythUIButtonList, "Blank", setdata, "");
+        }
+        count = 0;
     } else {
-        // load apps in the default order
-        count++;
-
-        if (count == max) {
-            count = 0;
-        }
-
-        if (name.compare("split") == 0) {
-            // split will load the image on a new line. Used heavily in music.
-            int maxCalc = (max - (count - 1));
-            if (maxCalc == max + 1) {
-                maxCalc = 1;
-            }
-
-            for (int i = 0; i < maxCalc; i++) {
-                loadImage(mythUIButtonList, "Blank", setdata, "");
-            }
-            count = 0;
-        } else {
-            // load the image on the screen
-            loadImage(mythUIButtonList, name, setdata, thumbnailPath);
-        }
+        // load the image on the screen
+        loadImage(mythUIButtonList, name, setdata, thumbnailPath);
     }
-}
-
-/** \brief load the program/images in alphabetical order */
-void MythApps::sortProgram() {
-    QList<QStringList> programList;
-    QCoreApplication::processEvents();
-    m_fileListGrid->Reset();
-
-    // load the favourites and watch list before sorting
-    loadImage(m_fileListGrid, QString(tr("Favourites") + favLink->getListSize()), QString("Favourites~Favourites"), fav_icon);
-    loadImage(m_fileListGrid, QString(tr("Watched List") + watchedLink->getListSize()), QString("Watched List~Watched List"), recent_icon);
-
-    std::map<std::string, QStringList>::iterator it = ProgramMap.begin(); // sort images
-    while (it != ProgramMap.end()) {
-        QString name = QString::fromUtf8(it->first.c_str());
-        QString programData = it->second.at(0);
-
-        // should ytNative be enabled?
-        if (ytNativeEnabled && name.compare(ytNative->getKodiYTPluginAppName()) == 0) {
-            ytNative->setKodiYTProgramData(programData);
-            programData = ytNative->getYTnativeProgramData();
-        }
-
-        QStringList programListTemp;
-        programListTemp.append(name);
-        programListTemp.append(programData);
-        programListTemp.append(it->second.at(1));
-
-        programList.append(programListTemp);
-        it++;
-    }
-
-    foreach (QList T, programList) {
-        loadImage(m_fileListGrid, T.at(0), T.at(1), T.at(2));
-    }
-
-    // load the my videos and my music after sorting if enabled
-    if (gCoreContext->GetSetting("MythAppsmyVideo").compare("1") == 0) {
-        loadImage(m_fileListGrid, tr("My Videos"), QString("Videos~Videos"), videos_icon);
-    }
-    if (gCoreContext->GetSetting("MythAppsMusic").compare("1") == 0) {
-        loadImage(m_fileListGrid, tr("Music"), QString("Music~Music"), music_icon);
-    }
-
-    loadFavourites(true);
 }
 
 /** \brief converts local file or a http link into a cached image full path.
@@ -880,7 +835,7 @@ void MythApps::loadImage(MythUIButtonList *mythUIButtonList, QString name, QStri
     }
 
     QString imageLocation = getStandarizedImagePath(thumbnailPath);
-    QString appIcon = getStandarizedImagePath(apps->getLocationFromUrlAddress(programDataTemp->getUrl()));
+    QString appIcon = getStandarizedImagePath(controls->getLocationFromUrlAddress(programDataTemp->getUrl()));
     delete programDataTemp;
 
     // to speedup the loading, save the parameters in a list. When the image is
@@ -1314,7 +1269,11 @@ void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerm
     loadBackButtonIfRequired(m_loadBackButton);
     bool showAZsearch = loadAZSearch(hash);
 
+    QElapsedTimer loadingTimer;
+    loadingTimer.start();
+    int searchCount = 0;
     int count = 0;
+
     for (auto oIt = o.constBegin(); oIt != o.constEnd(); ++oIt) {
         QJsonArray agentsArray = oIt.value().toArray();
         // loop throught each file/folder in the file browser
@@ -1325,13 +1284,24 @@ void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerm
             QString file = v.toObject().value("filetype").toString();
             QString fileUrl = v.toObject().value("file").toString();
 
-            if (searchNoDuplicateCheck.contains(fileUrl)) {
-                return;
+            count++;
+            if (count > 25) {
+                QCoreApplication::processEvents();
+            }
+
+            if (loadingTimer.elapsed() > 3000) { // 3 seconds
+                LOG(VB_GENERAL, LOG_DEBUG, "displayFileBrowser() -" + label + " count:" + QString::number(count));
+                loadingTimer.restart();
+            }
+
+            if (searching and searchNoDuplicateCheck.contains(fileUrl)) {
+                LOG(VB_GENERAL, LOG_DEBUG, "displayFileBrowser() duplicate found");
+                continue;
             }
             searchNoDuplicateCheck.append(fileUrl);
 
-            if (searchStartLeter.compare("") != 0 and label.size() > 0) { // only display items starting with the corrosponding start
-                                                                          // leter when using the a-z filter
+            // only display items starting with the corrosponding start leter when using the a-z filter
+            if (searchStartLeter.compare("") != 0 and label.size() > 0) {
                 if (searchStartLeter.compare(QString(label.at(0)), Qt::CaseInsensitive) != 0) {
                     continue;
                 }
@@ -1341,9 +1311,7 @@ void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerm
                 alphabeticalFolderFound = true;
             }
 
-            if (folderAllowed(label,
-                              previousSearchTerms)) { // if not a banned folder such as logout
-                                                      // etc, load / display folder
+            if (folderAllowed(label, previousSearchTerms)) { // if not a banned folder such as logout etc, load / display folder
                 bool playVideo = false;
                 if (file.compare("file") == 0) {
                     playVideo = true;
@@ -1351,15 +1319,14 @@ void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerm
                 loadProgram(label, createProgramData(fileUrl, plot, thumbnail, playVideo, ""), thumbnail, false);
 
                 if (searching and isHome) { // return max of 5 items when using global search
-                    if (count >= 4) {
+                    if (searchCount >= 4) {
                         return;
                     }
                 }
-                count++;
+                searchCount++;
             }
 
-            discoverSearchURLs(label,
-                               v.toObject().value("file").toString()); // discover if the directory is a search source url
+            discoverSearchURLs(label, v.toObject().value("file").toString()); // discover if the directory is a search source url
         }
     }
 
@@ -1452,6 +1419,7 @@ void MythApps::goBack() {
     //}
 
     removeCurrentUrlFromList();
+    searchNoDuplicateCheck = QStringList();
 
     if (previousListItem.size() == 0) {
         loadApps();
@@ -1463,7 +1431,6 @@ void MythApps::goBack() {
 
     QString label = previousList.at(0);
     QString data = previousList.at(1);
-    searchNoDuplicateCheck = QStringList();
     appsCallback(label, data);
 
     LOG(VB_GENERAL, LOG_DEBUG, "goBack() Finished");
@@ -1475,9 +1442,14 @@ void MythApps::refreshPage(bool enableDialog) {
 
     searchNoDuplicateCheck = QStringList();
 
-    if (previousListItem.size() > 0) {
+    if (previousListItem.size() > 0 || isHome) {
         if (enableDialog) {
             createAutoClosingBusyDialog(tr("Refreshing Page"), 3);
+        }
+        if (isHome) {
+            controls->getAddons(true);
+            loadApps();
+            return;
         }
 
         QStringList previousList = previousListItem.at(previousListItem.size() - 1);
@@ -1786,7 +1758,6 @@ void MythApps::appsCallback(MythUIButtonListItem *item) { appsCallback(item->Get
 void MythApps::appsCallback(QString label, QString data, bool allowBack) {
     LOG(VB_GENERAL, LOG_DEBUG, "appsCallback()-" + data);
 
-    ProgramMap.clear();
     searching = false;
 
     ProgramData *programData = new ProgramData(label, data);
@@ -2268,7 +2239,7 @@ void MythApps::loadShowsAZ() {
     toggleSearchVisible(false);
 
     QString alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    QString thumbnail = apps->getLocationFromUrlAddress(currentSearchUrl);
+    QString thumbnail = controls->getLocationFromUrlAddress(currentSearchUrl);
 
     for (int i = 0; i < alphabet.length(); i++) {
         loadProgram(QString(alphabet.at(i).toLatin1()), createProgramData("", "searchShowsAZ", "", false, ""), thumbnail, false); // currentSearchUrl

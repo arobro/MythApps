@@ -154,12 +154,61 @@ bool Controls::areAddonsInstalled() {
 }
 
 /** \brief get json with a list of addons */
-QString Controls::getAddons() {
+QString Controls::getAddons(bool forceRefresh) {
+    static QString answer = "";
+    if (!answer.isEmpty() and !forceRefresh) {
+        return answer;
+    }
+
+    QJsonArray array;
+    array.push_back("name");
+    array.push_back("description");
+    array.push_back("thumbnail");
+
     QJsonObject paramsObj;
     paramsObj["type"] = "xbmc.addon.video";
     paramsObj["enabled"] = true;
-    return fetchUrlJson("Addons.GetAddons", paramsObj);
+    paramsObj["properties"] = array;
+
+    answer = fetchUrlJson("Addons.GetAddons", paramsObj);
+    return answer;
 }
+
+/** \brief load all addons */
+void Controls::loadAddons() {
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(getAddons().toLocal8Bit().data());
+    QJsonObject jObject = jsonDocument.object();
+    QVariantMap mainMap = jObject.toVariantMap();
+
+    QVariantMap map = mainMap["result"].toMap();
+    QList list = map["addons"].toList();
+
+    QMap<QString, QStringList> hash;
+
+    foreach (QVariant T, list) {
+        QVariantMap map2 = T.toMap();
+        QStringList hashItem = {map2["addonid"].toString(), map2["description"].toString(), map2["thumbnail"].toString()};
+        hash[map2["name"].toString()] = hashItem;
+    }
+
+    urlToThumbnailMap.clear();
+    QMapIterator<QString, QStringList> i(hash);
+    while (i.hasNext()) {
+        i.next();
+        QStringList pd = i.value();
+        QString addonid = pd.at(0);
+        QString description = pd.at(1);
+        QString thumbnail = pd.at(2);
+
+        // creates a map to lookup the thumbnail based on the addonid.
+        urlToThumbnailMap.insert(getWebSiteDomain(addonid), thumbnail);
+
+        // load program
+        emit loadProgramSignal(i.key(), createProgramData(addonid, description, thumbnail, false, ""), thumbnail, true);
+    }
+}
+
+QString Controls::getLocationFromUrlAddress(QString urlAddress) { return urlToThumbnailMap.value(getWebSiteDomain(urlAddress)); }
 
 /** \brief  Checks if input adative addon installed. This is used by Kodi to play DRM video
  *  \return Is the input adative addon installed? */

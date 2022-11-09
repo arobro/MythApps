@@ -24,7 +24,6 @@
 #include "browser.h"
 #include "container.h"
 #include "controls.h"
-#include "getApps.h"
 #include "imageThread.h"
 #include "programData.h"
 #include "programLink.h"
@@ -90,7 +89,6 @@ class MythApps : public MythScreenType {
     QString currentSearchUrl = ""; /*!< the current search source url to append the search text. Used by the search box. */
 
     QList<QThread *> imageThreadList; /*!< thread pool */
-    std::map<std::string, QStringList> ProgramMap;
     QString getPlayBackTimeString(bool adjustEnd);
 
     QString searchText = ""; /*!< text entered into the search box */
@@ -125,7 +123,6 @@ class MythApps : public MythScreenType {
     void showSearchTextEditBackgroundText();
     QStringList searchNoDuplicateCheck;
 
-    void sortProgram();
     void showOptionsMenu();
     void goBack();
     void createAutoClosingBusyDialog(QString dialogText, int delaySeconds);
@@ -209,7 +206,6 @@ class MythApps : public MythScreenType {
     MythUIButtonListItem *nextPageitem;
 
     QScreen *screen;
-    GetApps *apps;
     Controls *controls;
 
     QString fav_icon;          /*!< stores physical image location for the corresponding button */

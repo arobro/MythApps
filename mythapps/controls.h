@@ -9,6 +9,7 @@
 #include <QJsonValue>
 #include <QList>
 #include <QNetworkAccessManager>
+#include <QObject>
 #include <QString>
 #include <QStringList>
 #include <QTime>
@@ -25,7 +26,8 @@
 /** \class Controls
  *  \brief Wraper between Myth Apps and the Kodi json api to control Kodi - https://kodi.wiki/view/JSON-RPC_API
  */
-class Controls {
+class Controls : public QObject {
+    Q_OBJECT
   public:
     Controls(QString m_username, QString m_password, QString m_ip, QString m_port);
     ~Controls();
@@ -63,7 +65,8 @@ class Controls {
 
     bool isInputAdaptive();
     bool areAddonsInstalled();
-    QString getAddons();
+    QString getAddons(bool forceRefresh = false);
+    void loadAddons();
 
     bool isVirtualKeyboardOpen();
     QJsonObject getDirectoryObject(QString url);
@@ -95,6 +98,8 @@ class Controls {
     int getConnected();
     bool isVideoNearEnd();
 
+    QString getLocationFromUrlAddress(QString urlAddress);
+
     // music
     void setCrossFade(int seconds);
     void setProjectM();
@@ -119,5 +124,9 @@ class Controls {
     int sockfd;
     bool eventClientConnected = false;
     bool videoNearEnd = false;
+    QMap<QString, QString> urlToThumbnailMap;
+
+  signals:
+    void loadProgramSignal(QString name, QString setdata, QString thumbnailPath, bool appDir);
 };
 #endif

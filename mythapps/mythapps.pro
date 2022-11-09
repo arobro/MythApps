@@ -16,10 +16,10 @@ installfiles.files = mythapps-ui.xml
 INSTALLS += installfiles
 
 # Input
-HEADERS += mythapps.h mythsettings.h mythosd.h mythinput.h imageThread.h searchSuggestions.h getApps.h shared.h controls.h programData.h programLink.h netRequest.h
+HEADERS += mythapps.h mythsettings.h mythosd.h mythinput.h imageThread.h searchSuggestions.h shared.h controls.h programData.h programLink.h netRequest.h
 HEADERS += mythappsdbcheck.h container.h libs/xbmcclient.h ytCustomApp.h browser.h
 
-SOURCES += main.cpp mythapps.cpp mythsettings.cpp mythosd.cpp mythinput.cpp imageThread.cpp music_functions.cpp searchSuggestions.cpp getApps.cpp netRequest.cpp 
+SOURCES += main.cpp mythapps.cpp mythsettings.cpp mythosd.cpp mythinput.cpp imageThread.cpp music_functions.cpp searchSuggestions.cpp netRequest.cpp 
 SOURCES += shared.cpp controls.cpp programData.cpp programLink.cpp mythappsdbcheck.cpp ytCustomApp.cpp browser.cpp
 
 DEFINES += MPLUGIN_API
