@@ -1,6 +1,8 @@
 #ifndef ytCustomApp_h
 #define ytCustomApp_h
 
+#include <QObject>
+
 // MythApps headers
 #include "browser.h"
 #include "netRequest.h"
@@ -12,7 +14,8 @@
 /** \class YT
  *  \brief */
 
-class ytCustomApp {
+class ytCustomApp : public QObject {
+    Q_OBJECT
   public:
     ytCustomApp(QString m_username, QString m_password, QString m_ip, QString m_port, MythUIButtonList *m_searchSettingsButtonList, MythUIType *m_searchSettingsGroup, Browser *m_browser);
 
@@ -26,7 +29,7 @@ class ytCustomApp {
     QString getKodiYTPluginAppName();
     QString getAppIcon();
 
-    QList<QStringList> getLoadProgramList(QString searchText, QString directory);
+    void loadProgramList(QString searchText, QString directory);
     void searchSettingsClicked(MythUIButtonListItem *item);
     void setSearchSettingsGroupVisibilty(bool visible);
     bool openInBrowserIfRequired(QString filePathParam);
@@ -62,5 +65,8 @@ class ytCustomApp {
     Browser *browser;
     QString converKodiYTURLtoBrowserUrl(QString url);
     QString getAPIBaseUrl();
+    
+  signals:
+    void loadProgramSignal(QString name, QString setdata, QString thumbnailPath);
 };
 #endif

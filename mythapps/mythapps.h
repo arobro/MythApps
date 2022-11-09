@@ -168,8 +168,8 @@ class MythApps : public MythScreenType {
     void removeCurrentUrlFromList();
     void delayWhileStopScroll(int maxDelay);
 
-    void loadProgram(QString name, QString setdata, QString thumbnailPath, bool appDir);
-    void loadProgram(QString name, QString setdata, QString thumbnailPath, bool appDir, MythUIButtonList *mythUIButtonList);
+    void loadProgram(QString name, QString setdata, QString thumbnailPath);
+    void loadProgram(QString name, QString setdata, QString thumbnailPath, MythUIButtonList *mythUIButtonList);
     void play_Kodi(QString mediaLocation, QString seekAmount);
     void play(QString mediaLocation);
 
@@ -327,7 +327,7 @@ class MythApps : public MythScreenType {
     void isKodiConnectedSlot();
     void nextPageTimerSlot();
 
-    void loadProgramSlot(QString name, QString setdata, QString thumbnailPath, bool appDir);
+    void loadProgramSlot(QString name, QString setdata, QString thumbnailPath);
 
   public slots:
     void handleImageSlot(int, MythUIButtonList *);

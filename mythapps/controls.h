@@ -127,6 +127,6 @@ class Controls : public QObject {
     QMap<QString, QString> urlToThumbnailMap;
 
   signals:
-    void loadProgramSignal(QString name, QString setdata, QString thumbnailPath, bool appDir);
+    void loadProgramSignal(QString name, QString setdata, QString thumbnailPath);
 };
 #endif

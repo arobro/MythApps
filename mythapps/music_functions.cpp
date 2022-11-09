@@ -565,7 +565,7 @@ void MythApps::loadArtists(bool listview) {
         QStringList split = list.next().split(",");
         QString label = split.at(0);
         QString image = split.at(1);
-        loadProgram(label, createProgramData("artists~", "", image, false, ""), image, false);
+        loadProgram(label, createProgramData("artists~", "", image, false, ""), image);
     }
 }
 
@@ -582,7 +582,7 @@ void MythApps::loadAlbums(bool listview) {
         QStringList split = list.next().split(",");
         QString label = split.at(0);
         QString image = split.at(1);
-        loadProgram(label, createProgramData("albums", "", image, false, ""), image, false);
+        loadProgram(label, createProgramData("albums", "", image, false, ""), image);
     }
 }
 /** \brief display music by genre */
@@ -619,10 +619,10 @@ void MythApps::loadMusicHelper(QString labelPrefix, QMap<QString, QStringList> l
             setData = i.value().at(1) + "~|";
         }
 
-        loadProgram(labelPrefix + label, setData, image, false, m_fileList);
+        loadProgram(labelPrefix + label, setData, image, m_fileList);
 
         if (count % 3 == 0 and m_fileListMusicGrid == m_fileList) { // load an invisible colum to help with navigation
-            loadProgram("BlankR", "", "", false, m_fileListMusicGrid);
+            loadProgram("BlankR", "", "", m_fileListMusicGrid);
         }
     }
 }
@@ -717,7 +717,7 @@ void MythApps::loadSongs(QString album) {
             number = number + QString(" ");
         }
 
-        loadProgram(number + label, url + "~" + "" + "|" + image, image, false, m_fileListSongs);
+        loadProgram(number + label, url + "~" + "" + "|" + image, image, m_fileListSongs);
     }
 }
 
@@ -809,9 +809,9 @@ void MythApps::loadSongsMain(QString value, QString type) {
             continue;
         }
 
-        loadProgram(label, createProgramData("", "", image, false, ""), image, false, m_fileListMusicGrid);
+        loadProgram(label, createProgramData("", "", image, false, ""), image, m_fileListMusicGrid);
         if (count % 3 == 0) { // load an invisible colum to help with navigation
-            loadProgram("BlankR", "", "", false, m_fileListMusicGrid);
+            loadProgram("BlankR", "", "", m_fileListMusicGrid);
         }
     }
     SetFocusWidget(m_fileListMusicGrid);
@@ -920,7 +920,7 @@ void MythApps::loadPlaylists() {
         QString label = v.toObject().value("label").toString();
         QString image = v.toObject().value("thumbnail").toString();
         QString url = v.toObject().value("file").toString();
-        loadProgram(label, createProgramData("playlists", url, image, false, ""), image, false, m_fileListGrid);
+        loadProgram(label, createProgramData("playlists", url, image, false, ""), image, m_fileListGrid);
     }
 }
 

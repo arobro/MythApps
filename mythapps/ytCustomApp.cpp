@@ -102,10 +102,10 @@ QList<QVariant> ytCustomApp::getVideos(QString searchText, QString directory) {
     return mainMap["items"].toList();
 }
 
-/** \brief get a list of videoes
+/** \brief load videoes
  *  \param searchText what to search for
  *  \param directory what directory path to load */
-QList<QStringList> ytCustomApp::getLoadProgramList(QString searchText, QString directory) {
+void ytCustomApp::loadProgramList(QString searchText, QString directory) {
     LOG(VB_GENERAL, LOG_DEBUG, "getLoadProgramList()");
 
     QList<QStringList> programList;
@@ -174,7 +174,10 @@ QList<QStringList> ytCustomApp::getLoadProgramList(QString searchText, QString d
             QCoreApplication::processEvents();
         }
     }
-    return programList;
+
+    foreach (QList T, programList) {
+        emit loadProgramSignal(T.at(0), T.at(1), T.at(2));
+    }
 }
 
 QString ytCustomApp::getKodiYTPluginAppName() { return "YouTube"; }

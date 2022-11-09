@@ -265,7 +265,7 @@ bool MythApps::Create() {
     port = QString(gCoreContext->GetSetting("MythAppsport"));
 
     controls = new Controls(username, password, ip, port);
-    connect(controls, SIGNAL(loadProgramSignal(QString, QString, QString, bool)), this, SLOT(loadProgramSlot(QString, QString, QString, bool)));
+    connect(controls, SIGNAL(loadProgramSignal(QString, QString, QString)), this, SLOT(loadProgramSlot(QString, QString, QString)));
 
     showsAZfolderNames = gCoreContext->GetSettingOnHost("MythAppsShowsAZfolderNames", gCoreContext->GetMasterHostName()).split("~");
 
@@ -334,6 +334,7 @@ bool MythApps::Create() {
     }
 
     ytNative = new ytCustomApp(username, password, ip, port, m_searchSettingsButtonList, m_searchSettingsGroup, browser);
+    connect(ytNative, SIGNAL(loadProgramSignal(QString, QString, QString)), this, SLOT(loadProgramSlot(QString, QString, QString)));
     if (gCoreContext->GetSetting("MythAppsYTnative").compare("1") == 0) {
         ytNativeEnabled = true;
     }
@@ -749,17 +750,22 @@ void MythApps::waitForThreads(int maxThreadsRunning) {
 }
 
 /** \brief helper function for loadProgram */
-void MythApps::loadProgramSlot(QString name, QString setdata, QString thumbnailPath, bool appDir) { loadProgram(name, setdata, thumbnailPath, appDir); }
+void MythApps::loadProgramSlot(QString name, QString setdata, QString thumbnailPath) { loadProgram(name, setdata, thumbnailPath); }
 
 /** \brief helper function for loadProgram */
-void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath, bool appDir) { loadProgram(name, setdata, thumbnailPath, appDir, m_fileListGrid); }
+void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath) { loadProgram(name, setdata, thumbnailPath, m_fileListGrid); }
 
 /** \brief prepares to load the image onscreen. Will insert the image on a new line and sort the images if required \param name directory or file name.
  * \param setdata - all the parameters that need to be retrived on click or hover
  * \param thumbnailPath
- * \param appDir is the image a top level directory, basiclly is the image on the start screen.
  * \param mythUIButtonList The button to load the image*/
-void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath, bool appDir, MythUIButtonList *mythUIButtonList) {
+void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath, MythUIButtonList *mythUIButtonList) {
+	// should ytNative be enabled?
+	if (ytNativeEnabled && name.compare(ytNative->getKodiYTPluginAppName()) == 0) {
+		ytNative->setKodiYTProgramData(setdata);
+        setdata = ytNative->getYTnativeProgramData();
+	}
+
     static int count = 0;
     int max = 6;
 
@@ -914,7 +920,7 @@ void MythApps::loadBackButton() {
     if (searching) {
         SetFocusWidget(m_fileListGrid);
     }
-    loadProgram(QString(tr("Back")), createProgramData(tr("Back"), "", "", false, ""), QString("file://") + back_icon, false);
+    loadProgram(QString(tr("Back")), createProgramData(tr("Back"), "", "", false, ""), QString("file://") + back_icon);
 }
 
 /** \brief selected callback for the search list. */
@@ -1244,7 +1250,7 @@ void MythApps::loadBackButtonIfRequired(bool m_loadBackButton) {
  *  \return is the showAZsearch being displayed*/
 bool MythApps::loadAZSearch(QString hash) {
     if ((!searching and allShowsFolderFound and currentSearchUrl.size() > 1) || azShowOnUrl.contains(hash) || overrideAppAZSearch(hash)) {
-        loadProgram(tr("Shows A-Z"), createProgramData("", "Shows A-Z", "", false, ""), QString("file://") + ma_tv_icon, false);
+        loadProgram(tr("Shows A-Z"), createProgramData("", "Shows A-Z", "", false, ""), QString("file://") + ma_tv_icon);
         return true;
     }
     return false;
@@ -1316,7 +1322,7 @@ void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerm
                 if (file.compare("file") == 0) {
                     playVideo = true;
                 }
-                loadProgram(label, createProgramData(fileUrl, plot, thumbnail, playVideo, ""), thumbnail, false);
+                loadProgram(label, createProgramData(fileUrl, plot, thumbnail, playVideo, ""), thumbnail);
 
                 if (searching and isHome) { // return max of 5 items when using global search
                     if (searchCount >= 4) {
@@ -2136,7 +2142,7 @@ void MythApps::loadFavourites(bool home) {
             continue;
         }
 
-        loadProgram(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image, false);
+        loadProgram(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image);
     }
 }
 
@@ -2161,7 +2167,7 @@ void MythApps::loadWatched(bool unwatched) {
             continue;
         }
 
-        loadProgram(watched.title, createProgramData(watched.url, watched.plot, watched.image, watched.autoPlay, seek), watched.image, false);
+        loadProgram(watched.title, createProgramData(watched.url, watched.plot, watched.image, watched.autoPlay, seek), watched.image);
     }
 }
 
@@ -2188,7 +2194,7 @@ void MythApps::loadVideos() {
         QString url = map4["file"].toString();
         QString image = "";
 
-        loadProgram(label, createProgramData(url, "", image, false, ""), image, false);
+        loadProgram(label, createProgramData(url, "", image, false, ""), image);
     }
 }
 
@@ -2223,9 +2229,7 @@ void MythApps::loadYTNative(QString searchString, QString directory) {
             return;
         }
 
-        foreach (QList T, ytNative->getLoadProgramList(searchString, directory)) {
-            loadProgram(T.at(0), T.at(1), T.at(2), false);
-        }
+        ytNative->loadProgramList(searchString, directory);
     }
 }
 
@@ -2242,7 +2246,7 @@ void MythApps::loadShowsAZ() {
     QString thumbnail = controls->getLocationFromUrlAddress(currentSearchUrl);
 
     for (int i = 0; i < alphabet.length(); i++) {
-        loadProgram(QString(alphabet.at(i).toLatin1()), createProgramData("", "searchShowsAZ", "", false, ""), thumbnail, false); // currentSearchUrl
+        loadProgram(QString(alphabet.at(i).toLatin1()), createProgramData("", "searchShowsAZ", "", false, ""), thumbnail);
     }
 }
 

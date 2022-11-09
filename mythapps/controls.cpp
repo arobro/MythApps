@@ -204,7 +204,7 @@ void Controls::loadAddons() {
         urlToThumbnailMap.insert(getWebSiteDomain(addonid), thumbnail);
 
         // load program
-        emit loadProgramSignal(i.key(), createProgramData(addonid, description, thumbnail, false, ""), thumbnail, true);
+        emit loadProgramSignal(i.key(), createProgramData(addonid, description, thumbnail, false, ""), thumbnail);
     }
 }
 
