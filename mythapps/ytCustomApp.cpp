@@ -81,7 +81,7 @@ QList<QVariant> ytCustomApp::getVideos(QString searchText, QString directory) {
     if (!directory.isEmpty()) {
         if (directory.startsWith("YTNative://channel/")) {
             directory.replace("YTNative://channel/", "");
-            query = "https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&channelId=" + directory;
+            query = getAPIBaseUrl() + "search?part=snippet&maxResults=50&channelId=" + directory;
         } else if (directory.startsWith("YTNative://playlist/")) {
             directory.replace("YTNative://playlist/", "");
             query = getAPIBaseUrl() + "playlistItems?part=snippet&maxResults=50&playlistId=" + directory;
@@ -111,6 +111,7 @@ QList<QStringList> ytCustomApp::getLoadProgramList(QString searchText, QString d
     QList<QStringList> programList;
     QList<QVariant> list = getVideos(searchText, directory);
 
+    int count = 0;
     foreach (QVariant T, list) {
         QVariantMap map4 = T.toMap();
 
@@ -167,6 +168,11 @@ QList<QStringList> ytCustomApp::getLoadProgramList(QString searchText, QString d
         programListTemp.append(imgurl);
 
         programList.append(programListTemp);
+
+        count++;
+        if (count % 4 == 0) {
+            QCoreApplication::processEvents();
+        }
     }
     return programList;
 }
