@@ -286,7 +286,7 @@ bool MythApps::Create() {
     } else if (theme.compare("MythCenter-wide") == 0) {
 
         foundtheme = LoadWindowFromXML("mythapps-ui.720.MCW.xml", "mythapps", this);
-    } else if (theme.compare("MythCenterXMAS-wide") == 0) {
+    } else if (theme.contains("XMAS") ) {
         LOG(VB_GENERAL, LOG_INFO, "Loading mythapps-ui.720.NoAlpha.xml");
         foundtheme = LoadWindowFromXML("mythapps-ui.720.NoAlpha.xml", "mythapps", this);
     } else {
