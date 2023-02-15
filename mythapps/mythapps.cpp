@@ -23,7 +23,6 @@
 #include "music_functions.cpp"
 #include "mythapps.h"
 #include "mythinput.h"
-#include "mythosd.h"
 #include "mythsettings.h"
 #include "searchSuggestions.h"
 #include "shared.h"
@@ -165,10 +164,6 @@ void MythApps::onConnectedWS() {
  * \param kodi websocket message  */
 void MythApps::onTextMessageReceived(QString message) {
     LOG(VB_GENERAL, LOG_DEBUG, "onTextMessageReceived():" + message);
-
-    if (message.contains("Player.OnPause")) {
-        openOSD("Player.OnPause");
-    }
 
     if (message.contains("Player.OnStop")) {
         if (musicOpen || isHome) { // music
@@ -1689,17 +1684,7 @@ bool MythApps::takeScreenshot() {
 /** \brief toggle the pause status */
 void MythApps::pauseToggle() {
     int activePlayerStatus = controls->getActivePlayer();
-    bool paused = false;
-
-    if (!controls->isPaused(activePlayerStatus)) {
-        takeScreenshot();
-        paused = true;
-    }
     controls->pauseToggle(activePlayerStatus);
-
-    if (!paused) {
-        handleDialogs(true);
-    }
     delayMilli(200); // button debounce
 }
 
@@ -1708,17 +1693,6 @@ int MythApps::stopPlayBack() {
     LOG(VB_GENERAL, LOG_DEBUG, "stopPlayBack()");
     takeScreenshot();
     return controls->stopPlayBack();
-}
-
-/** \brief unpause the video */
-void MythApps::unPause() {
-    pausedMenu = false;
-    minimizeTimer->stop();
-    if (!musicOpen) {
-        goFullscreen();
-        kodiPlayerOpen = true;
-    }
-    pauseToggle();
 }
 
 /** \brief is the video playing? will retry if its not.
@@ -2518,9 +2492,8 @@ void MythApps::searchTimerSlot() {
 }
 
 /** \brief decides what menu to open when media playback has finished
- * \param screenType Player.OnStop or Player.OnPause */
+ * \param screenType Player.OnStop */
 void MythApps::openOSD(QString screenType) {
-    pausedMenu = true;
     goMinimize(true);
     kodiPlayerOpen = false;
 
@@ -2539,22 +2512,6 @@ void MythApps::openOSD(QString screenType) {
 #ifdef __ANDROID__
         controls->androidAppSwitch("MythTV");
 #endif
-    } else if (screenType.compare("Player.OnPause") == 0) { // 2
-        goMinimize(true);
-        minimizeTimer->start();
-
-        MythScreenStack *mainStack = GetMythMainWindow()->GetMainStack();
-        auto *mythOSD = new MythOSD(mainStack, "mythosd");
-
-        if (mythOSD->Create()) {
-            mainStack->AddScreen(mythOSD);
-            mythOSD->setPlayBackTimeOSD(getPlayBackTimeString(false));
-            mythOSD->waitforKey();
-            mythOSD->closeWindow();
-        } else {
-            delete mythOSD;
-        }
-        unPause();
     }
 }
 

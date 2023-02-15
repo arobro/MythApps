@@ -104,7 +104,6 @@ class MythApps : public MythScreenType {
     bool kodiPlayerOpen = false;
     bool musicOpen = false;        /*!< is the music player open? */
     bool ytNativeOpen = false;     /*!< is ytNative open? */
-    bool pausedMenu = false;       /*!< is the pause menu open? */
     bool isFavouritesOpen = false; /*!< is the favourites app open? */
     bool allowAutoMinimize = true; /*!< is auto minimizing kodi enabled? */
     bool isPreviouslyPlayed = false;
@@ -148,7 +147,6 @@ class MythApps : public MythScreenType {
     void pauseToggle();
 
     void openOSD(QString screenType);
-    void unPause();
     bool takeScreenshot();
     void resetScreenshot();
     void inputSendText(QString text);
