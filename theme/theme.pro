@@ -1,6 +1,10 @@
 include ( ../../mythconfig.mak )
 include ( ../../settings.pro )
 
+!exists( ../../settings.pro ) {
+    PREFIX = /usr
+}
+
 TEMPLATE = aux
 
 defaultfiles.path = $${PREFIX}/share/mythtv/themes/default

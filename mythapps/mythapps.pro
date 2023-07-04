@@ -2,6 +2,11 @@ include ( ../../mythconfig.mak )
 include ( ../../settings.pro )
 include ( ../../programs-libs.pro )
 
+!exists( ../../settings.pro ) {
+    INCLUDEPATH += /usr/include/mythtv/
+    LIBDIR = /usr/lib
+}
+
 QT += network sql xml widgets websockets
 
 TEMPLATE = lib
