@@ -6,7 +6,14 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
-cd /usr/local/share/mythtv/themes/defaultmenu/
+if [ -d "/usr/local/share/mythtv/themes/defaultmenu/" ]; then
+    cd /usr/local/share/mythtv/themes/defaultmenu/
+elif [ -d "/usr/share/mythtv/themes/defaultmenu/" ]; then
+    cd /usr/share/mythtv/themes/defaultmenu/
+else
+    echo "Sorry, cant not find the correct path for MythTV."
+    exit 1
+fi
 
 if grep -q mythapps "library.xml"; then
   exit 1
