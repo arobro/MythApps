@@ -24,6 +24,7 @@
 #include "browser.h"
 #include "container.h"
 #include "controls.h"
+#include "fileBrowserHistory.h"
 #include "imageThread.h"
 #include "programData.h"
 #include "programLink.h"
@@ -163,7 +164,6 @@ class MythApps : public MythScreenType {
 
     void loadBackButton();
     void goSearch(QString overrideCurrentSearchUrl);
-    void removeCurrentUrlFromList();
     void delayWhileStopScroll(int maxDelay);
 
     void loadProgram(QString name, QString setdata, QString thumbnailPath);
@@ -228,6 +228,7 @@ class MythApps : public MythScreenType {
     void addToPreviouslyPlayed();
 
     Browser *browser;
+    FileBrowserHistory *fileBrowserHistory;
 
     // music app
     int m_currentMusicButton = 0;
@@ -348,8 +349,6 @@ class MythApps : public MythScreenType {
     MythUIButtonList *m_filterGrid;
     MythUIButtonList *m_filterOptionsList;
     MythUIButtonList *m_playlistVertical;
-
-    QList<QStringList> previousListItem;
 
     ytCustomApp *ytNative;
     bool ytNativeEnabled = false;

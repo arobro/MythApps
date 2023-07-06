@@ -22,10 +22,10 @@ INSTALLS += installfiles
 
 # Input
 HEADERS += mythapps.h mythsettings.h mythinput.h imageThread.h searchSuggestions.h shared.h controls.h programData.h programLink.h netRequest.h
-HEADERS += mythappsdbcheck.h container.h libs/xbmcclient.h ytCustomApp.h browser.h
+HEADERS += mythappsdbcheck.h container.h libs/xbmcclient.h ytCustomApp.h browser.h fileBrowserHistory.h
 
 SOURCES += main.cpp mythapps.cpp mythsettings.cpp mythinput.cpp imageThread.cpp music_functions.cpp searchSuggestions.cpp netRequest.cpp 
-SOURCES += shared.cpp controls.cpp programData.cpp programLink.cpp mythappsdbcheck.cpp ytCustomApp.cpp browser.cpp
+SOURCES += shared.cpp controls.cpp programData.cpp programLink.cpp mythappsdbcheck.cpp ytCustomApp.cpp browser.cpp fileBrowserHistory.cpp
 
 DEFINES += MPLUGIN_API
 

@@ -65,7 +65,7 @@ class ytCustomApp : public QObject {
     Browser *browser;
     QString converKodiYTURLtoBrowserUrl(QString url);
     QString getAPIBaseUrl();
-    
+
   signals:
     void loadProgramSignal(QString name, QString setdata, QString thumbnailPath);
 };

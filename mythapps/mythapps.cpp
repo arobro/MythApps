@@ -134,6 +134,7 @@ MythApps::~MythApps() {
     delete currentselectionDetails;
     delete lastPlayedDetails;
     delete browser;
+    delete fileBrowserHistory;
     // music app
     delete m_textSong;
     delete m_textArtist;
@@ -267,6 +268,8 @@ bool MythApps::Create() {
     browser = new Browser(controls);
     connect(browser, SIGNAL(setFocusWidgetSignal(QString)), this, SLOT(setFocusWidgetSlot(QString)));
 
+    fileBrowserHistory = new FileBrowserHistory();
+
     bool foundtheme = false;
 
     QString theme = gCoreContext->GetSetting("Theme");
@@ -281,7 +284,7 @@ bool MythApps::Create() {
     } else if (theme.compare("MythCenter-wide") == 0) {
 
         foundtheme = LoadWindowFromXML("mythapps-ui.720.MCW.xml", "mythapps", this);
-    } else if (theme.contains("XMAS") ) {
+    } else if (theme.contains("XMAS")) {
         LOG(VB_GENERAL, LOG_INFO, "Loading mythapps-ui.720.NoAlpha.xml");
         foundtheme = LoadWindowFromXML("mythapps-ui.720.NoAlpha.xml", "mythapps", this);
     } else {
@@ -1410,37 +1413,17 @@ QString MythApps::getNewSearch(QString url) {
     return searchDirectory;
 }
 
-/** \brief Removes the last url from the previousURL list. Used for the back button.  */
-void MythApps::removeCurrentUrlFromList() {
-    if (previousListItem.size() > 0) {
-        previousListItem.removeLast();
-    }
-}
-
-/** \brief go back in the file browser. previousURL is a list of directories the user has clicked on */
+/** \brief go to the previous url in the file browser*/
 void MythApps::goBack() {
-    LOG(VB_GENERAL, LOG_DEBUG, "goBack() Start");
-
-    // foreach (QStringList previousList, previousListItem) {
-    // LOG(VB_GENERAL, LOG_DEBUG, previousList.at(0) + " - " + previousList.at(1) );
-    //}
-
-    removeCurrentUrlFromList();
     searchNoDuplicateCheck = QStringList();
+    fileBrowserHistory->goBack();
 
-    if (previousListItem.size() == 0) {
+    if (fileBrowserHistory->isEmpty()) {
         loadApps();
         return;
+    } else {
+        appsCallback(fileBrowserHistory->getCurrentLabel(), fileBrowserHistory->getCurrentData(), false);
     }
-
-    QStringList previousList = previousListItem.at(previousListItem.size() - 1);
-    removeCurrentUrlFromList();
-
-    QString label = previousList.at(0);
-    QString data = previousList.at(1);
-    appsCallback(label, data);
-
-    LOG(VB_GENERAL, LOG_DEBUG, "goBack() Finished");
 }
 
 /** \brief refresh the currrent page wihtout cache*/
@@ -1449,7 +1432,7 @@ void MythApps::refreshPage(bool enableDialog) {
 
     searchNoDuplicateCheck = QStringList();
 
-    if (previousListItem.size() > 0 || isHome) {
+    if (!fileBrowserHistory->isEmpty() || isHome) {
         if (enableDialog) {
             createAutoClosingBusyDialog(tr("Refreshing Page"), 2, false);
         }
@@ -1459,10 +1442,9 @@ void MythApps::refreshPage(bool enableDialog) {
             return;
         }
 
-        QStringList previousList = previousListItem.at(previousListItem.size() - 1);
         searchNoDuplicateCheck = QStringList();
 
-        ProgramData *programData = new ProgramData(previousList.at(0), previousList.at(1));
+        ProgramData *programData = new ProgramData(fileBrowserHistory->getCurrentLabel(), fileBrowserHistory->getCurrentData());
         QString url = programData->getFilePathParam();
         if (url.contains("plugin") and !url.contains("YTNative")) {
             requestFileBrowser("plugin://" + friendlyUrl(programData->getFilePathParam()), QStringList(), true, "refresh");
@@ -1760,10 +1742,7 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
 
     // back
     if (allowBack) {
-        QStringList previousList;
-        previousList.append(label);
-        previousList.append(data);
-        previousListItem.append(previousList);
+        fileBrowserHistory->append(label, data);
     }
 
     if (programData->isYTWrappedApp()) { // close YT native
