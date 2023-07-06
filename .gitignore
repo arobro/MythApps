@@ -3,3 +3,6 @@ latex
 Makefile
 /.qmake.stash
 /theme/default/mythapps-ui.xml~
+*.o
+/mythapps/*moc_*.cpp
+/mythapps/moc_*.h
