@@ -2,9 +2,20 @@ include ( ../../mythconfig.mak )
 include ( ../../settings.pro )
 include ( ../../programs-libs.pro )
 
-!exists( ../../settings.pro ) {
-    INCLUDEPATH += /usr/include/mythtv/
-    LIBDIR = /usr/lib
+!exists(../../settings.pro) {
+    message("WARNING: Using include fallback")
+
+    exists(/usr/local/include/mythtv/) {
+        INCLUDEPATH += /usr/local/include/mythtv/
+        LIBS += -L/usr/local/lib/
+    } else {
+        exists(/usr/include/mythtv/) {
+            INCLUDEPATH += /usr/include/mythtv/
+            LIBS += -L/usr/lib/
+        } else {
+            error("Include path not found")
+        }
+    }
 }
 
 QT += network sql xml widgets websockets
