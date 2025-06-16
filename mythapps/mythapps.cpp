@@ -153,6 +153,17 @@ MythApps::~MythApps() {
     delete m_next_buttonOff;
     delete m_ff_buttonOff;
     delete ytNative;
+
+    // Clean up QThreads in imageThreadList
+    for (QThread *thread : imageThreadList) {
+        thread->quit();
+        if (!thread->wait(2000)) {
+            thread->terminate(); // last resort
+            thread->wait();
+        }
+        delete thread;
+    }
+    imageThreadList.clear();
 }
 
 /** \brief The Websocket connection to Kodi has been establised.  */
@@ -923,7 +934,7 @@ void MythApps::loadBackButton() {
 
 /** \brief selected callback for the search list. */
 void MythApps::selectSearchList(MythUIButtonListItem *item) {
-	QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
     QString buttonName = item->GetText();
     if (buttonName.compare("Back to Search") == 0) {
         SetFocusWidget(m_SearchTextEdit);
