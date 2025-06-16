@@ -64,12 +64,14 @@ class MythSettings : public MythScreenType {
     QString allWebsites = "";
 
     QString savedWebSite(QString website);
+    QString mCommand;
 
     MythSettingsPriv *m_priv{nullptr};
 
     void togglePage();
     void save();
     void updateApikey(QString appfilePath);
+    void checkProgramInstalled(QString programName, bool displayMessageIfInstalled);
 
   private slots:
     void m_searchListCallback(MythUIButtonListItem *item);

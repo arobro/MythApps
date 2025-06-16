@@ -174,37 +174,28 @@ bool MythSettings::Create() // _videoUrl,_seek
         m_MusicCheckbox->SetCheckState(false);
     }
 
-    QString mCommand = "Install Status: ";
+    mCommand = "Install Status: ";
 
-    if (system("command -v kodi >/dev/null 2>&1 || { exit 1; }") == 0) {
-        mCommand = mCommand + tr("Kodi Installed,");
-    } else {
-        mCommand = mCommand + tr("Kodi not found,");
-    }
+    checkProgramInstalled("Kodi",true);
+        
     if (isX11()) {
-        if (system("command -v xdotool >/dev/null 2>&1 || { exit 1; }") == 0) {
-            mCommand = mCommand + tr(" xdotool Installed,");
-        } else {
-            mCommand = mCommand + tr(" xdotool not found,");
-        }
+		checkProgramInstalled("xdotool",true);
     } else if (isGnome()) {
-        system("command -v git >/dev/null 2>&1 || { exit 1; }");
+		checkProgramInstalled("git",false);
+		checkProgramInstalled("gsettings",false);
 
         if (QFile(QDir::homePath() + "/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de/extension.js").exists()) {
-            system("gnome-extensions enable activate-window-by-title@lucaswerkmeister.de");
-
+            system("gsettings set org.gnome.shell disable-user-extensions false");
+           
             if (system("gnome-extensions show activate-window-by-title@lucaswerkmeister.de | grep -c ENABLED") == 0) {
                 mCommand = mCommand + tr(" activate-window Installed,");
             } else {
+				system("gnome-extensions enable activate-window-by-title@lucaswerkmeister.de");
                 mCommand = mCommand + tr(" Logout to enable activate-window,");
             }
         } else {
             mCommand = mCommand + tr("gnome activate-window-by-title not installed,");
 
-            if (system("command -v git >/dev/null 2>&1 || { exit 1; }") == 0) {
-            } else {
-                mCommand = mCommand + tr(" git not found,");
-            }
             system("mkdir -p ~/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de");
             system("cd ~/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de && "
                    "git clone https://github.com/lucaswerkmeister/activate-window-by-title . ");
@@ -492,4 +483,20 @@ void MythSettings::updateApikey(QString appfilePath) {
         Close();
         break;
     }
+
+/** \brief Checks whether a specified program is installed on a Linux system.
+ * @param programName The name of the program to check.
+ * @param displayMessageIfInstalled Whether to display a installed message if the program is found. */
+void MythSettings::checkProgramInstalled(QString programName, bool displayMessageIfInstalled) {
+	#ifdef __linux__
+    QString command = "command -v " + programName + " >/dev/null 2>&1 || { exit 1; }";
+    
+     if (system(command.toLatin1().constData()) == 0) {
+        if (displayMessageIfInstalled) {
+            mCommand += tr(" %1 Installed,").arg(programName);
+        }
+    } else {
+        mCommand += tr(" %1 not found,").arg(programName);
+    }
+    #endif
 }
