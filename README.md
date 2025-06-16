@@ -100,6 +100,7 @@ but will require a logoff. You can check if this is setup correctly by running: 
 "gnome-extensions show activate-window-by-title@lucaswerkmeister.de | grep -c ENABLED"<br />
 <br />
 https://github.com/lucaswerkmeister/activate-window-by-title<br />
+Also make sure you have gnome extensions enabled: "gsettings set org.gnome.shell disable-user-extensions false"<br />
 
 # DEVELOPER
 While MythApps is stable for me, Please note this is a new plugin under developement.
