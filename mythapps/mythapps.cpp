@@ -923,6 +923,7 @@ void MythApps::loadBackButton() {
 
 /** \brief selected callback for the search list. */
 void MythApps::selectSearchList(MythUIButtonListItem *item) {
+	QCoreApplication::processEvents();
     QString buttonName = item->GetText();
     if (buttonName.compare("Back to Search") == 0) {
         SetFocusWidget(m_SearchTextEdit);
