@@ -36,10 +36,8 @@ class ImageThread : public QObject {
     QString port;
     MythUIButtonList *fileListType;
 
-    NetRequest *nr;
-
-    void downloadAppIconImage();
-    void proccessImage();
+    void downloadAppIconImage(NetRequest &nr);
+    void proccessImage(NetRequest &nr);
 };
 
 #endif // MYTHREAD_H

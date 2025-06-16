@@ -30,58 +30,56 @@ ImageThread::ImageThread(int _buttonPosition, QString _thumbnailPath, QString _f
 void ImageThread::startRead() {
     this->fileName.replace("//", "/");
 
-    nr = new NetRequest(username, password, ip, port, false);
+    NetRequest nr(username, password, ip, port, false);
     if (!QFileInfo::exists(this->fileName + ".processed")) {
-        downloadAppIconImage();
-        proccessImage();
+        downloadAppIconImage(nr);
+        proccessImage(nr);
     }
-    delete nr;
     emit renderImage(buttonPosition, this->fileListType);
 }
 
 /** \brief Download the app icon image using net request if required */
-void ImageThread::downloadAppIconImage() {
+void ImageThread::downloadAppIconImage(NetRequest &nr) {
     if (this->fileName.compare(this->appIcon) == 0) { // if app icon, save it to overlay source on thumbnails
         if (!QFileInfo::exists(fileName)) {
             QFile file(fileName);
             file.open(QIODevice::WriteOnly);
-            file.write(nr->downloadImage(urlEncode(this->thumbnailPath), false));
+            file.write(nr.downloadImage(urlEncode(this->thumbnailPath), false));
             file.close();
         }
     }
 }
 
 /** \brief convert the image from a thumbnail to a button */
-void ImageThread::proccessImage() {
-    QImage *originalImage = new QImage();
-
-    if (QFileInfo::exists(this->fileName)) { // only for icons
-        originalImage->load(this->fileName);
+void ImageThread::proccessImage(NetRequest &nr) {
+    // convert the image from a thumbnail to a button
+    QImage originalImage;
+    if (QFileInfo::exists(fileName)) { // only for icons
+        originalImage.load(fileName);
     } else { // all the thumbnails from Kodi
-        originalImage->loadFromData(nr->downloadImage(this->thumbnailPath, true), "");
+        originalImage.loadFromData(nr.downloadImage(thumbnailPath, true), "");
     }
 
-    QColor originalImageColor(originalImage->pixel(2, 2)); // get image colour
+    QColor originalImageColor(originalImage.pixel(2, 2)); // get image colour
 
     // get image ratio and scale
-    int hRatio = originalImage->height() * ((16 / 9) * 1.75);
-    originalImage->scaled(500, 500, Qt::KeepAspectRatio);
-    int widthDiff = hRatio - originalImage->width();
-    widthDiff = widthDiff / 2;
+    int hRatio = originalImage.height() * ((16 / 9) * 1.75);
+    originalImage = originalImage.scaled(500, 500, Qt::KeepAspectRatio);
+    int widthDiff = (hRatio - originalImage.width()) / 2;
 
-    QImage *destBackground = new QImage(hRatio, originalImage->height(), QImage::Format_ARGB32);
-    destBackground->fill(originalImageColor);
+    QImage destBackground(hRatio, originalImage.height(), QImage::Format_ARGB32);
+    destBackground.fill(originalImageColor);
 
-    QPainter pI(&*destBackground);
+    QPainter pI(&destBackground);
     pI.setCompositionMode(QPainter::CompositionMode_SourceAtop);
-    pI.drawImage(widthDiff, 0, *originalImage);
+    pI.drawImage(widthDiff, 0, originalImage);
     pI.end();
 
-    // refelction
-    QImage reflectionImage = destBackground->mirrored();
+    // reflection
+    QImage reflectionImage = destBackground.mirrored();
 
     // crop
-    QRect rectI(0, destBackground->height() / 1.25, destBackground->width(), destBackground->height());
+    QRect rectI(0, destBackground.height() / 1.25, destBackground.width(), destBackground.height());
     QImage reflectionCroppedImage = reflectionImage.copy(rectI);
 
     // black opacity
@@ -94,16 +92,16 @@ void ImageThread::proccessImage() {
     imagepainter.end();
 
     ////combine image and reflectionImage
-    QImage result(destBackground->width(), destBackground->height() + destBackground->height() * .20,
+    QImage result(destBackground.width(), destBackground.height() + destBackground.height() * .20,
                   QImage::Format_ARGB32); // image to hold the join of image 1 & 2
     QPainter painterII(&result);
     painterII.drawImage(0, 0, reflectionCroppedImage);
-    painterII.drawImage(0, destBackground->height() * .20, *destBackground);
+    painterII.drawImage(0, destBackground.height() * .20, destBackground);
     painterII.end();
 
     // app icon
-    QImage *appIconImage = new QImage(this->appIcon);
-    *appIconImage = appIconImage->scaled(40, 40, Qt::IgnoreAspectRatio);
+    QImage appIconImage(appIcon);
+    appIconImage = appIconImage.scaled(40, 40, Qt::IgnoreAspectRatio);
 
     // rounded corners
     QImage roundedCornersImage(result.width(), result.height(), QImage::Format_ARGB32);
@@ -120,13 +118,10 @@ void ImageThread::proccessImage() {
     painter.setBrush(brush);
     painter.setPen(pen);
     painter.drawRoundedRect(0, 0, result.width(), result.height(), 30, 30);
-    if (!appIcon.compare(this->fileName) == 0 and !this->appIcon.contains("ma_mv_browse_nocover.png")) {
-        painter.drawImage(result.width() - 40, result.height() / 2, *appIconImage);
+    if (appIcon != fileName && !appIcon.contains("ma_mv_browse_nocover.png")) {
+        painter.drawImage(result.width() - 40, result.height() / 2, appIconImage);
     }
     painter.end();
 
     roundedCornersImage.save(fileName + ".processed", "PNG");
-    delete originalImage;
-    delete destBackground;
-    delete appIconImage;
 }
