@@ -38,9 +38,7 @@ QMap<QString, bool> &getSettingLocationMap() {
     return settingLocationMap;
 }
 
-void saveSetting(QString settingName, bool settingValue) {
-    saveSetting(settingName, QString::number(settingValue));
-}
+void saveSetting(QString settingName, bool settingValue) { saveSetting(settingName, QString::number(settingValue)); }
 
 void saveSetting(QString settingName, QString settingValue) {
     const auto &map = getSettingLocationMap();

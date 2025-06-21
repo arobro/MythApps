@@ -207,106 +207,47 @@ void MythSettings::togglePage() {
 }
 
 bool MythSettings::keyPressEvent(QKeyEvent *event) {
-    if (GetFocusWidget() && GetFocusWidget()->keyPressEvent(event))
-        return true;
+    if (auto current = GetFocusWidget()) {
+        if (current->keyPressEvent(event))
+            return true;
+    }
 
     bool handled = false;
     QStringList actions;
     handled = GetMythMainWindow()->TranslateKeyPress("mythapps", event, actions);
 
-    for (int i = 0; i < actions.size() && !handled; i++) {
-        QString action = actions[i];
-        handled = true;
+    for (const QString &action : actions) { // Process each action key.
+        if (action == "ESCAPE") { // Global commands.
+            Close();
+            return true;
+        }
+        if (pageOne && (action == "HELP" || action == "Menu")) {
+            m_texteditHelp->SetVisible(!m_texteditHelp->IsVisible());
+            m_shapeHelp->SetVisible(!m_shapeHelp->IsVisible());
+            return true;
+        }
 
-        if (pageOne) {
-            if (action == "ESCAPE") {
-                Close();
-            } else if (action == "HELP" || action == "Menu") {
-                m_texteditHelp->SetVisible(!m_texteditHelp->IsVisible());
-                m_shapeHelp->SetVisible(!m_shapeHelp->IsVisible());
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_settingUser) {
-                SetFocusWidget(m_settingPassword);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_settingPassword) {
-                SetFocusWidget(m_settingIP);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_settingIP) {
-                SetFocusWidget(m_settingPort);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_settingPort) {
-                SetFocusWidget(m_settingAppPass);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_settingAppPass) {
-                SetFocusWidget(m_settingWeb);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_settingWeb) {
-                SetFocusWidget(m_myVideoCheckbox);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_myVideoCheckbox) {
-                SetFocusWidget(m_MuteCheckbox);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_MuteCheckbox) {
-                SetFocusWidget(m_closeKodiOnExitCheckbox);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_closeKodiOnExitCheckbox) {
-                SetFocusWidget(m_VolCheckbox);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_VolCheckbox) {
-                SetFocusWidget(m_RemoteCheckbox);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_RemoteCheckbox) {
-                SetFocusWidget(m_MusicCheckbox);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_MusicCheckbox) {
-                SetFocusWidget(m_cancelBtn);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_cancelBtn) {
-                SetFocusWidget(m_saveBtn);
-            } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_saveBtn) {
-                SetFocusWidget(m_settingUser);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_settingUser) {
-                SetFocusWidget(m_saveBtn);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_saveBtn) {
-                SetFocusWidget(m_cancelBtn);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_cancelBtn) {
-                SetFocusWidget(m_MusicCheckbox);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_MusicCheckbox) {
-                SetFocusWidget(m_RemoteCheckbox);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_RemoteCheckbox) {
-                SetFocusWidget(m_VolCheckbox);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_VolCheckbox) {
-                SetFocusWidget(m_closeKodiOnExitCheckbox);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_closeKodiOnExitCheckbox) {
-                SetFocusWidget(m_MuteCheckbox);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_MuteCheckbox) {
-                SetFocusWidget(m_myVideoCheckbox);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_myVideoCheckbox) {
-                SetFocusWidget(m_settingWeb);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_settingWeb) {
-                SetFocusWidget(m_settingAppPass);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_settingAppPass) {
-                SetFocusWidget(m_settingPort);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_settingPort) {
-                SetFocusWidget(m_settingIP);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_settingIP) {
-                SetFocusWidget(m_settingPassword);
-            } else if ((action == "UP" || action == "LEFT") and GetFocusWidget() == m_settingPassword) {
-                SetFocusWidget(m_settingUser);
-            } else {
-                handled = false;
+        if (action == "DOWN" || action == "RIGHT" || action == "UP" || action == "LEFT") { // Process directional navigation.
+            bool forward = (action == "DOWN" || action == "RIGHT");
+
+            QList<MythUIType *> order; // Define the navigation order for each page.
+            if (pageOne) {
+                order = {m_settingUser,    m_settingPassword, m_settingIP,       m_settingPort,  m_settingSuggestUrl,
+                         m_settingAppPass, m_settingWeb,      m_myVideoCheckbox, m_MuteCheckbox, m_closeKodiOnExitCheckbox,
+                         m_VolCheckbox,    m_RemoteCheckbox,  m_MusicCheckbox,   m_YTapi,        m_YTid,
+                         m_YTcs,           m_cancelBtn,       m_saveBtn};
+
+            } else { // Page two.
+                order = {m_cancelBtn, m_saveBtn, m_searchSourcesList, m_ResetSearchList};
             }
-        } else { // page 2
-            if (action == "ESCAPE") {
-                Close();
-            } else if (action == "LEFT" and GetFocusWidget() == m_saveBtn) {
-                SetFocusWidget(m_cancelBtn);
-            } else if ((action == "RIGHT" || action == "UP") and GetFocusWidget() == m_cancelBtn) {
-                SetFocusWidget(m_saveBtn);
-            } else if ((action == "RIGHT" || action == "UP") and GetFocusWidget() == m_saveBtn) {
-                SetFocusWidget(m_searchSourcesList);
-            } else if ((action == "RIGHT" || action == "UP") and GetFocusWidget() == m_searchSourcesList) {
-                SetFocusWidget(m_ResetSearchList);
-            } else if ((action == "RIGHT" || action == "UP") and GetFocusWidget() == m_ResetSearchList) {
-                SetFocusWidget(m_cancelBtn);
-            } else if ((action == "LEFT" || action == "DOWN") and GetFocusWidget() == m_ResetSearchList) {
-                SetFocusWidget(m_searchSourcesList);
-            } else if ((action == "LEFT" || action == "DOWN") and GetFocusWidget() == m_searchSourcesList) {
-                SetFocusWidget(m_saveBtn);
-            } else if ((action == "LEFT" || action == "DOWN") and GetFocusWidget() == m_saveBtn) {
-                SetFocusWidget(m_cancelBtn);
-            } else if ((action == "LEFT" || action == "DOWN") and GetFocusWidget() == m_cancelBtn) {
-                SetFocusWidget(m_ResetSearchList);
 
-            } else {
-                handled = false;
+            MythUIType *current = GetFocusWidget(); // Get current index and compute the new index cyclically.
+            int idx = order.indexOf(current);
+            if (idx != -1) {
+                int n = order.size();
+                int newIdx = forward ? (idx + 1) % n : (idx - 1 + n) % n;
+                SetFocusWidget(order[newIdx]);
+                return true;
             }
         }
     }
