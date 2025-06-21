@@ -1,8 +1,9 @@
+#include "fileBrowserHistory.h"
+
 // MythTV headers
 #include <libmyth/mythcontext.h>
 
 // MythApps headers
-#include "fileBrowserHistory.h"
 #include "programData.h"
 
 FileBrowserHistory::FileBrowserHistory() {}

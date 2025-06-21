@@ -1,7 +1,7 @@
 #ifndef shared_h
 #define shared_h
 
-// QT Headers
+// QT headers
 #include <QApplication>
 #include <QJsonObject>
 #include <QString>

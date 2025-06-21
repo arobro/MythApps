@@ -1,8 +1,9 @@
+#include "programLink.h"
+
 // MythTV headers
 #include <libmyth/mythcontext.h>
 
 // MythApps headers
-#include "programLink.h"
 #include "shared.h"
 
 /** \class ProgramLink

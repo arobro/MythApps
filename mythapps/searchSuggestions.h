@@ -1,10 +1,15 @@
 #ifndef SearchSuggestions_h
 #define SearchSuggestions_h
 
-#include "netRequest.h"
+// QT headers
 #include <QNetworkAccessManager>
 #include <QString>
 #include <QStringList>
+
+// MythApps headers
+#include "netRequest.h"
+
+#endif
 
 /** \class SearchSuggestions
  *  \brief Creates a list of search suggestions */
@@ -17,4 +22,3 @@ class SearchSuggestions {
     NetRequest *netRequestSearchSuggestions;
     QString customSearchSuggestUrl;
 };
-#endif

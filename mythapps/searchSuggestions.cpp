@@ -1,5 +1,4 @@
-// MythTV headers
-#include <libmyth/mythcontext.h>
+#include "searchSuggestions.h"
 
 // QT headers
 #include <QCoreApplication>
@@ -7,7 +6,8 @@
 #include <QString>
 #include <QXmlStreamReader>
 
-#include "searchSuggestions.h"
+// MythTV headers
+#include <libmyth/mythcontext.h>
 
 SearchSuggestions::SearchSuggestions() {
     netRequestSearchSuggestions = new NetRequest("", "", "", "", false);

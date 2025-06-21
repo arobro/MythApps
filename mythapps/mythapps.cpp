@@ -1,3 +1,13 @@
+#include "mythapps.h"
+
+// QT headers
+#include <QCoreApplication>
+#include <QDir>
+#include <QEvent>
+#include <QFile>
+#include <QTextStream>
+#include <QtWidgets>
+
 // MythTV headers
 #include "libmythui/mythuistatetracker.h"
 #include <libmyth/mythcontext.h>
@@ -8,14 +18,6 @@
 #include <libmythui/mythuibutton.h>
 #include <libmythui/mythuiimage.h>
 #include <libmythui/mythuitext.h>
-
-// QT headers
-#include <QCoreApplication>
-#include <QDir>
-#include <QEvent>
-#include <QFile>
-#include <QTextStream>
-#include <QtWidgets>
 
 // MythApps headers
 #include "imageThread.h"

@@ -1,10 +1,10 @@
 #ifndef NetRequest_h
 #define NetRequest_h
 
+// QT headers
 #include <QNetworkAccessManager>
 #include <QString>
 #include <QStringList>
-
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>

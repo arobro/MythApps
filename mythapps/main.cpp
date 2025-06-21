@@ -6,6 +6,7 @@
 #include <libmythbase/mythversion.h>
 #include <libmythui/mythmainwindow.h>
 
+// MythApps headers
 #include "mythapps.h"
 #include "mythappsdbcheck.h"
 #include "mythsettings.h"

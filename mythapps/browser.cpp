@@ -1,4 +1,6 @@
 #include "browser.h"
+
+// MythApps headers
 #include "shared.h"
 
 Browser::Browser(Controls *m_controls) { controls = m_controls; }

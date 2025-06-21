@@ -1,5 +1,4 @@
 #include "imageThread.h"
-#include "shared.h"
 
 // QT headers
 #include <QApplication>
@@ -9,6 +8,9 @@
 #include <QImage>
 #include <QPainter>
 #include <QTime>
+
+// MythApps headers
+#include "shared.h"
 
 /** \param _buttonPosition The postion of the button to update the image on.
  *  \param _thumbnailPath path of the thumbnail

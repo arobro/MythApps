@@ -1,7 +1,10 @@
 #include "netRequest.h"
-#include "shared.h"
 
+// MythTV headers
 #include <libmyth/mythcontext.h>
+
+// MythApps headers
+#include "shared.h"
 
 /** \param m_username Kodi username
  *  \param m_password Kodi password

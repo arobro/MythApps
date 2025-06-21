@@ -1,12 +1,12 @@
-// MythTV headers
-#include <libmyth/mythcontext.h>
+// MythApps headers
+#include "programData.h"
+#include "ytCustomApp.h"
 
 // QT headers
 #include <QDateTime>
 
-// MythApps headers
-#include "programData.h"
-#include "ytCustomApp.h"
+// MythTV headers
+#include <libmyth/mythcontext.h>
 
 /** \brief Creates a new ytCustomApp to provide native performance.
 /** \param m_username Kodi username

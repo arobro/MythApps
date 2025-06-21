@@ -1,11 +1,13 @@
 #ifndef ProgramData_h
 #define ProgramData_h
 
+// QT headers
 #include <QDebug>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
 
+// MythApps headers
 #include "container.h"
 
 /** \class ProgramData

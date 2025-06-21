@@ -1,24 +1,18 @@
 #ifndef MYTHKODI_H
 #define MYTHKODI_H
 
+// QT headers
+#include <QApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+
 // MythTV headers
 #include <libmythui/mythscreentype.h>
 #include <libmythui/mythuibutton.h>
 #include <libmythui/mythuibuttonlist.h>
 #include <libmythui/mythuiprogressbar.h>
 #include <libmythui/mythuishape.h>
-
-// QT headers
-#include <QApplication>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
-#include <QList>
-#include <QTime>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
-#include <QtWebSockets/QWebSocket>
 
 // MythApps headers
 #include "browser.h"

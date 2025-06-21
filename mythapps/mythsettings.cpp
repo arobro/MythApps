@@ -1,3 +1,11 @@
+#include "mythsettings.h"
+
+// QT headers
+#include <QDir>
+#include <QDirIterator>
+#include <QFileInfo>
+#include <QJsonDocument>
+
 // MythTV headers
 #include <libmyth/mythcontext.h>
 #include <libmythbase/mythdbcon.h>
@@ -7,15 +15,8 @@
 #include <libmythui/mythuicheckbox.h>
 #include <libmythui/mythuitext.h>
 
-// QT headers
-#include <QDir>
-#include <QDirIterator>
-#include <QFileInfo>
-#include <QJsonDocument>
-
 // MythApps headers
 #include "mythappsdbcheck.h"
-#include "mythsettings.h"
 #include "netRequest.h"
 #include "shared.h"
 

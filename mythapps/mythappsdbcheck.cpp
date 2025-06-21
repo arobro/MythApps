@@ -1,11 +1,11 @@
-// C++ headers
+// C++ standard library
 #include <iostream>
 
 // QT headers
 #include <QSqlError>
 #include <QString>
 
-// Myth headers
+// MythTV headers
 #include <libmyth/mythcontext.h>
 #include <libmythbase/mythdb.h>
 #include <libmythbase/mythdbcheck.h>

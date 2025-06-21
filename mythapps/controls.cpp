@@ -1,4 +1,6 @@
 #include "controls.h"
+
+// MythTV headers
 #include <libmyth/mythcontext.h>
 #include <libmythbase/mythdirs.h>
 

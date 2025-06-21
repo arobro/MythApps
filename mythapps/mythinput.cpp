@@ -1,5 +1,7 @@
 #include "mythinput.h"
-#include "shared.h"
+
+// QT headers
+#include <QThread>
 
 // MythTV headers
 #include <libmyth/mythcontext.h>
@@ -9,7 +11,8 @@
 #include <libmythui/mythuicheckbox.h>
 #include <libmythui/mythuitext.h>
 
-#include <QThread>
+// MythApps headers
+#include "shared.h"
 
 MythInput::MythInput(MythScreenStack *parent, const QString &name) : MythScreenType(parent, name) {}
 

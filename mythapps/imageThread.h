@@ -7,8 +7,11 @@
 #include <QString>
 #include <QThread>
 
-#include "netRequest.h"
+// MythTV headers
 #include <libmythui/mythuibuttonlist.h>
+
+// MythApps headers
+#include "netRequest.h"
 
 /** \class ImageThread
  *  \brief Downloads and processes an image thumbnail into an image button. This can be multithreaded*/

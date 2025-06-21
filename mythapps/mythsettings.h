@@ -1,3 +1,7 @@
+// QT headers
+#include <QList>
+#include <QPair>
+
 // MythTV headers
 #include <libmythui/mythscreentype.h>
 #include <libmythui/mythuibutton.h>
@@ -5,10 +9,6 @@
 #include <libmythui/mythuicheckbox.h>
 #include <libmythui/mythuishape.h>
 #include <libmythui/mythuitextedit.h>
-
-// QT
-#include <QList>
-#include <QPair>
 
 class MythSettingsPriv;
 

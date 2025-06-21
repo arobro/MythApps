@@ -1,15 +1,16 @@
 #ifndef ytCustomApp_h
 #define ytCustomApp_h
 
+// QT headers
 #include <QObject>
+
+// MythTV headers
+#include <libmythui/mythuibuttonlist.h>
 
 // MythApps headers
 #include "browser.h"
 #include "netRequest.h"
 #include "shared.h"
-
-// MythTV headers
-#include <libmythui/mythuibuttonlist.h>
 
 /** \class YT
  *  \brief */

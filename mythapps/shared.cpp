@@ -1,11 +1,16 @@
+// MythApps headers
 #include "shared.h"
-#include <libmyth/mythcontext.h>
 
+// C++ standard library
+#include <sstream>
+#include <string>
+
+// QT headers
 #include <QDir>
 #include <QtNetwork/QTcpSocket>
 
-#include <sstream>
-#include <string>
+// MythTV headers
+#include <libmyth/mythcontext.h>
 
 /** \brief  helper function that converts parameters into an ugly delimited string. Todo: Should be either a class or list.
  * \param   file - can be a directory or a video url.
