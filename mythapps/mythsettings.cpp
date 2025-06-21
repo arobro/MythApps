@@ -13,6 +13,8 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 
+// MythApps headers
+#include "mythappsdbcheck.h"
 #include "mythsettings.h"
 #include "netRequest.h"
 #include "shared.h"
@@ -85,17 +87,15 @@ bool MythSettings::Create() // _videoUrl,_seek
 
     connect(m_searchSourcesList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(m_searchListCallback(MythUIButtonListItem *)));
 
-    backendHostName = gCoreContext->GetMasterHostName();
-
     m_settingUser->SetText(gCoreContext->GetSetting("MythAppsusername"));
     m_settingPassword->SetText(gCoreContext->GetSetting("MythAppspassword"));
     m_settingIP->SetText(gCoreContext->GetSetting("MythAppsip"));
     m_settingPort->SetText(gCoreContext->GetSetting("MythAppsport"));
 
     m_settingAppPass->SetPassword(true);
-    m_settingAppPass->SetText(ROT13(gCoreContext->GetSettingOnHost("MythAppsAppPass", backendHostName)));
+    m_settingAppPass->SetText(ROT13(gCoreContext->GetSetting("MythAppsAppPass")));
 
-    QString websites = gCoreContext->GetSettingOnHost("MythAppsweb", backendHostName);
+    QString websites = gCoreContext->GetSetting("MythAppsweb");
 
     // parse and create websites list
     if (websites.contains("~")) {
@@ -110,11 +110,11 @@ bool MythSettings::Create() // _videoUrl,_seek
 
     m_settingWeb->SetText(allWebsites);
 
-    m_settingSuggestUrl->SetText(gCoreContext->GetSettingOnHost("MythAppsCustomSearchSuggestUrl", backendHostName));
+    m_settingSuggestUrl->SetText(gCoreContext->GetSetting("MythAppsCustomSearchSuggestUrl"));
 
-    m_YTapi->SetText(gCoreContext->GetSettingOnHost("MythAppsYTapi", backendHostName));
-    m_YTid->SetText(gCoreContext->GetSettingOnHost("MythAppsYTID", backendHostName));
-    m_YTcs->SetText(gCoreContext->GetSettingOnHost("MythAppsYTCS", backendHostName));
+    m_YTapi->SetText(gCoreContext->GetSetting("MythAppsYTapi"));
+    m_YTid->SetText(gCoreContext->GetSetting("MythAppsYTID"));
+    m_YTcs->SetText(gCoreContext->GetSetting("MythAppsYTCS"));
 
     m_texteditHelp->SetVisible(false);
     m_shapeHelp->SetVisible(false);
@@ -140,39 +140,12 @@ bool MythSettings::Create() // _videoUrl,_seek
         }
     }
 
-    if (gCoreContext->GetSetting("MythAppsmyVideo").compare("1") == 0) {
-        m_myVideoCheckbox->SetCheckState(true);
-    } else {
-        m_myVideoCheckbox->SetCheckState(false);
-    }
-
-    if (gCoreContext->GetSetting("MythAppsCloseOnExit").compare("1") == 0) {
-        m_closeKodiOnExitCheckbox->SetCheckState(true);
-    } else {
-        m_closeKodiOnExitCheckbox->SetCheckState(false);
-    }
-
-    if (gCoreContext->GetSetting("MythAppsInternalMute").compare("1") == 0) {
-        m_MuteCheckbox->SetCheckState(true);
-    } else {
-        m_MuteCheckbox->SetCheckState(false);
-    }
-    if (gCoreContext->GetSetting("MythAppsInternalVol").compare("1") == 0) {
-        m_VolCheckbox->SetCheckState(true);
-    } else {
-        m_VolCheckbox->SetCheckState(false);
-    }
-    if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0) {
-        m_RemoteCheckbox->SetCheckState(true);
-    } else {
-        m_RemoteCheckbox->SetCheckState(false);
-    }
-
-    if (gCoreContext->GetSetting("MythAppsMusic").compare("1") == 0) {
-        m_MusicCheckbox->SetCheckState(true);
-    } else {
-        m_MusicCheckbox->SetCheckState(false);
-    }
+    setCheckboxFromSetting(m_myVideoCheckbox, "MythAppsmyVideo");
+    setCheckboxFromSetting(m_closeKodiOnExitCheckbox, "MythAppsCloseOnExit");
+    setCheckboxFromSetting(m_MuteCheckbox, "MythAppsInternalMute");
+    setCheckboxFromSetting(m_VolCheckbox, "MythAppsInternalVol");
+    setCheckboxFromSetting(m_RemoteCheckbox, "MythAppsInternalRemote");
+    setCheckboxFromSetting(m_MusicCheckbox, "MythAppsMusic");
 
     mCommand = "Install Status: ";
 
@@ -384,19 +357,13 @@ void MythSettings::button_save() {
 }
 
 void MythSettings::save() {
-    gCoreContext->SaveSetting("MythAppsmyVideo", m_myVideoCheckbox->GetBooleanCheckState());
-    gCoreContext->SaveSetting("MythAppsCloseOnExit", m_closeKodiOnExitCheckbox->GetBooleanCheckState());
+    saveAllCheckboxSettings();
 
-    gCoreContext->SaveSetting("MythAppsInternalMute", m_myVideoCheckbox->GetBooleanCheckState());
-    gCoreContext->SaveSetting("MythAppsInternalVol", m_closeKodiOnExitCheckbox->GetBooleanCheckState());
-    gCoreContext->SaveSetting("MythAppsInternalRemote", m_closeKodiOnExitCheckbox->GetBooleanCheckState());
-    gCoreContext->SaveSetting("MythAppsMusic", m_MusicCheckbox->GetBooleanCheckState());
-
-    gCoreContext->SaveSetting("MythAppsusername", m_settingUser->GetText());
-    gCoreContext->SaveSetting("MythAppspassword", m_settingPassword->GetText());
-    gCoreContext->SaveSetting("MythAppsip", m_settingIP->GetText());
-    gCoreContext->SaveSetting("MythAppsport", m_settingPort->GetText());
-    gCoreContext->SaveSettingOnHost("MythAppsAppPass", ROT13(m_settingAppPass->GetText()), backendHostName);
+    saveSetting("MythAppsusername", m_settingUser->GetText());
+    saveSetting("MythAppspassword", m_settingPassword->GetText());
+    saveSetting("MythAppsip", m_settingIP->GetText());
+    saveSetting("MythAppsport", m_settingPort->GetText());
+    saveSetting("MythAppsAppPass", ROT13(m_settingAppPass->GetText()));
 
     QString savedWebsites = m_settingWeb->GetText();
 
@@ -421,13 +388,13 @@ void MythSettings::save() {
         }
 
         LOG(VB_GENERAL, LOG_DEBUG, "allSavedWebsites: " + allSavedWebsites);
-        gCoreContext->SaveSettingOnHost("MythAppsweb", allSavedWebsites, backendHostName);
+        saveSetting("MythAppsweb", allSavedWebsites);
     }
 
-    gCoreContext->SaveSettingOnHost("MythAppsCustomSearchSuggestUrl", m_settingSuggestUrl->GetText(), backendHostName);
-    gCoreContext->SaveSettingOnHost("MythAppsYTapi", m_YTapi->GetText(), backendHostName);
-    gCoreContext->SaveSettingOnHost("MythAppsYTID", m_YTid->GetText(), backendHostName);
-    gCoreContext->SaveSettingOnHost("MythAppsYTCS", m_YTcs->GetText(), backendHostName);
+    saveSetting("MythAppsCustomSearchSuggestUrl", m_settingSuggestUrl->GetText());
+    saveSetting("MythAppsYTapi", m_YTapi->GetText());
+    saveSetting("MythAppsYTID", m_YTid->GetText());
+    saveSetting("MythAppsYTCS", m_YTcs->GetText());
 
     for (int i = 0; i < m_searchSourcesList->GetCount(); i++) {
         QString isEnabled;
@@ -500,4 +467,19 @@ void MythSettings::checkProgramInstalled(QString programName, bool displayMessag
         mCommand += tr(" %1 not found,").arg(programName);
     }
 #endif
+}
+
+void MythSettings::setCheckboxFromSetting(MythUICheckBox *checkbox, const QString &settingName) {
+    checkboxCollection.append(qMakePair(checkbox, settingName)); // Remember for saving later
+
+    bool isChecked = (gCoreContext->GetSetting(settingName).compare("1") == 0);
+    checkbox->SetCheckState(isChecked);
+}
+
+void MythSettings::saveAllCheckboxSettings() {
+    for (const auto &entry : checkboxCollection) {
+        if (entry.first) {
+            saveSetting(entry.second, entry.first->GetBooleanCheckState());
+        }
+    }
 }

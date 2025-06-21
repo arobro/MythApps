@@ -13,7 +13,7 @@ SearchSuggestions::SearchSuggestions() {
     netRequestSearchSuggestions = new NetRequest("", "", "", "", false);
 
     // Is there a custom search suggest url?
-    QString url = gCoreContext->GetSettingOnHost("MythAppsCustomSearchSuggestUrl", gCoreContext->GetMasterHostName());
+    QString url = gCoreContext->GetSetting("MythAppsCustomSearchSuggestUrl");
 
     if (url.isEmpty()) {
         customSearchSuggestUrl = "https://en.wikipedia.org/w/api.php?action=opensearch&format=xml&search=";

@@ -6,6 +6,10 @@
 #include <libmythui/mythuishape.h>
 #include <libmythui/mythuitextedit.h>
 
+// QT
+#include <QList>
+#include <QPair>
+
 class MythSettingsPriv;
 
 class MythSettings : public MythScreenType {
@@ -60,11 +64,12 @@ class MythSettings : public MythScreenType {
 
     MythUIText *m_searchSourceTextarea;
 
-    QString backendHostName;
     QString allWebsites = "";
 
     QString savedWebSite(QString website);
     QString mCommand;
+
+    QList<QPair<MythUICheckBox *, QString>> checkboxCollection;
 
     MythSettingsPriv *m_priv{nullptr};
 
@@ -72,6 +77,8 @@ class MythSettings : public MythScreenType {
     void save();
     void updateApikey(QString appfilePath);
     void checkProgramInstalled(QString programName, bool displayMessageIfInstalled);
+    void setCheckboxFromSetting(MythUICheckBox *checkbox, const QString &settingName);
+    void saveAllCheckboxSettings();
 
   private slots:
     void m_searchListCallback(MythUIButtonListItem *item);

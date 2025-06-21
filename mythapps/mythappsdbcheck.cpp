@@ -30,6 +30,29 @@ template <typename T> void createSetting(QString settingName, T settingValue, bo
             gCoreContext->SaveSetting(settingName, settingValue);
         }
     }
+    getSettingLocationMap().insert(settingName, remote);
+}
+
+QMap<QString, bool> &getSettingLocationMap() {
+    static QMap<QString, bool> settingLocationMap;
+    return settingLocationMap;
+}
+
+void saveSetting(QString settingName, bool settingValue) {
+    saveSetting(settingName, QString::number(settingValue));
+}
+
+void saveSetting(QString settingName, QString settingValue) {
+    const auto &map = getSettingLocationMap();
+    if (map.contains(settingName)) {
+        if (map.value(settingName)) { // shared setting
+            gCoreContext->SaveSettingOnHost(settingName, settingValue, QString());
+        } else { // local setting
+            gCoreContext->SaveSetting(settingName, settingValue);
+        }
+    } else {
+        LOG(VB_GENERAL, LOG_ERR, "Setting Error: " + settingName);
+    }
 }
 
 /** \brief *updates tthe database schema*/

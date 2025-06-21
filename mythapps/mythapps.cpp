@@ -274,7 +274,7 @@ bool MythApps::Create() {
     controls = new Controls(username, password, ip, port);
     connect(controls, SIGNAL(loadProgramSignal(QString, QString, QString)), this, SLOT(loadProgramSlot(QString, QString, QString)));
 
-    showsAZfolderNames = gCoreContext->GetSettingOnHost("MythAppsShowsAZfolderNames", gCoreContext->GetMasterHostName()).split("~");
+    showsAZfolderNames = gCoreContext->GetSetting("MythAppsShowsAZfolderNames").split("~");
 
     browser = new Browser(controls);
     connect(browser, SIGNAL(setFocusWidgetSignal(QString)), this, SLOT(setFocusWidgetSlot(QString)));
@@ -2173,7 +2173,7 @@ void MythApps::loadYTNative(QString searchString, QString directory) {
     if (gCoreContext->GetSetting("MythAppsYTnative").compare("1") == 0) {
         LOG(VB_GENERAL, LOG_DEBUG, "loadYTNative()" + searchString + " dir:" + directory);
 
-        if (gCoreContext->GetSettingOnHost("MythAppsYTapi", gCoreContext->GetMasterHostName()).length() < 10) {
+        if (gCoreContext->GetSetting("MythAppsYTapi").length() < 10) {
             LOG(VB_GENERAL, LOG_DEBUG, "No API key");
             createAutoClosingBusyDialog(tr("Please enter in your API key under MythApps->Settings"), 3);
             return;

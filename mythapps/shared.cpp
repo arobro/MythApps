@@ -215,7 +215,7 @@ bool overrideAppAZSearch(QString appHash) {
 
 /** \brief urls to turn off previously feature played on*/
 bool excludePreviouslyPlayed(QString lastMediaLocation) {
-    QStringList urls = gCoreContext->GetSettingOnHost("MythAppsPreviouslyPlayedExclude", gCoreContext->GetMasterHostName()).split("~");
+    QStringList urls = gCoreContext->GetSetting("MythAppsPreviouslyPlayedExclude").split("~");
 
     foreach (QString url, urls) {
         if (lastMediaLocation.contains(url) and !url.isEmpty()) {

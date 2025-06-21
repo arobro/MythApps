@@ -89,7 +89,7 @@ bool MythInput::setType(QString type) {
     bool containsPassword = false;
     if (type.compare("password") == 0) {
         m_TextEditValue->SetPassword(true);
-        QString pass = ROT13(gCoreContext->GetSettingOnHost("MythAppsAppPass", gCoreContext->GetMasterHostName()));
+        QString pass = ROT13(gCoreContext->GetSetting("MythAppsAppPass"));
         if (!pass.compare("") == 0) {
             m_TextEditValue->SetText(pass);
             passwordActive = true;

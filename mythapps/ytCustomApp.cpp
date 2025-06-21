@@ -69,9 +69,8 @@ QList<QVariant> ytCustomApp::getVideos(QString searchText, QString directory) {
 
     QString query = getAPIBaseUrl() + "videos?part=snippet&maxResults=50&chart=mostPopular"; //&regionCode=US
 
-    QString backendHostName = gCoreContext->GetMasterHostName();
-    ytApi = gCoreContext->GetSettingOnHost("MythAppsYTapi", backendHostName);
-    ytID = gCoreContext->GetSettingOnHost("MythAppsYTID", backendHostName);
+    ytApi = gCoreContext->GetSetting("MythAppsYTapi");
+    ytID = gCoreContext->GetSetting("MythAppsYTID");
 
     if (!searchText.isEmpty()) {
         query = getAPIBaseUrl() + "search?part=snippet&maxResults=50&type=" + type + eventType + datePublishedBeforeUrlBuilder + dateBetweenUrlBuilder + "&order=" + sortBy +
