@@ -10,6 +10,9 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 
+// MythTV headers
+#include <libmythbase/mythdirs.h>
+
 /** \class Shared
  *  \brief Contains shared functions or static functions */
 QString createProgramData(QString file, QString plot, QString thumbnail, bool play, QString seek);
@@ -49,5 +52,10 @@ bool isGnome();
 bool isGnomeWayland();
 
 void activateWindowWayland(QString windowName);
+
+void createGlobalPathPrefix();
+QString getGlobalPathPrefix();
+
+QString globalPathprefix; /*!< cache path mythapps uses to store images in */
 
 #endif

@@ -56,7 +56,6 @@ class MythApps : public MythScreenType {
     MythUIType *m_help;
     MythUIButton *m_androidMenuBtn;
 
-    QString globalPathprefix;             /*!< cache path mythapps uses to store images in */
     ProgramData *currentselectionDetails; /*!<  current selection in the file browser */
     ProgramData *lastPlayedDetails;       /*!< last media played. used by the watch list feature */
 

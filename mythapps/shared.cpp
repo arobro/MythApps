@@ -287,3 +287,23 @@ void activateWindowWayland(QString windowName) {
            " --method de.lucaswerkmeister.ActivateWindowByTitle.activateBySubstring '" +
            windowName.toLocal8Bit() + "'");
 }
+
+/** \brief Returns the full cached image path based of the original image location. Will copy the image to the cache if required. Used to copy mythapp
+ * icons such as favourites to the cache directory.
+ * \param imagePath path of the orginal image
+ * \param imageFileName filename of the image
+ * \return full cached image path with the image in the cache */
+QString createImageCachePath(QString imageFileName) {
+    QString cachedPath = QString("%1%2").arg(GetShareDir()).arg("themes/default//" + imageFileName);
+    if (QFile::exists(cachedPath)) {
+        QFile::copy(cachedPath, globalPathprefix + "/" + imageFileName);
+    }
+    return QString("file://") + globalPathprefix + "/" + imageFileName;
+}
+
+void createGlobalPathPrefix() {
+    createDirectoryIfDoesNotExist(globalPathprefix);
+    globalPathprefix = GetConfDir() + "/MythApps/";
+    createDirectoryIfDoesNotExist(globalPathprefix);
+}
+QString getGlobalPathPrefix() { return globalPathprefix; }

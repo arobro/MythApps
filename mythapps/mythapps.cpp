@@ -11,7 +11,6 @@
 // MythTV headers
 #include "libmythui/mythuistatetracker.h"
 #include <libmyth/mythcontext.h>
-#include <libmythbase/mythdirs.h>
 #include <libmythui/mythdialogbox.h>
 #include <libmythui/mythmainwindow.h>
 #include <libmythui/mythprogressdialog.h>
@@ -379,12 +378,9 @@ bool MythApps::Create() {
 
     m_webSocket.open(QUrl("ws://" + ip + ":9090"));
 
+    createGlobalPathPrefix();
     // Setup cache directories
-    globalPathprefix = GetConfDir();
-    createDirectoryIfDoesNotExist(globalPathprefix);
-    globalPathprefix += "/MythApps/";
-    createDirectoryIfDoesNotExist(globalPathprefix);
-    createDirectoryIfDoesNotExist(globalPathprefix + "00cache/");
+    createDirectoryIfDoesNotExist(getGlobalPathPrefix() + "00cache/");
 
     // load icons
     fav_icon = createImageCachePath("ma_favourites.png");
@@ -421,20 +417,6 @@ bool MythApps::Create() {
     LOG(VB_GENERAL, LOG_DEBUG, "Create() Finished. Threads: " + QString::number(QThread::idealThreadCount()) + ", 4+ recommended");
 
     return true;
-}
-
-/** \brief Returns the full cached image path based of the original image location. Will copy the image to the cache if required. Used to copy mythapp
- * icons such as favourites to the cache directory.
- * \param imagePath path of the orginal image
- * \param imageFileName filename of the image
- * \param globalPathprefix this is the plungins cache directory
- * \return full cached image path with the image in the cache */
-QString MythApps::createImageCachePath(QString imageFileName) {
-    QString cachedPath = QString("%1%2").arg(GetShareDir()).arg("themes/default//" + imageFileName);
-    if (QFile::exists(cachedPath)) {
-        QFile::copy(cachedPath, globalPathprefix + "/" + imageFileName);
-    }
-    return QString("file://") + globalPathprefix + "/" + imageFileName;
 }
 
 /** \brief create and initialize the main app screen*/
@@ -821,7 +803,7 @@ QString MythApps::getStandarizedImagePath(QString imagePath) {
         imageLocation = QString("%1%2").arg(GetShareDir()).arg("themes/default/ma_mv_browse_nocover.png");
     } else { // download image file from http (Kodi json)
         QString imgID = QString(QCryptographicHash::hash((imagePath.toUtf8()), QCryptographicHash::Md5).toHex());
-        imageLocation = globalPathprefix + imgID;
+        imageLocation = getGlobalPathPrefix() + imgID;
     }
     return imageLocation;
 }
@@ -2005,7 +1987,7 @@ void MythApps::requestFileBrowser(QString url, QStringList previousSearches, boo
     QByteArray data = doc.toJson();
 
     QString urlID = QString(QCryptographicHash::hash((url.toUtf8()), QCryptographicHash::Md5).toHex());
-    QString filePathName = globalPathprefix + "00cache/" + urlID + ".cache";
+    QString filePathName = getGlobalPathPrefix() + "00cache/" + urlID + ".cache";
     QFile cacheFile(filePathName);
     bool useCache = true;
     QString cacheData = "";
@@ -2293,9 +2275,9 @@ void MythApps::customEvent(QEvent *event) {
                 runMythSettingsSlot();
             } else if (resulttext == tr("Clear Cache")) {
                 // remove all files in the cache directory
-                QDir dir(globalPathprefix + "00cache/");
+                QDir dir(getGlobalPathPrefix() + "00cache/");
                 dir.removeRecursively();
-                createDirectoryIfDoesNotExist(globalPathprefix + "00cache/");
+                createDirectoryIfDoesNotExist(getGlobalPathPrefix() + "00cache/");
             } else if (resulttext == tr("Clear Previously Played")) {
                 previouslyPlayedLink->listRemove(currentselectionDetails->get());
                 setButtonWatched(false);
