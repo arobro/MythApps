@@ -20,16 +20,15 @@ const QString MythAppsVersionName = "MythAppsDBSchemaVer";
  *  \param settingName Setting Name
  *  \param settingValue Default setting value. Can be a string or boolean.
  *  \param remote Is the setting a backend or local setting*/
-template <typename T> void createSetting(QString settingName, T settingValue, bool remote) {
-    if (remote) {
-        if (gCoreContext->GetSettingOnHost(settingName, gCoreContext->GetMasterHostName()).isEmpty()) {
-            gCoreContext->SaveSettingOnHost(settingName, QString(settingValue), gCoreContext->GetMasterHostName());
-        }
-    } else {
-        if (gCoreContext->GetSetting(settingName).isEmpty()) {
+template <typename T> void createSetting(const QString &settingName, const T &settingValue, bool remote) {
+    if (gCoreContext->GetSetting(settingName).isEmpty()) {
+        if (remote) {
+            gCoreContext->SaveSettingOnHost(settingName, QString(settingValue), QString());
+        } else {
             gCoreContext->SaveSetting(settingName, settingValue);
         }
     }
+
     getSettingLocationMap().insert(settingName, remote);
 }
 

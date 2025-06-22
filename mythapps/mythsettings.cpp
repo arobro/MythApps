@@ -218,7 +218,7 @@ bool MythSettings::keyPressEvent(QKeyEvent *event) {
     handled = GetMythMainWindow()->TranslateKeyPress("mythapps", event, actions);
 
     for (const QString &action : actions) { // Process each action key.
-        if (action == "ESCAPE") { // Global commands.
+        if (action == "ESCAPE") {           // Global commands.
             Close();
             return true;
         }

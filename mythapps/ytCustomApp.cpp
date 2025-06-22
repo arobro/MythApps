@@ -1,6 +1,7 @@
+#include "ytCustomApp.h"
+
 // MythApps headers
 #include "programData.h"
-#include "ytCustomApp.h"
 
 // QT headers
 #include <QDateTime>

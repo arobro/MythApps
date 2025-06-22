@@ -1,7 +1,7 @@
 #ifndef MYTHAPPSDBCHECK_H_
 #define MYTHAPPSDBCHECK_H_
 
-template <typename T> void createSetting(QString settingName, T settingValue, bool remote);
+template <typename T> void createSetting(const QString &settingName, const T &settingValue, bool remote);
 bool UpgradeMythAppsDatabaseSchema(void);
 QMap<QString, bool> &getSettingLocationMap();
 void saveSetting(QString settingName, QString settingValue);
