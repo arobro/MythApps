@@ -53,9 +53,7 @@ bool isGnomeWayland();
 
 void activateWindowWayland(QString windowName);
 
-void createGlobalPathPrefix();
 QString getGlobalPathPrefix();
-
-QString globalPathprefix; /*!< cache path mythapps uses to store images in */
+QString createImageCachePath(const QString imageFileName);
 
 #endif

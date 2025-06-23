@@ -213,8 +213,6 @@ class MythApps : public MythScreenType {
     QString ma_popular_icon;   /*!< stores physical image location for the corresponding button */
     QString ma_search_icon;    /*!< stores physical image location for the corresponding button */
 
-    QString createImageCachePath(QString imageFileName);
-
     void confirmDialog(QString description, QString type);
     void returnFocus();
     void setButtonWatched(bool watched);

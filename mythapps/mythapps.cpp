@@ -377,10 +377,8 @@ bool MythApps::Create() {
     }
 
     m_webSocket.open(QUrl("ws://" + ip + ":9090"));
-
-    createGlobalPathPrefix();
-    // Setup cache directories
-    createDirectoryIfDoesNotExist(getGlobalPathPrefix() + "00cache/");
+    
+    createDirectoryIfDoesNotExist(getGlobalPathPrefix() + "00cache/"); // Setup cache directories
 
     // load icons
     fav_icon = createImageCachePath("ma_favourites.png");
