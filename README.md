@@ -107,10 +107,8 @@ While MythApps is stable for me, Please note this is a new plugin under develope
 
 
 ## Code Formating
-clang-format -i *.cpp -style="{IndentWidth: 4, ColumnLimit: 200}" <br />
-clang-format -i *.h -style="{IndentWidth: 4, ColumnLimit: 200}" <br />
-clang-format -i *.pl -style="{IndentWidth: 4, ColumnLimit: 200}" <br />
-xmlindent -l 10000 -nba -t -w mythapps-ui.xml 
+run ./format.sh <br />
+See https://www.mythtv.org/wiki/Coding_Standards for more information.
 
 ## Generate developer documenation
 doxygen <br />
