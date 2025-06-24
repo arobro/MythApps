@@ -4,7 +4,7 @@ STYLE="{IndentWidth: 4, ColumnLimit: 200}"
 
 # Format .cpp, .h files in specific directories
 for dir in mythapps mythpluginLoader mythapps/plugins; do
-    find "$dir" -type f \( -name "*.cpp" -o -name "*.h" \) -exec clang-format -i -style="$STYLE" {} +
+    find "$dir" -maxdepth 1 -type f \( -name "*.cpp" -o -name "*.h" \) -exec clang-format -i -style="$STYLE" {} +
 done
 
 # Format .pl files
