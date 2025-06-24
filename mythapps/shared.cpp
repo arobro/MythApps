@@ -295,7 +295,7 @@ void activateWindowWayland(QString windowName) {
 QString createImageCachePath(const QString imageFileName) {
     QString cachedPath = QString("%1%2").arg(GetShareDir()).arg("themes/default//" + imageFileName);
     if (QFile::exists(cachedPath)) {
-        QFile::copy(cachedPath, getGlobalPathPrefix()  + "/" + imageFileName);
+        QFile::copy(cachedPath, getGlobalPathPrefix() + "/" + imageFileName);
     }
     return QString("file://") + getGlobalPathPrefix() + "/" + imageFileName;
 }

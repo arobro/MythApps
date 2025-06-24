@@ -104,15 +104,6 @@ bool ProgramData::hasWeb() {
     return false;
 }
 
-/** \brief is the folder an app called Favourites?
- * \return is the corresponding folder type? */
-bool ProgramData::hasFavourites() {
-    if (getPlot().compare("Favourites") == 0) {
-        return true;
-    }
-    return false;
-}
-
 /** \brief is the folder an app called Shows A-Z"?
  * \return is the corresponding folder type? */
 bool ProgramData::hasShowsAZ() {
@@ -172,6 +163,20 @@ bool ProgramData::hasYTnative() {
         return true;
     }
     return false;
+}
+
+bool ProgramData::hasApp() {
+    if (getFilePathParam().startsWith("app://")) {
+        return true;
+    }
+    return false;
+}
+
+QString ProgramData::getAppPluginName() {
+    QString path = getFilePathParam();
+    int schemeEnd = path.indexOf("app://") + 6;
+    int nextSlash = path.indexOf('/', schemeEnd);
+    return path.mid(schemeEnd, nextSlash - schemeEnd);
 }
 
 QString ProgramData::getWebPage() { return getFilePathParam().replace("browser://", ""); }

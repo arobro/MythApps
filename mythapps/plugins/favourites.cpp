@@ -1,0 +1,45 @@
+#include "favourites.h"
+
+// QT headers
+#include <QObject>
+#include <QString>
+
+// MythApps headers
+#include "plugin_api.h"
+#include "shared.h"
+
+Favourites::Favourites() : pluginName("Favourites"), pluginIcon("ma_favourites.png"), favLink("allFavourites", true, false) {}
+
+Favourites::~Favourites() {}
+
+QString Favourites::getPluginName() const { return pluginName; }
+
+QString Favourites::getPluginDisplayName() const {
+    ProgramLink favLink("allFavourites", true, false);
+    return getPluginName() + favLink.getListSize();
+}
+
+QString Favourites::getPluginIcon() const { return pluginIcon; }
+
+void Favourites::load() {
+    m_toggleSearchVisibleCallback(false);
+    loadFavourites(false);
+}
+
+void Favourites::displayHomeScreenItems() { loadFavourites(true); }
+
+void Favourites::loadFavourites(bool displayOnHome) {
+    Q_FOREACH (const FileFolderContainer &favourite, favLink.getList()) {
+        if (displayOnHome && !favourite.pinnedToHome) // Skip items not pinned to home
+            continue;
+
+        if (m_loadProgramCallback) {
+            m_loadProgramCallback(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image);
+        }
+    }
+}
+
+// Register the plugin with the PluginManager
+extern "C" PluginAPI *createPlugin() { return new Favourites(); }
+
+extern "C" void destroyPlugin(PluginAPI *plugin) { delete plugin; }

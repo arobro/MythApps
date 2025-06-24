@@ -263,6 +263,8 @@ void MythApps::exitToMainMenuSleepTimerReset() {
     }
 }
 
+PluginManager MythApps::pluginManager;
+
 /** \brief create the main screen and initialize the setting and state*/
 bool MythApps::Create() {
     LOG(VB_GENERAL, LOG_INFO, "Opening MythApp");
@@ -377,11 +379,10 @@ bool MythApps::Create() {
     }
 
     m_webSocket.open(QUrl("ws://" + ip + ":9090"));
-    
+
     createDirectoryIfDoesNotExist(getGlobalPathPrefix() + "00cache/"); // Setup cache directories
 
     // load icons
-    fav_icon = createImageCachePath("ma_favourites.png");
     mm_albums_icon = createImageCachePath("ma_mm_albums.png");
     mm_alltracks_icon = createImageCachePath("ma_mm_alltracks.png");
     mm_artists_icon = createImageCachePath("ma_mm_artists.png");
@@ -405,6 +406,9 @@ bool MythApps::Create() {
 
     m_streamDetailsbackground->Hide();
 
+    pluginManager.setLoadProgramCallback([this](const QString &name, const QString &setdata, const QString &thumbnailPath) { this->loadProgram(name, setdata, thumbnailPath); });
+    pluginManager.setToggleSearchVisibleCallback([this](bool visible) { this->toggleSearchVisible(visible); });
+
     loadApps();
 
 #ifdef _WIN32
@@ -423,7 +427,6 @@ void MythApps::loadApps() {
     // Initialize the load apps state
     isHome = true;
     browser->setOpenStatus(false);
-    isFavouritesOpen = false;
     currentSearchUrl = "";
     showMusicUI(false);
     azShowOnUrl.clear();
@@ -475,8 +478,12 @@ void MythApps::loadApps() {
         return;
     }
 
-    // load the favourites and watch list before sorting
-    loadImage(m_fileListGrid, QString(tr("Favourites") + favLink->getListSize()), QString("Favourites~Favourites"), fav_icon);
+    QList<PluginDisplayInfo> plugins = pluginManager.getPluginsForDisplay();
+    for (const auto &plugin : plugins) {
+        loadImage(m_fileListGrid, plugin.name, plugin.setData, plugin.iconPath);
+    }
+
+    // load the app plugins and watch list before sorting
     loadImage(m_fileListGrid, QString(tr("Watched List") + watchedLink->getListSize()), QString("Watched List~Watched List"), recent_icon);
 
     controls->loadAddons();
@@ -489,7 +496,8 @@ void MythApps::loadApps() {
     if (gCoreContext->GetSetting("MythAppsMusic").compare("1") == 0) {
         loadImage(m_fileListGrid, tr("Music"), QString("Music~Music"), music_icon);
     }
-    loadFavourites(true);
+
+    pluginManager.getPluginByName("Favourites")->displayHomeScreenItems();
 
     LOG(VB_GENERAL, LOG_DEBUG, "loadApps() Finished");
 }
@@ -1769,8 +1777,15 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
         return;
     }
 
-    if (programData->hasFavourites()) { // Favouries
-        loadFavourites(false);
+    if (programData->hasApp()) {
+        QString pluginName = programData->getAppPluginName();
+        PluginAPI *plugin = pluginManager.getPluginByName(pluginName);
+        if (plugin) {
+            m_fileListGrid->Reset();
+            loadBackButton();
+            isHome = false;
+            plugin->load();
+        }
         return;
     }
 
@@ -1865,8 +1880,10 @@ void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
 
     ProgramData *programData = new ProgramData(item->GetText("buttontext2"), item->GetData().toString());
 
-    if (programData->hasPlotandImageUrl()) {
+    if (programData->hasPlotandImageUrl()) { // figure out if 'video' home screen item
         currentselectionDetails->set(getLabel(item), item->GetData().toString());
+    } else {
+        currentselectionDetails->set("", "");
     }
 
     m_plot->SetText("");
@@ -2078,27 +2095,6 @@ void MythApps::requestFileBrowser(QString url, QStringList previousSearches, boo
     cacheFile.close();
 }
 
-/** \brief load the favourites list */
-void MythApps::loadFavourites(bool home) {
-    LOG(VB_GENERAL, LOG_DEBUG, "loadFavourites()");
-    if (!home) {
-        isFavouritesOpen = true;
-        m_fileListGrid->Reset();
-        loadBackButton();
-        toggleSearchVisible(false);
-        isHome = false;
-    }
-
-    Q_FOREACH (const FileFolderContainer &favourite, favLink->getList()) {
-        if (favourite.pinnedToHome) {
-        } else if (home) {
-            continue;
-        }
-
-        loadProgram(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image);
-    }
-}
-
 /** \brief load the watched list */
 void MythApps::loadWatched(bool unwatched) {
     LOG(VB_GENERAL, LOG_DEBUG, "loadWatched()");
@@ -2223,7 +2219,7 @@ void MythApps::showOptionsMenu() {
 
             if (favLink->isPinnedToHome(currentselectionDetails->get())) {
                 m_menuPopup->AddButton(tr("Remove Selection from Home Screen"));
-            } else if (favLink->contains(currentselectionDetails->getUrl()) and isFavouritesOpen) {
+            } else if (favLink->contains(currentselectionDetails->getUrl()) and pluginManager.isFavouritesPluginOpen(isHome)) {
                 m_menuPopup->AddButton(tr("Pin Selection to Home Screen"));
             }
 
@@ -2349,14 +2345,15 @@ void MythApps::customEvent(QEvent *event) {
 
 /** \brief reload either the home screen or favourites screen*/
 void MythApps::reload() {
-    if (isFavouritesOpen) {
+    if (pluginManager.isFavouritesPluginOpen(isHome)) {
         m_fileListGrid->Reset();
         loadBackButton();
-        loadFavourites(false);
+        pluginManager.getPluginByName("Favourites")->load();
     } else {
         loadApps();
     }
 }
+
 /** \brief refresh the selection in the file list grid.  */
 void MythApps::refreshFileListGridSelection() {
     int pos = m_fileListGrid->GetCurrentPos();

@@ -20,6 +20,7 @@
 #include "controls.h"
 #include "fileBrowserHistory.h"
 #include "imageThread.h"
+#include "plugins/plugin_manager.h"
 #include "programData.h"
 #include "programLink.h"
 #include "ytCustomApp.h"
@@ -98,7 +99,6 @@ class MythApps : public MythScreenType {
     bool kodiPlayerOpen = false;
     bool musicOpen = false;        /*!< is the music player open? */
     bool ytNativeOpen = false;     /*!< is ytNative open? */
-    bool isFavouritesOpen = false; /*!< is the favourites app open? */
     bool allowAutoMinimize = true; /*!< is auto minimizing kodi enabled? */
     bool isPreviouslyPlayed = false;
     bool allShowsFolderFound = false;
@@ -121,7 +121,6 @@ class MythApps : public MythScreenType {
     void createAutoClosingBusyDialog(QString dialogText, int delaySeconds, bool wait = true);
     void refreshPage(bool enableDialog);
 
-    void loadFavourites(bool home);
     void loadWatched(bool unwatched);
     void loadVideos();
     void loadYTNative(QString searchString, QString directory);
@@ -199,7 +198,6 @@ class MythApps : public MythScreenType {
     QScreen *screen;
     Controls *controls;
 
-    QString fav_icon;          /*!< stores physical image location for the corresponding button */
     QString mm_albums_icon;    /*!< stores physical image location for the corresponding button */
     QString mm_alltracks_icon; /*!< stores physical image location for the corresponding button */
     QString mm_artists_icon;   /*!< stores physical image location for the corresponding button */
@@ -344,6 +342,8 @@ class MythApps : public MythScreenType {
     ytCustomApp *ytNative;
     bool ytNativeEnabled = false;
     QString firstDirectoryName;
+
+    static PluginManager pluginManager;
 };
 
 #endif /* MYTHKODI_H */

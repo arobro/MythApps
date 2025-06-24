@@ -35,7 +35,6 @@ class ProgramData {
     bool hasPlaylists();
 
     bool hasWeb();
-    bool hasFavourites();
     bool hasShowsAZ();
     bool hasSearchShowsAZ();
     bool hasMusic();
@@ -44,6 +43,8 @@ class ProgramData {
     bool hasVideos();
 
     bool hasYTnative();
+    bool hasApp();
+    QString getAppPluginName();
     QString getWebPage();
 
     void set(QString label, QString data);

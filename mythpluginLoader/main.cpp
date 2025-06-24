@@ -11,53 +11,51 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <QKeyEvent>
-#include <QEvent>
-#include <QWidget>
 #include <QApplication>
-#include <QString>
-#include <QFileInfo>
 #include <QDir>
+#include <QEvent>
+#include <QFileInfo>
+#include <QKeyEvent>
+#include <QString>
+#include <QWidget>
 
-#include "exitcodes.h"
-#include "mythcontext.h"
-#include "mythdbcon.h"
-#include "mythversion.h"
+#include "../../../mythtv/libs/libmythbase/cleanupguard.h"
 #include "commandlineparser.h"
 #include "compat.h"
-#include "mythlogging.h"
-#include "signalhandling.h"
+#include "exitcodes.h"
 #include "langsettings.h"
-#include "mythtranslation.h"
-#include "mythmainwindow.h"
-#include "mythuihelper.h"
+#include "mythcontext.h"
 #include "mythcorecontext.h"
-#include "../../../mythtv/libs/libmythbase/cleanupguard.h"
+#include "mythdbcon.h"
+#include "mythlogging.h"
+#include "mythmainwindow.h"
+#include "mythtranslation.h"
+#include "mythuihelper.h"
+#include "mythversion.h"
+#include "signalhandling.h"
 
 #include "../../../mythtv/libs/libmythui/mythdisplay.h"
 
 #include "../mythapps/mythapps.h"
 
-#define LOC      QString("MythScreenWizard: ")
+#define LOC QString("MythScreenWizard: ")
 #define LOC_WARN QString("MythScreenWizard, Warning: ")
-#define LOC_ERR  QString("MythScreenWizard, Error: ")
+#define LOC_ERR QString("MythScreenWizard, Error: ")
 
-namespace
-{
-    void cleanup()
-    {
-        DestroyMythMainWindow();
+namespace {
+void cleanup() {
+    DestroyMythMainWindow();
 
-        delete gContext;
-        gContext = nullptr;
+    delete gContext;
+    gContext = nullptr;
 
-        ReferenceCounter::PrintDebug();
+    ReferenceCounter::PrintDebug();
 
-        SignalHandler::Done();
-    }}
+    SignalHandler::Done();
+}
+} // namespace
 
-static void startAppearWiz(int _x, int _y, int _w, int _h)
-{ 
+static void startAppearWiz(int _x, int _y, int _w, int _h) {
     MythScreenStack *mainStack = GetMythMainWindow()->GetMainStack();
     auto *mythapps = new MythApps(mainStack, "mythapps");
 
@@ -65,26 +63,22 @@ static void startAppearWiz(int _x, int _y, int _w, int _h)
         mainStack->AddScreen(mythapps);
         return;
     }
-    delete mythapps;        
+    delete mythapps;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     MythScreenWizardCommandLineParser cmdline;
-    if (!cmdline.Parse(argc, argv))
-    {
+    if (!cmdline.Parse(argc, argv)) {
         cmdline.PrintHelp();
         return GENERIC_EXIT_INVALID_CMDLINE;
     }
 
-    if (cmdline.toBool("showhelp"))
-    {
+    if (cmdline.toBool("showhelp")) {
         cmdline.PrintHelp();
         return GENERIC_EXIT_OK;
     }
 
-    if (cmdline.toBool("showversion"))
-    {
+    if (cmdline.toBool("showversion")) {
         MythScreenWizardCommandLineParser::PrintVersion();
         return GENERIC_EXIT_OK;
     }
@@ -102,9 +96,8 @@ int main(int argc, char **argv)
 
 #ifndef _WIN32
     QList<int> signallist;
-    signallist << SIGINT << SIGTERM << SIGSEGV << SIGABRT << SIGBUS << SIGFPE
-               << SIGILL;
-#if ! CONFIG_DARWIN
+    signallist << SIGINT << SIGTERM << SIGSEGV << SIGABRT << SIGBUS << SIGFPE << SIGILL;
+#if !CONFIG_DARWIN
     signallist << SIGRTMIN;
 #endif
     SignalHandler::Init(signallist);
@@ -115,25 +108,22 @@ int main(int argc, char **argv)
         return retval;
 
     gContext = new MythContext(MYTH_BINARY_VERSION);
-    if (!gContext->Init(true, false, false))
-    {
+    if (!gContext->Init(true, false, false)) {
         LOG(VB_GENERAL, LOG_ERR, LOC + "Failed to init MythContext, exiting.");
         return GENERIC_EXIT_NO_MYTHCONTEXT;
     }
 
     int GuiOffsetX = gCoreContext->GetNumSetting("GuiOffsetX", 0);
     int GuiOffsetY = gCoreContext->GetNumSetting("GuiOffsetY", 0);
-    int GuiWidth   = gCoreContext->GetNumSetting("GuiWidth", 0);
-    int GuiHeight  = gCoreContext->GetNumSetting("GuiHeight", 0);
-    
+    int GuiWidth = gCoreContext->GetNumSetting("GuiWidth", 0);
+    int GuiHeight = gCoreContext->GetNumSetting("GuiHeight", 0);
+
     cmdline.ApplySettingsOverride();
-    
+
     QString themename = gCoreContext->GetSetting("Theme", DEFAULT_UI_THEME);
     QString themedir = GetMythUI()->FindThemeDir(themename);
-    if (themedir.isEmpty())
-    {
-        LOG(VB_GENERAL, LOG_ERR, QString("Couldn't find theme '%1'")
-                .arg(themename));
+    if (themedir.isEmpty()) {
+        LOG(VB_GENERAL, LOG_ERR, QString("Couldn't find theme '%1'").arg(themename));
         return GENERIC_EXIT_NO_THEME;
     }
 
