@@ -66,7 +66,6 @@ void ImageThread::proccessImage(NetRequest &nr) {
 
     // get image ratio and scale
     int hRatio = originalImage.height() * ((16 / 9) * 1.75);
-    originalImage = originalImage.scaled(500, 500, Qt::KeepAspectRatio);
     int widthDiff = (hRatio - originalImage.width()) / 2;
 
     QImage destBackground(hRatio, originalImage.height(), QImage::Format_ARGB32);
@@ -93,7 +92,7 @@ void ImageThread::proccessImage(NetRequest &nr) {
     imagepainter.drawImage(0, 0, blackImage);
     imagepainter.end();
 
-    ////combine image and reflectionImage
+    // combine image and reflectionImage
     QImage result(destBackground.width(), destBackground.height() + destBackground.height() * .20,
                   QImage::Format_ARGB32); // image to hold the join of image 1 & 2
     QPainter painterII(&result);
