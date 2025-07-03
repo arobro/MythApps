@@ -395,7 +395,6 @@ bool Controls::isPaused(int playerid) {
  * \return the first active player id. zero indicates an error */
 int Controls::getActivePlayer() {
     LOG(VB_GENERAL, LOG_DEBUG, "getActivePlayer()");
-    delayMilli(100);
 
     QString answer = fetchUrlJson("Player.GetActivePlayers");
 

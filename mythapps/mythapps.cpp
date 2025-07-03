@@ -1520,8 +1520,6 @@ void MythApps::goFullscreen() {
     if (musicOpen) {
         controls->activateWindow("visualer");
     } else {
-        // controls->activateWindow("screensaver"); // hides the kodi gui (may be unstable?)
-
         controls->activateWindow("screensaver"); // hides the kodi gui (may be unstable?)
     }
 
@@ -1539,8 +1537,7 @@ void MythApps::goFullscreen() {
 #ifdef __ANDROID__
     if (!controls->androidAppSwitch("Kodi")) {
         createAutoClosingBusyDialog(tr("Myth Apps Services (anroid app - apk) is either not installed or "
-                                       "running. Have you opened the app?"),
-                                    3);
+                                       "running. Have you opened the app?"), 3);
         niceClose(true);
     }
 #elif _WIN32
@@ -1582,7 +1579,7 @@ void MythApps::goMinimize(bool fullscreenCheck) {
     if (!allowAutoMinimize) {
         return;
     }
-    if (fullscreenCheck && !isGnomeWayland()) {
+    if (fullscreenCheck && isX11()) {
         if (controls->isFullscreenBool()) {
             toggleFullscreen();
         }
@@ -1595,7 +1592,6 @@ void MythApps::goMinimize(bool fullscreenCheck) {
     wchar_t kodi_wchar2[] = L"MythApps";
     SetActiveWindow(FindWindow(NULL, kodi_wchar2));
 #else
-    delayMilli(150);
     controls->goMinimize();
 #endif
 }
@@ -1651,15 +1647,13 @@ bool MythApps::takeScreenshot() {
 #endif
     if (!musicOpen) {
         m_screenshotMainQimage = screen->grabWindow(0).toImage().convertToFormat(QImage::Format_ARGB32);
-        m_screenshotMainQimage.scaled(1920, 1080, Qt::KeepAspectRatio);
+        m_screenshotMainQimage = m_screenshotMainQimage.scaled(1920, 1080, Qt::KeepAspectRatio);
 
         QColor imageColor(m_screenshotMainQimage.pixel(600, 600));
         if (imageColor.red() == 0 and imageColor.green() == 0 and imageColor.blue() == 0) {
             LOG(VB_GENERAL, LOG_DEBUG, "Screenshot is blank ");
             return false;
         }
-
-        delayMilli(200);
         return true;
     }
     return false;
