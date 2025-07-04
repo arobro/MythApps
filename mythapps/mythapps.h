@@ -161,7 +161,7 @@ class MythApps : public MythScreenType {
     void loadProgram(QString name, QString setdata, QString thumbnailPath);
     void loadProgram(QString name, QString setdata, QString thumbnailPath, MythUIButtonList *mythUIButtonList);
     void play_Kodi(QString mediaLocation, QString seekAmount);
-    void play(QString mediaLocation);
+    void play(QString mediaLocation, QString seekAmount = "");
 
     void ReplyFinishedFileBrowser(QNetworkReply *reply);
     void requestFileBrowser(QString url, QStringList previousSearches, bool loadBackButton, QString itemData);

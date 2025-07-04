@@ -37,7 +37,6 @@ class Controls : public QObject {
     template <typename T> void setKodiSetting(QString SettingName, T SettingValue);
     QString fetchUrlJson(QString method, QJsonObject paramsObj = QJsonObject(), QJsonArray property = QJsonArray());
     void seek(int hours, int minutes, int seconds);
-    void seek(QString seekAmount);
 
     void showOSD();
     void togglePlayerDebug(bool doubleclick);
@@ -75,7 +74,7 @@ class Controls : public QObject {
     QVariantMap getPlayBackTime(int playerid);
 
     QString handleDialogs();
-    void play(QString mediaLocation);
+    void play(const QString &mediaLocation, const QString &seekAmount);
 
     void pauseToggle(int activePlayerStatus);
     QString isPlaying();

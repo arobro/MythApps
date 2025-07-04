@@ -79,7 +79,7 @@ void Controls::startKodiIfNotRunning() {
            "nul || (start kodi_start.cmd)");
 #else
     QString kodiName = "kodi";
-    if (checkIfProgramInstalled("kodi-start")) { //used for testing
+    if (checkIfProgramInstalled("kodi-start")) { // used for testing
         kodiName = "kodi-start";
     } else if (!checkIfProgramInstalled(kodiName)) {
         kodiName = "flatpak run tv.kodi.Kodi"; // try flatpak kodi
@@ -244,14 +244,6 @@ void Controls::seek(int hours, int minutes, int seconds) {
     paramsObj["value"] = obj2;
 
     fetchUrlJson("Player.Seek", paramsObj);
-}
-
-/** \brief seek to a set position */
-void Controls::seek(QString seekAmount) {
-    QStringList seekTime = seekAmount.split(":");
-    if (seekTime.size() >= 2) {
-        seek(seekTime.at(0).toInt(), seekTime.at(1).toInt(), seekTime.at(2).toInt()); // seek to timestamp
-    }
 }
 
 /** \brief active a window in Kodi
@@ -538,15 +530,32 @@ QString Controls::handleDialogs() {
     return map2["System.CurrentWindow"].toString();
 }
 
-/** \brief play the media in Kodi */
-void Controls::play(QString mediaLocation) {
+/**  \brief Open media in Kodi and optionally resume playback */
+void Controls::play(const QString &mediaLocation, const QString &seekAmount) {
     FFspeed = 1;
-    QJsonObject obj;
-    obj["file"] = mediaLocation.trimmed();
-    QJsonObject paramsObj;
-    paramsObj["item"] = obj;
 
-    fetchUrlJson("Player.Open", paramsObj);
+    QJsonObject itemObj;
+    itemObj["file"] = mediaLocation.trimmed();
+
+    QJsonObject openParams;
+    openParams["item"] = itemObj;
+
+    QString trimmedSeek = seekAmount.trimmed();
+    if (!trimmedSeek.isEmpty()) {
+        QStringList parts = trimmedSeek.split(":");
+        if (parts.size() == 3) {
+            QJsonObject resumeObj;
+            resumeObj["hours"] = parts.at(0).toInt();
+            resumeObj["minutes"] = parts.at(1).toInt();
+            resumeObj["seconds"] = parts.at(2).toInt();
+
+            QJsonObject optionsObj;
+            optionsObj["resume"] = resumeObj;
+            openParams["options"] = optionsObj;
+        }
+    }
+
+    fetchUrlJson("Player.Open", openParams);
 }
 
 /** \brief toggle pause the playing media */

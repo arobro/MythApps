@@ -1499,10 +1499,11 @@ QString MythApps::getPlayBackTimeString(bool adjustEnd) {
 }
 
 /** \brief play the video
- * \param filePathParam url of the video*/
-void MythApps::play(QString mediaLocation) {
+ * \param filePathParam url of the video
+ * \param seekAmount amount to seek in hours minutes seconds. Can be blank */
+void MythApps::play(QString mediaLocation, QString seekAmount) {
     m_plot->SetText("Play");
-    controls->play(mediaLocation);
+    controls->play(mediaLocation, seekAmount);
 }
 
 /** \brief toggle kodi fullscreen */
@@ -2387,7 +2388,7 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
     exitToMainMenuSleepTimer->stop();
 
     goFullscreen();
-    play(mediaLocation); // play the media
+    play(mediaLocation, seekAmount); // play the media
 
     QTime dieTime = QTime::currentTime().addSecs(9); // check the media is playing
     while (isPlaying(0) == 0) {                      // not playing
@@ -2397,14 +2398,6 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
         delay(1);
     }
 
-    if (!seekAmount.compare("00:00:00") == 0) { // if seek timestamp specified
-        if (isPlaying(0) == 1) {                // if playing
-            if (controls->getConnected() == 2) {
-                controls->seek(seekAmount); // seek to timestamp
-                delay(2);
-            }
-        }
-    }
     if (controls->getConnected() == 2) {
         handleDialogs(true);
 
