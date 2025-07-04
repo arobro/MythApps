@@ -76,7 +76,7 @@ class MythSettings : public MythScreenType {
     void togglePage();
     void save();
     void updateApikey(QString appfilePath);
-    void checkProgramInstalled(QString programName, bool displayMessageIfInstalled);
+    void appendProgramInstallStatus(QString programName, bool displayMessageIfInstalled);
     void setCheckboxFromSetting(MythUICheckBox *checkbox, const QString &settingName);
     void saveAllCheckboxSettings();
 

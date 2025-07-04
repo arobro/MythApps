@@ -7,3 +7,4 @@ Makefile
 /mythapps/*moc_*.cpp
 /mythapps/moc_*.h
 /.vscode/settings.json
+/.vscode/tasks.json

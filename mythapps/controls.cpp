@@ -79,8 +79,10 @@ void Controls::startKodiIfNotRunning() {
            "nul || (start kodi_start.cmd)");
 #else
     QString kodiName = "kodi";
-    if (system("command -v kodi >/dev/null 2>&1 || { exit 1; }") != 0) { // kodi found
-        kodiName = "flatpak run tv.kodi.Kodi";                           // try flatpak kodi
+    if (checkIfProgramInstalled("kodi-start")) { //used for testing
+        kodiName = "kodi-start";
+    } else if (!checkIfProgramInstalled(kodiName)) {
+        kodiName = "flatpak run tv.kodi.Kodi"; // try flatpak kodi
     }
     if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0) {
         system("export LIRC_SOCKET_PATH=\"/\";if ! pgrep -x kodi > /dev/null; then " + kodiName.toLocal8Bit() + " & fi;");

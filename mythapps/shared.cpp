@@ -310,3 +310,13 @@ QString getGlobalPathPrefix() {
 
     return globalPathprefix;
 }
+
+/** \brief Checks whether a specific program is installed on a Linux system.
+ * @param programName The name of the program to check. */
+bool checkIfProgramInstalled(const QString &programName) {
+#ifdef __linux__
+    QString command = "command -v " + programName + " >/dev/null 2>&1";
+    return system(command.toLatin1().constData()) == 0;
+#endif
+    return false;
+}

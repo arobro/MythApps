@@ -1537,7 +1537,8 @@ void MythApps::goFullscreen() {
 #ifdef __ANDROID__
     if (!controls->androidAppSwitch("Kodi")) {
         createAutoClosingBusyDialog(tr("Myth Apps Services (anroid app - apk) is either not installed or "
-                                       "running. Have you opened the app?"), 3);
+                                       "running. Have you opened the app?"),
+                                    3);
         niceClose(true);
     }
 #elif _WIN32

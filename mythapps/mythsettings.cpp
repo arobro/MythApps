@@ -150,13 +150,13 @@ bool MythSettings::Create() // _videoUrl,_seek
 
     mCommand = "Install Status: ";
 
-    checkProgramInstalled("Kodi", true);
+    appendProgramInstallStatus("Kodi", true);
 
     if (isX11()) {
-        checkProgramInstalled("xdotool", true);
+        appendProgramInstallStatus("xdotool", true);
     } else if (isGnome()) {
-        checkProgramInstalled("git", false);
-        checkProgramInstalled("gsettings", false);
+        appendProgramInstallStatus("git", false);
+        appendProgramInstallStatus("gsettings", false);
 
         if (QFile(QDir::homePath() + "/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de/extension.js").exists()) {
             system("gsettings set org.gnome.shell disable-user-extensions false");
@@ -394,10 +394,10 @@ void MythSettings::updateApikey(QString appfilePath) {
     }
 }
 
-/** \brief Checks whether a specified program is installed on a Linux system.
+/** \brief Checks whether a specific program is installed on a Linux system and appends the status.
  * @param programName The name of the program to check.
  * @param displayMessageIfInstalled Whether to display a installed message if the program is found. */
-void MythSettings::checkProgramInstalled(QString programName, bool displayMessageIfInstalled) {
+void MythSettings::appendProgramInstallStatus(QString programName, bool displayMessageIfInstalled) {
 #ifdef __linux__
     QString command = "command -v " + programName + " >/dev/null 2>&1 || { exit 1; }";
 

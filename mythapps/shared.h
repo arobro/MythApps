@@ -56,4 +56,6 @@ void activateWindowWayland(QString windowName);
 QString getGlobalPathPrefix();
 QString createImageCachePath(const QString imageFileName);
 
+bool checkIfProgramInstalled(const QString &programName);
+
 #endif
