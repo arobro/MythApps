@@ -396,10 +396,10 @@ bool MythApps::Create() {
     ma_popular_icon = createImageCachePath("ma_popular.png");
     ma_search_icon = createImageCachePath("ma_search.png");
 
-    previouslyPlayedLink = new ProgramLink("previouslyPlayed", true, false); // load previously played videos
-    favLink = new ProgramLink("allFavourites", true, false);                 // load Favourites
-    watchedLink = new ProgramLink("allWatched", true, false);                // load Watched List
-    searchListLink = new ProgramLink("searchList", false, false);            // load Search Sources
+    previouslyPlayedLink = new ProgramLink("previouslyPlayed"); // load previously played videos
+    favLink = new ProgramLink("allFavourites");                 // load Favourites
+    watchedLink = new ProgramLink("allWatched");                // load Watched List
+    searchListLink = new ProgramLink("searchList");             // load Search Sources
 
     currentselectionDetails = new ProgramData("", "");
     lastPlayedDetails = new ProgramData("", "");
@@ -484,7 +484,7 @@ void MythApps::loadApps() {
     }
 
     // load the app plugins and watch list before sorting
-    loadImage(m_fileListGrid, QString(tr("Watched List") + watchedLink->getListSize()), QString("Watched List~Watched List"), recent_icon);
+    loadImage(m_fileListGrid, QString(tr("Watched List")), QString("Watched List~Watched List"), recent_icon);
 
     controls->loadAddons();
     SetFocusWidget(m_fileListGrid); // set the focus to the file list grid
@@ -2097,12 +2097,14 @@ void MythApps::loadWatched(bool unwatched) {
     m_fileListGrid->Reset();
     loadBackButton();
     toggleSearchVisible(false);
+    int limit = 0;
 
     if (!unwatched) {
         loadImage(m_fileListGrid, QString(tr("Unwatched") + watchedLink->getUnWatchedSize()), QString("Unwatched~Unwatched"), recent_icon);
+        limit = 22;
     }
 
-    Q_FOREACH (const FileFolderContainer &watched, watchedLink->getList()) {
+    Q_FOREACH (const FileFolderContainer &watched, watchedLink->getList(true, limit)) {
 
         QString seek = watched.seek;
         if (seek.compare("false") == 0 and !unwatched) {

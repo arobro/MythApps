@@ -1,19 +1,12 @@
 #include "programLink.h"
 
-// MythTV headers
-#include <libmyth/mythcontext.h>
-
 // MythApps headers
 #include "shared.h"
 
 /** \class ProgramLink
  *  \brief Find, Add and remove program links such as favourites, watchlist, previously played & search List */
 
-ProgramLink::ProgramLink(QString _linkName, bool _remote, bool _mostRecentOnly) {
-    linkName = _linkName;
-    remote = _remote;
-    mostRecentOnly = _mostRecentOnly;
-}
+ProgramLink::ProgramLink(QString _linkName) { linkName = _linkName; }
 
 /** \brief How many favourites/'program links' are there?
  *  \return number of program links */
@@ -21,10 +14,7 @@ QString ProgramLink::getListSize() {
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE");
     query.bindValue(":TYPE", linkName);
-
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
-    }
+    execQuery(query);
 
     return " (" + QString::number(query.size()) + ")";
 }
@@ -34,42 +24,37 @@ QString ProgramLink::getListSize() {
 int ProgramLink::getListSizeEnabled() { return getListEnabled().size(); }
 
 /** \brief Returns a list of all the favourites/'program links'
- *  \return list of favourites/'program links in a fileFolderContainer' */
-QList<FileFolderContainer> ProgramLink::getList() {
-    QString programLinkDatabaseString("");
-    if (!remote) {
-        programLinkDatabaseString = "AND hostname = :HOSTNAME;";
-    }
-
+ *  \param descending If true, results are ordered by id descending
+ *  \param limit Maximum number of results to return (0 means no limit)
+ *  \return list of favourites/'program links in a fileFolderContainer'
+ */
+QList<FileFolderContainer> ProgramLink::getList(bool descending, int limit) {
     LinkDataList.clear();
 
     MSqlQuery query(MSqlQuery::InitCon());
-    query.prepare("SELECT title,url,plot,image,autoPlay,seek,pinnedToHome FROM mythapps_programlink WHERE type = :TYPE " + programLinkDatabaseString);
-    query.bindValue(":TYPE", linkName);
-    query.bindValue(":HOSTNAME", gCoreContext->GetHostName());
+    QString sql = "SELECT title, url, plot, image, autoPlay, seek, pinnedToHome "
+                  "FROM mythapps_programlink WHERE type = :TYPE ORDER BY id ";
+    sql += descending ? "DESC " : "ASC ";
 
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
+    if (limit > 0) {
+        sql += QString("LIMIT %1 ").arg(limit);
     }
 
-    int count = 0;
+    query.prepare(sql);
+    query.bindValue(":TYPE", linkName);
+    execQuery(query);
+
     while (query.next()) {
-        count++;
+        FileFolderContainer item;
+        item.title = query.value(0).toString();
+        item.url = query.value(1).toString();
+        item.plot = query.value(2).toString();
+        item.image = query.value(3).toString();
+        item.autoPlay = query.value(4).toBool();
+        item.seek = query.value(5).toString();
+        item.pinnedToHome = query.value(6).toBool();
 
-        if (mostRecentOnly and count > 30) {
-            break;
-        }
-
-        FileFolderContainer fileFolderContainerTemp;
-        fileFolderContainerTemp.title = query.value(0).toString();
-        fileFolderContainerTemp.url = query.value(1).toString();
-        fileFolderContainerTemp.plot = query.value(2).toString();
-        fileFolderContainerTemp.image = query.value(3).toString();
-        fileFolderContainerTemp.autoPlay = query.value(4).toBool();
-        fileFolderContainerTemp.seek = query.value(5).toString();
-        fileFolderContainerTemp.pinnedToHome = query.value(6).toBool();
-
-        LinkDataList.append(fileFolderContainerTemp);
+        LinkDataList.append(item);
     }
 
     return LinkDataList;
@@ -83,10 +68,8 @@ QStringList ProgramLink::getListEnabled() {
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("SELECT url FROM mythapps_programlink  WHERE type = :TYPE AND enabled = 1");
     query.bindValue(":TYPE", linkName);
+    execQuery(query);
 
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
-    }
     while (query.next()) {
         enabledList.append(query.value(0).toString());
     }
@@ -101,15 +84,9 @@ bool ProgramLink::contains(QString url) {
     query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND url = :URL");
     query.bindValue(":TYPE", linkName);
     query.bindValue(":URL", url);
+    execQuery(query);
 
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
-    }
-
-    if (query.size() > 0) {
-        return true;
-    }
-    return false;
+    return query.size() > 0;
 }
 
 /** \brief Does part of the favourite/'program link exist in the mythtv database
@@ -119,15 +96,9 @@ bool ProgramLink::containsLike(QString url) {
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND url LIKE '" + url + "%'");
     query.bindValue(":TYPE", linkName);
+    execQuery(query);
 
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
-    }
-
-    if (query.size() > 0) {
-        return true;
-    }
-    return false;
+    return query.size() > 0;
 }
 
 /** \brief find the enabled search url from a base url
@@ -137,10 +108,8 @@ QString ProgramLink::findSearchUrl(QString url) {
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("SELECT url FROM mythapps_programlink  WHERE type = :TYPE AND enabled = 1 AND url LIKE '" + url + "%'");
     query.bindValue(":TYPE", linkName);
+    execQuery(query);
 
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
-    }
     while (query.next()) {
         return query.value(0).toString();
     }
@@ -162,12 +131,7 @@ void ProgramLink::append(FileFolderContainer fileFolderContainerTemp) {
     query.bindValue(":SEEK", fileFolderContainerTemp.seek);
     query.bindValue(":PINNEDTOHOME", false);
     query.bindValue(":ENABLED", true);
-
-    if (remote) {
-        query.bindValue(":HOSTNAME", "");
-    } else {
-        query.bindValue(":HOSTNAME", gCoreContext->GetHostName());
-    }
+    query.bindValue(":HOSTNAME", "");
 
     if (!query.exec() || !query.isActive()) {
         MythDB::DBError("mythapps: inserting in DB", query);
@@ -200,9 +164,7 @@ void ProgramLink::listRemove(FileFolderContainer fileFolderContainerTemp) {
     query.prepare("DELETE FROM mythconverg.mythapps_programlink WHERE type = :TYPE AND url = :URL;");
     query.bindValue(":TYPE", linkName);
     query.bindValue(":URL", fileFolderContainerTemp.url);
-    if (!query.exec() || !query.isActive()) {
-        MythDB::DBError("mythapps: delete from db", query);
-    }
+    execQuery(query);
 }
 
 /** \brief is the program link pinned to the home screen?
@@ -213,15 +175,9 @@ bool ProgramLink::isPinnedToHome(FileFolderContainer fileFolderContainerTemp) {
     query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND url = :URL AND pinnedToHome = true;");
     query.bindValue(":TYPE", linkName);
     query.bindValue(":URL", fileFolderContainerTemp.url);
+    execQuery(query);
 
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not find isPinnedToHome in DB", query);
-    }
-
-    if (query.size() > 0) {
-        return true;
-    }
-    return false;
+    return query.size() > 0;
 }
 
 /** \brief remove the program link from the home screen
@@ -231,10 +187,7 @@ void ProgramLink::removeFromHomeScreen(FileFolderContainer fileFolderContainerTe
     query.prepare("UPDATE mythapps_programlink SET pinnedToHome = false WHERE type = :TYPE AND url = :URL AND pinnedToHome = true;");
     query.bindValue(":TYPE", linkName);
     query.bindValue(":URL", fileFolderContainerTemp.url);
-
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not update isPinnedToHome in DB", query);
-    }
+    execQuery(query);
 }
 
 /** \brief add the program link from the home screen
@@ -244,10 +197,7 @@ void ProgramLink::addToHomeScreen(FileFolderContainer fileFolderContainerTemp) {
     query.prepare("UPDATE mythapps_programlink SET pinnedToHome = true WHERE type = :TYPE AND url = :URL AND pinnedToHome = false;");
     query.bindValue(":TYPE", linkName);
     query.bindValue(":URL", fileFolderContainerTemp.url);
-
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not update isPinnedToHome in DB", query);
-    }
+    execQuery(query);
 }
 
 /** \brief get the unwatched size. (seek is false)  */
@@ -255,10 +205,15 @@ QString ProgramLink::getUnWatchedSize() {
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND seek = 'false'");
     query.bindValue(":TYPE", linkName);
-
-    if (!query.exec()) {
-        MythDB::DBError(LOG_ERR + "Could not find in DB", query);
-    }
-
+    execQuery(query);
     return " (" + QString::number(query.size()) + ")";
+}
+
+/** \brief Executes a query and logs an error if it fails
+ *  \param query The prepared MSqlQuery object
+ *  \param context Description or context for the error log */
+void ProgramLink::execQuery(MSqlQuery &query) {
+    if (!query.exec()) {
+        MythDB::DBError(LOG_ERR + "programLink db error", query);
+    }
 }

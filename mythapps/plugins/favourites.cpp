@@ -8,14 +8,14 @@
 #include "plugin_api.h"
 #include "shared.h"
 
-Favourites::Favourites() : pluginName("Favourites"), pluginIcon("ma_favourites.png"), favLink("allFavourites", true, false) {}
+Favourites::Favourites() : pluginName("Favourites"), pluginIcon("ma_favourites.png"), favLink("allFavourites") {}
 
 Favourites::~Favourites() {}
 
 QString Favourites::getPluginName() const { return pluginName; }
 
 QString Favourites::getPluginDisplayName() const {
-    ProgramLink favLink("allFavourites", true, false);
+    ProgramLink favLink("allFavourites");
     return getPluginName() + favLink.getListSize();
 }
 
@@ -29,7 +29,7 @@ void Favourites::load() {
 void Favourites::displayHomeScreenItems() { loadFavourites(true); }
 
 void Favourites::loadFavourites(bool displayOnHome) {
-    Q_FOREACH (const FileFolderContainer &favourite, favLink.getList()) {
+    Q_FOREACH (const FileFolderContainer &favourite, favLink.getList(true, 0)) {
         if (displayOnHome && !favourite.pinnedToHome) // Skip items not pinned to home
             continue;
 
