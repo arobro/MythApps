@@ -102,6 +102,8 @@ but will require a logoff. You can check if this is setup correctly by running: 
 https://github.com/lucaswerkmeister/activate-window-by-title<br />
 Also make sure you have gnome extensions enabled: "gsettings set org.gnome.shell disable-user-extensions false"<br />
 
+Wayland works beter than X11.
+
 # DEVELOPER
 While MythApps is stable for me, Please note this is a new plugin under developement.
 
@@ -144,6 +146,3 @@ Most addons will have a setting not to prompt for video quality. <br />
 4.	Confirm all dependencies are installed by opening the settings menu (m key).  <br />
 5.	Run mythfrontend from a terminal, optionally with logging. mythfrontend --loglevel debug  <br />
 6. 	Are you running Wayland without GNOME? Try X11. Check with echo $XDG_SESSION_TYPE.
-
-
-
