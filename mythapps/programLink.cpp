@@ -145,16 +145,26 @@ void ProgramLink::appendSearchUrl(QString currentSearchUrl) {
     fileFolderContainerTemp.url = currentSearchUrl;
     fileFolderContainerTemp.autoPlay = false;
 
-    // replace search link with incognito search link if discovered
-    if (fileFolderContainerTemp.url.compare("?incognito=True")) {
-        QString baseUrl = fileFolderContainerTemp.url.replace("?incognito=True", "");
-        if (getListEnabled().contains(baseUrl)) { // update base url to disabled
+    // If it's an incognito search, update the base URL to disable it
+    if (fileFolderContainerTemp.url.contains("?incognito=True")) {
+        QString baseUrl = fileFolderContainerTemp.url;
+        baseUrl.replace("?incognito=True", "");
+
+        if (getListEnabled().contains(baseUrl)) {
             MSqlQuery query(MSqlQuery::InitCon());
             query.prepare("UPDATE mythapps_programlink SET enabled = false WHERE type = 'searchList' AND url = :URL");
             query.bindValue(":URL", baseUrl);
             query.exec();
         }
+        return;
     }
+
+    // Otherwise, insert the new search URL
+    MSqlQuery query(MSqlQuery::InitCon());
+    query.prepare("INSERT INTO mythapps_programlink (type, url, enabled) VALUES (:TYPE, :URL, true)");
+    query.bindValue(":TYPE", "searchList");
+    query.bindValue(":URL", fileFolderContainerTemp.url);
+    query.exec();
 }
 
 /** \brief Removes the favourite/'program link' by URL from the mythtv database
