@@ -181,7 +181,7 @@ void MythApps::onTextMessageReceived(QString message) {
     if (message.contains("Player.OnStop")) {
         if (musicOpen || isHome) { // music
             musicBarOnStopTimer->start(500);
-            if (controls->isFullscreenBool()) {
+            if (controls->isFullscreen()) {
                 goMinimize(true);
             }
         } else { // video
@@ -197,7 +197,7 @@ void MythApps::onTextMessageReceived(QString message) {
         if (musicOpen) {
             updateMusicPlayingBarStatus(); // update the music status bar
             if (message.contains("video")) {
-                if (!controls->isFullscreenBool()) {
+                if (!controls->isFullscreen()) {
                     confirmDialog(tr("Do you want to open this video in fullscreen?"), "fullscreen");
                 }
             }
@@ -516,7 +516,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
     handled = GetMythMainWindow()->TranslateKeyPress("mythapps", event, actions);
     bool musicPlayerFullscreenOpen = false;
     if (musicOpen) {
-        musicPlayerFullscreenOpen = controls->isFullscreenBool();
+        musicPlayerFullscreenOpen = controls->isFullscreen();
     }
 
     for (int i = 0; i < actions.size() && !handled; i++) {
@@ -1526,14 +1526,6 @@ void MythApps::goFullscreen() {
 
     minimizeTimer->stop();      // stops minimizing kodi
     SetFocusWidget(m_filepath); // hack to make the seek work in fullscreen as the remote requires focus
-    QString fullscreenStatus = controls->isFullscreen();
-
-    for (int i = 0; i < 3; i++) {
-        if (fullscreenStatus.compare("Connection refused") != 0) {
-            break;
-        }
-        delayMilli(600);
-    }
 
 #ifdef __ANDROID__
     if (!controls->androidAppSwitch("Kodi")) {
@@ -1550,14 +1542,14 @@ void MythApps::goFullscreen() {
 #else // linux
     if (isGnomeWayland()) { // use activate-window-by-title
         activateWindowWayland("Kodi");
-        if (!controls->isFullscreenBool()) {
+        if (!controls->isFullscreen()) {
             delayMilli(350);
             toggleFullscreen();
         }
 
     } else { // X11
         for (int i = 0; i < 2; i++) {
-            if (controls->isFullscreen().compare("1")) { // fullscreen toggle from fullscreen to window mode and then full screen to bring kodi to the front of mythtv.
+            if (controls->isFullscreen()) { // fullscreen toggle from fullscreen to window mode and then full screen to bring kodi to the front of mythtv.
                 delayMilli(50);
                 toggleFullscreen();
                 delayMilli(20);
@@ -1566,7 +1558,7 @@ void MythApps::goFullscreen() {
                 toggleFullscreen();
             }
             delayMilli(100);
-            if (controls->isFullscreenBool()) {
+            if (controls->isFullscreen()) {
                 break;
             } else {
                 delayMilli(200);
@@ -1582,7 +1574,7 @@ void MythApps::goMinimize(bool fullscreenCheck) {
         return;
     }
     if (fullscreenCheck && isX11()) {
-        if (controls->isFullscreenBool()) {
+        if (controls->isFullscreen()) {
             toggleFullscreen();
         }
     }
@@ -1673,48 +1665,6 @@ int MythApps::stopPlayBack() {
     LOG(VB_GENERAL, LOG_DEBUG, "stopPlayBack()");
     takeScreenshot();
     return controls->stopPlayBack();
-}
-
-/** \brief is the video playing? will retry if its not.
- * \param retryNo - how many times to retry? */
-int MythApps::isPlaying(int retryNo) {
-    QString playStatus = controls->isPlaying();
-
-    static int count = 0;
-    if (playStatus.compare("Connection refused") == 0) {
-        if (retryNo > 2) {
-            count++;
-            LOG(VB_GENERAL, LOG_WARNING, "isPlaying - no kodi running?");
-
-            if (count == 3) {
-                niceClose(true);
-            }
-            return 2;
-        } else {
-            delayMilli(500);
-            return isPlaying(retryNo + 1);
-        }
-    } else {
-        count = 0;
-    }
-
-    if (playStatus.contains("internal")) {
-        return 1;
-
-    } else if (playStatus.contains("jsonrpc")) {
-        return 0;
-    } else {
-        LOG(VB_GENERAL, LOG_WARNING, "playStatus: no result? " + playStatus);
-
-        if (retryNo > 2) {
-            LOG(VB_GENERAL, LOG_WARNING, "isPlaying - no kodi running? -2");
-            return 2;
-        } else {
-            delayMilli(500);
-            return isPlaying(retryNo + 1);
-        }
-        return 1;
-    }
 }
 
 /** \brief runs when clicking the button/image. Used to load the next directory, file, link or app
@@ -2393,7 +2343,7 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
     play(mediaLocation, seekAmount); // play the media
 
     QTime dieTime = QTime::currentTime().addSecs(9); // check the media is playing
-    while (isPlaying(0) == 0) {                      // not playing
+    while (controls->isPlaying()) {                  // not playing
         if (QTime::currentTime() > dieTime) {        // sanity check incase loop gets stuck for more than 9 seconds
             break;
         }

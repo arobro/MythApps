@@ -152,7 +152,6 @@ class MythApps : public MythScreenType {
     void toggleFullscreen();
     void goFullscreen();
     void goMinimize(bool fullscreenCheck);
-    int isPlaying(int retryNo);
 
     void loadBackButton();
     void goSearch(QString overrideCurrentSearchUrl);

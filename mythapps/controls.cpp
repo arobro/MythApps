@@ -11,6 +11,7 @@
 Controls::Controls(QString m_username, QString m_password, QString m_ip, QString m_port) {
     netRequest = new NetRequest(m_username, m_password, m_ip, m_port, false);
     eventClientIpAddress = CAddress(m_ip.toLocal8Bit().constData());
+    seekTimer.setSingleShot(true);
 }
 
 Controls::~Controls() {
@@ -22,7 +23,7 @@ Controls::~Controls() {
 }
 
 /** \brief connect to kodi event client (remote control interface) if not connected */
-void Controls::checkEventClientConnected() {
+void Controls::ensureEventClient() {
     if (!eventClientConnected) {
         sockfd = socket(AF_INET, SOCK_DGRAM, 0);
         if (sockfd < 0) {
@@ -34,18 +35,62 @@ void Controls::checkEventClientConnected() {
     eventClientConnected = true;
 }
 
-/** \brief minimizes kodi */
-void Controls::goMinimize() {
-    checkEventClientConnected();
-    CPacketACTION action("Minimize");
-    action.Send(sockfd, eventClientIpAddress);
+/** window-minimize **/
+void Controls::goMinimize() { sendEventAction("Minimize", false); }
+
+/** quit kodi **/
+void Controls::quitKodi() { sendEventAction("Quit", false); }
+
+/** send any remote-control action **/
+void Controls::sendEventAction(const QString &action, bool actionButton) {
+    ensureEventClient();
+    CPacketACTION pkt = actionButton ? CPacketACTION(action.toUtf8().constData(), ACTION_BUTTON) : CPacketACTION(action.toUtf8().constData());
+    pkt.Send(sockfd, eventClientIpAddress);
 }
 
-/** \brief quit kodi */
-void Controls::quitKodi() {
-    checkEventClientConnected();
-    CPacketACTION action("Quit");
-    action.Send(sockfd, eventClientIpAddress);
+/** high-level JSON-RPC caller; returns the "result" object **/
+QJsonValue Controls::callJsonRpc(const QString &method, const QJsonObject &params, const QJsonArray &props) {
+    QJsonObject req;
+    req["jsonrpc"] = "2.0";
+    req["id"] = 1;
+    req["method"] = method;
+
+    QJsonObject finalParams = params;
+    if (!props.isEmpty()) {
+        finalParams["properties"] = props;
+    }
+
+    if (!finalParams.isEmpty()) {
+        req["params"] = finalParams;
+    }
+
+    QString reply = netRequest->requestUrl(req);
+    QJsonDocument doc = QJsonDocument::fromJson(reply.toUtf8());
+    QJsonObject root = doc.object();
+
+    if (root.contains("error")) {
+        LOG(VB_GENERAL, LOG_ERR, QString("RPC %1 error: %2").arg(method, reply));
+        return QJsonValue();
+    }
+
+    return root.value("result");
+}
+
+QString Controls::callJsonRpcString(const QString &method, const QJsonObject &params, const QJsonArray &props) {
+    QJsonValue result = callJsonRpc(method, params, props);
+
+    QJsonDocument doc;
+    if (result.isObject()) {
+        doc = QJsonDocument(result.toObject());
+    } else if (result.isArray()) {
+        doc = QJsonDocument(result.toArray());
+    } else {
+        QJsonObject wrapper;
+        wrapper["value"] = result;
+        doc = QJsonDocument(wrapper);
+    }
+
+    return QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
 }
 
 /** \brief toggle the player debug menu to show bitrate overlay
@@ -55,10 +100,7 @@ void Controls::togglePlayerDebug(bool doubleclick) {
 
     if (!doubleclick || time > QTime::currentTime()) {
         LOG(VB_GENERAL, LOG_DEBUG, "togglePlayerDebug() -playerdebug");
-
-        checkEventClientConnected();
-        CPacketACTION action("playerdebug", ACTION_BUTTON);
-        action.Send(sockfd, eventClientIpAddress);
+        sendEventAction("playerdebug", true);
     }
     time = QTime::currentTime().addSecs(1);
 }
@@ -92,59 +134,33 @@ void Controls::startKodiIfNotRunning() {
 #endif
 }
 
-/** \brief is the setting equal to value in Kodi?
- *  \param SettingName the setting name.
- *  \param SettingValue  the value of the setting.
- *  \return does the SettingValue equal the corrosponding setting?  */
-bool Controls::isKodiSetting(QString SettingName, QString SettingValue) {
-    QJsonObject paramsObj;
-    paramsObj["setting"] = SettingName;
-    QString answer = fetchUrlJson("Settings.GetSettingValue", paramsObj);
+/** \brief Checks if the Kodi setting equals the given value.
+ *  \param SettingName The name of the setting.
+ *  \param SettingValue The expected value of the setting.
+ *  \return true if the setting equals the value, false otherwise.
+ */
+bool Controls::isKodiSetting(const QString &SettingName, const QString &SettingValue) {
+    QJsonObject params;
+    params["setting"] = SettingName;
 
-    if (answer.compare(SettingValue) == 0) {
+    QJsonObject result = callJsonRpc("Settings.GetSettingValue", params).toObject();
+
+    if (!result.contains("value")) {
         return false;
     }
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
-    QVariantMap map2 = mainMap["result"].toMap();
-
-    if (map2["value"].toString().compare(SettingValue) == 0) {
-        return false;
-    }
-    return true;
+    QString currentValue = result["value"].toVariant().toString();
+    return currentValue == SettingValue;
 }
 
 /** \brief set the setting in Kodi
  *  \param SettingName the setting name.
  *  \param SettingValue  the value of the setting.  */
-template <typename T> void Controls::setKodiSetting(QString SettingName, T SettingValue) {
-    QJsonObject obj;
-    obj["setting"] = SettingName;
-    obj["value"] = SettingValue;
-    fetchUrlJson("Settings.SetSettingValue", obj);
-}
-
-/** \brief build and request the json string for kodi
- *  \param method method to send
- *  \param paramsObj the parameters to send. Optional parameter.
- *  \param property any properties to send. Optional parameter.
- *  \return json response from kodi */
-QString Controls::fetchUrlJson(QString method, QJsonObject paramsObj, QJsonArray property) {
-    QJsonObject jsonObj;
-    jsonObj["id"] = "1";
-    jsonObj["jsonrpc"] = "2.0";
-    jsonObj["method"] = method;
-
-    if (paramsObj.size() > 0) {
-        if (property.size() > 0) {
-            paramsObj["properties"] = property;
-        }
-        jsonObj["params"] = paramsObj;
-    }
-
-    return requestUrl(jsonObj);
+template <typename T> void Controls::setKodiSetting(const QString &SettingName, const T &SettingValue) {
+    QJsonObject params;
+    params["setting"] = SettingName;
+    params["value"] = SettingValue;
+    callJsonRpc("Settings.SetSettingValue", params);
 }
 
 /** \brief are any addons installed? */
@@ -157,58 +173,54 @@ bool Controls::areAddonsInstalled() {
     return true;
 }
 
-/** \brief get json with a list of addons */
+/** \brief Get JSON with a list of video addons */
 QString Controls::getAddons(bool forceRefresh) {
-    static QString answer = "";
-    if (!answer.isEmpty() and !forceRefresh) {
-        return answer;
+    static QString cachedResult;
+
+    if (!cachedResult.isEmpty() && !forceRefresh) {
+        return cachedResult;
     }
 
-    QJsonArray array;
-    array.push_back("name");
-    array.push_back("description");
-    array.push_back("thumbnail");
+    QJsonArray properties = {"name", "description", "thumbnail"};
 
-    QJsonObject paramsObj;
-    paramsObj["type"] = "xbmc.addon.video";
-    paramsObj["enabled"] = true;
-    paramsObj["properties"] = array;
+    QJsonObject params;
+    params["type"] = "xbmc.addon.video";
+    params["enabled"] = true;
 
-    answer = fetchUrlJson("Addons.GetAddons", paramsObj);
-    return answer;
+    QJsonObject fullResponse = callJsonRpc("Addons.GetAddons", params, properties).toObject();
+
+    QJsonObject wrapped;
+    wrapped["result"] = fullResponse;
+
+    QJsonDocument doc(wrapped);
+    cachedResult = QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
+
+    return cachedResult;
 }
 
-/** \brief load all addons */
+/** \brief Load all addons */
 void Controls::loadAddons() {
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(getAddons().toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
+    QString json = getAddons(true);
+    QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
 
-    QVariantMap map = mainMap["result"].toMap();
-    QList list = map["addons"].toList();
-
-    QMap<QString, QStringList> hash;
-
-    foreach (QVariant T, list) {
-        QVariantMap map2 = T.toMap();
-        QStringList hashItem = {map2["addonid"].toString(), map2["description"].toString(), map2["thumbnail"].toString()};
-        hash[map2["name"].toString()] = hashItem;
-    }
+    QJsonObject root = doc.object();
+    QJsonObject result = root.value("result").toObject();
+    QJsonArray addons = result.value("addons").toArray();
 
     urlToThumbnailMap.clear();
-    QMapIterator<QString, QStringList> i(hash);
-    while (i.hasNext()) {
-        i.next();
-        QStringList pd = i.value();
-        QString addonid = pd.at(0);
-        QString description = pd.at(1);
-        QString thumbnail = pd.at(2);
+
+    for (const QJsonValue &addonVal : addons) {
+        QJsonObject addon = addonVal.toObject();
+        QString addonId = addon.value("addonid").toString();
+        QString name = addon.value("name").toString();
+        QString description = addon.value("description").toString();
+        QString thumbnail = addon.value("thumbnail").toString();
 
         // creates a map to lookup the thumbnail based on the addonid.
-        urlToThumbnailMap.insert(getWebSiteDomain(addonid), thumbnail);
+        urlToThumbnailMap.insert(getWebSiteDomain(addonId), thumbnail);
 
         // load program
-        emit loadProgramSignal(i.key(), createProgramData(addonid, description, thumbnail, false, ""), thumbnail);
+        emit loadProgramSignal(name, createProgramData(addonId, description, thumbnail, false, ""), thumbnail);
     }
 }
 
@@ -217,12 +229,13 @@ QString Controls::getLocationFromUrlAddress(QString urlAddress) { return urlToTh
 /** \brief  Checks if input adative addon installed. This is used by Kodi to play DRM video
  *  \return Is the input adative addon installed? */
 bool Controls::isInputAdaptive() {
-    QJsonObject paramsObj;
-    paramsObj["type"] = "kodi.inputstream";
+    QJsonObject params;
+    params["type"] = "kodi.inputstream";
+    params["enabled"] = true;
 
-    QString answer = fetchUrlJson("Addons.GetAddons", paramsObj);
+    QString result = callJsonRpcString("Addons.GetAddons", params);
 
-    if (answer.contains("inputstream.adaptive")) {
+    if (result.contains("inputstream.adaptive")) {
         return true;
     }
     return false;
@@ -233,17 +246,17 @@ bool Controls::isInputAdaptive() {
  *  \param minutes - time to seek
  *  \param seconds  - time to seek */
 void Controls::seek(int hours, int minutes, int seconds) {
-    int time = (hours * 60 * 60) + (minutes * 60) + seconds;
-    LOG(VB_GENERAL, LOG_DEBUG, "controls_seek()" + QString::number(time));
+    int time = (hours * 3600) + (minutes * 60) + seconds;
+    LOG(VB_GENERAL, LOG_DEBUG, "controls_seek() " + QString::number(time));
 
-    QJsonObject obj2;
-    obj2["seconds"] = time;
+    QJsonObject valueObj;
+    valueObj["seconds"] = time;
 
-    QJsonObject paramsObj;
-    paramsObj["playerid"] = getActivePlayer();
-    paramsObj["value"] = obj2;
+    QJsonObject params;
+    params["playerid"] = getActivePlayer();
+    params["value"] = valueObj;
 
-    fetchUrlJson("Player.Seek", paramsObj);
+    callJsonRpc("Player.Seek", params);
 }
 
 /** \brief active a window in Kodi
@@ -251,138 +264,116 @@ void Controls::seek(int hours, int minutes, int seconds) {
 void Controls::activateWindow(QString window) {
     LOG(VB_GENERAL, LOG_DEBUG, "controls_activateSplash()");
 
-    QJsonObject paramsObj;
-    paramsObj["window"] = window;
-    fetchUrlJson("GUI.ActivateWindow", paramsObj);
+    QJsonObject params;
+    params["window"] = window;
+    callJsonRpc("GUI.ActivateWindow", params);
 }
 
 /** \brief show the on screen display */
-void Controls::showOSD() { fetchUrlJson("Input.ShowOSD"); }
+void Controls::showOSD() { callJsonRpc("Input.ShowOSD"); }
 
 /** \brief show video player info */
-void Controls::showPlayerProcessInfo() { fetchUrlJson("Input.ShowPlayerProcessInfo"); }
+void Controls::showPlayerProcessInfo() { callJsonRpc("Input.ShowPlayerProcessInfo"); }
 
 /** \brief show video info in Kodi */
-void Controls::showInfo() { fetchUrlJson("Input.Info"); }
+void Controls::showInfo() { callJsonRpc("Input.Info"); }
 
-/** \brief get the volume
- *  \return volume level */
+/** \brief Get the current volume level
+ *  \return Volume as an integer (0–100) */
 int Controls::getVol() {
-    QJsonArray array;
-    array.push_back("volume");
+    QJsonArray props;
+    props.append("volume");
 
-    QJsonObject paramsObj;
-    paramsObj["properties"] = array;
-
-    return fetchUrlJson("Application.SetVolume", paramsObj, array).toInt();
+    QJsonObject result = callJsonRpc("Application.GetProperties", QJsonObject(), props).toObject();
+    return result.value("volume").toInt();
 }
 
-/** \brief close dialog if one pops up. e.g. for a subscription */
+/** \brief close dialog if one pops up. e.g. for a subscription
+ *  \return True if the virtual keyboard is open, false otherwise */
 bool Controls::isVirtualKeyboardOpen() {
     LOG(VB_GENERAL, LOG_DEBUG, "isVirtualKeyboardOpen()");
 
-    QJsonArray array;
-    array.push_back("System.CurrentWindow");
-    QJsonObject paramsObj;
-    paramsObj["labels"] = array;
+    QJsonObject params;
+    QJsonArray labels;
+    labels.append("System.CurrentWindow");
+    params["labels"] = labels;
 
-    QString answer = fetchUrlJson("XBMC.GetInfoLabels", paramsObj);
+    QJsonObject result = callJsonRpc("XBMC.GetInfoLabels", params).toObject();
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
-    QVariantMap map2 = mainMap["result"].toMap();
-
-    if (map2["System.CurrentWindow"].toString().compare("Virtual keyboard") == 0) {
-        return true;
-    }
-    return false;
+    QString currentWindow = result.value("System.CurrentWindow").toString();
+    return currentWindow.compare("Virtual keyboard", Qt::CaseInsensitive) == 0;
 }
 
-/** \brief Files.GetDirectory
- * \param url directory url
+/** \brief Retrieve a directory listing
+ * \param url Path to the directory
  * \return get plot, thumbnail, file etc */
 QJsonObject Controls::getDirectoryObject(QString url) {
     LOG(VB_GENERAL, LOG_DEBUG, "getDirectoryObject() " + url);
 
-    QJsonObject jsonObj;
-    jsonObj["jsonrpc"] = "2.0";
-    jsonObj["method"] = "Files.GetDirectory";
+    QJsonObject params;
+    params["directory"] = url;
+    params["media"] = "video";
+    params["properties"] = QJsonArray{"plot", "thumbnail", "file"};
 
-    QJsonArray array;
-    array.push_back("plot");
-    array.push_back("thumbnail");
-    array.push_back("file");
+    QJsonObject request;
+    request["jsonrpc"] = "2.0";
+    request["method"] = "Files.GetDirectory";
+    request["params"] = params;
+    request["id"] = 1;
 
-    QJsonObject paramsObj;
-    paramsObj["directory"] = url;
-    paramsObj["media"] = "video";
-    paramsObj["properties"] = array;
-
-    jsonObj["params"] = paramsObj;
-    jsonObj["id"] = "1";
-
-    return jsonObj;
+    return request;
 }
 
 /** \brief press the back button in kodi */
-void Controls::inputBack() { fetchUrlJson("Input.Back"); }
+void Controls::inputBack() { callJsonRpc("Input.Back"); }
 
 /** \brief mute the playing media */
 void Controls::setMute() {
-    if (!gCoreContext->GetSetting("MythAppsInternalMute").compare("1") == 0) {
-        return; // internal mute disabled
+    if (!isInternalVolEnabled()) {
+        return;
     }
 
-    QJsonObject paramsObj;
-    paramsObj["mute"] = "toggle";
+    QJsonObject params;
+    params["mute"] = "toggle";
 
-    fetchUrlJson("Application.SetMute", paramsObj);
+    callJsonRpc("Application.SetMute", params);
 }
 
 /** \brief increase the volume if enabled */
 void Controls::increaseVol() {
-    if (!gCoreContext->GetSetting("MythAppsInternalVol").compare("1") == 0) {
-        return; // internal volume disabled
+    if (!isInternalVolEnabled()) {
+        return;
     }
 
-    QJsonObject paramsObj;
-    paramsObj["volume"] = getVol() + 5;
-    fetchUrlJson("Application.SetVolume", paramsObj);
+    QJsonObject params;
+    params["volume"] = getVol() + 5;
+    callJsonRpc("Application.SetVolume", params);
 }
 
 /** \brief decrease the volume if enabled */
 void Controls::decreaseVol() {
-    if (!gCoreContext->GetSetting("MythAppsInternalVol").compare("1") == 0) {
-        return; // internal volume disabled
+    if (!isInternalVolEnabled()) {
+        return;
     }
 
-    QJsonObject paramsObj;
-    paramsObj["volume"] = getVol() - 5;
-    fetchUrlJson("Application.SetVolume", paramsObj);
+    QJsonObject params;
+    params["volume"] = getVol() - 5;
+    callJsonRpc("Application.SetVolume", params);
 }
+
+bool Controls::isInternalVolEnabled() { return gCoreContext->GetSetting("MythAppsInternalVol") == "1"; }
 
 /** \brief is the video paused?
  *  \param playerid Kodi player id*/
 bool Controls::isPaused(int playerid) {
-    QJsonArray array;
-    array.push_back("speed");
+    QJsonObject params;
+    params["playerid"] = playerid;
 
-    QJsonObject paramsObj;
-    paramsObj["playerid"] = playerid;
+    QJsonArray props;
+    props.append("speed");
 
-    QString answer = fetchUrlJson("Player.GetProperties", paramsObj, array);
-
-    // parse json
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
-
-    QVariantMap map2 = mainMap["result"].toMap();
-    if (map2["speed"].toString().toInt() == 0) {
-        return true;
-    }
-    return false;
+    QJsonObject result = callJsonRpc("Player.GetProperties", params, props).toObject();
+    return result.value("speed").toInt() == 0;
 }
 
 /** \brief kodi can have multible active video players.
@@ -390,315 +381,225 @@ bool Controls::isPaused(int playerid) {
 int Controls::getActivePlayer() {
     LOG(VB_GENERAL, LOG_DEBUG, "getActivePlayer()");
 
-    QString answer = fetchUrlJson("Player.GetActivePlayers");
+    QJsonArray players = callJsonRpc("Player.GetActivePlayers").toArray();
 
-    // error handling
-    if (answer.contains("error") or not answer.contains("playerid")) {
-        delayMilli(500);
-        LOG(VB_GENERAL, LOG_ERR, "no getActivePlayer");
+    if (players.isEmpty()) {
+        LOG(VB_GENERAL, LOG_ERR, "No active player found");
         return 0;
     }
 
-    // parse the json response
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
-
-    QList list3 = mainMap["result"].toList();
-
-    foreach (QVariant T, list3) {
-        QVariantMap map4 = T.toMap();
-        return map4["playerid"].toString().toInt();
-    }
-    return 0;
+    QJsonObject player = players.first().toObject();
+    return player.value("playerid").toInt();
 }
 
 /** \brief stop playing the video */
 int Controls::stopPlayBack() {
     int activePlayer = getActivePlayer();
 
-    QJsonObject paramsObj;
-    paramsObj["playerid"] = activePlayer;
+    QJsonObject params;
+    params["playerid"] = activePlayer;
 
-    fetchUrlJson("Player.Stop", paramsObj);
+    callJsonRpc("Player.Stop", params);
     return activePlayer;
 }
 
 /** \brief is kodi fullscreen */
-bool Controls::isFullscreenBool() {
-    if (isFullscreen().compare("1")) {
-        return true;
-    }
-    return false;
-}
-/** \brief is kodi fullscreen
- * \return 1 - yes, 0 no or 'Connection refused' */
-QString Controls::isFullscreen() {
-    QJsonObject paramsObj;
-    paramsObj["setting"] = "videoscreen.screen";
+bool Controls::isFullscreen() {
+    QJsonObject params;
+    params["setting"] = QString("videoscreen.screen");
 
-    QString windowMode = fetchUrlJson("Settings.GetSettingValue", paramsObj);
+    QJsonObject result = callJsonRpc("Settings.GetSettingValue", params, QJsonArray()).toObject();
+    int screenValue = result.value("value").toInt();
 
-    if (windowMode.compare("Connection refused") == 0) {
-        return "Connection refused";
-    }
-
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(windowMode.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
-    QVariantMap map2 = mainMap["result"].toMap();
-    QString status = map2["value"].toString().replace("-", "");
-
-    if (status.compare("") == 0) {
-        return "0";
-    }
-
-    return status;
+    return screenValue >= 0;
 }
 
-/** \brief check if the username and password is correct when connecting to kodi
- */
-bool Controls::isUserNamePasswordCorrect() { return isKodiSetting("videoscreen.screen", "Host requires authentication"); }
+/** \brief check if the username and password is correct when connecting to kodi */
+bool Controls::isUserNamePasswordCorrect() {
+    QJsonValue result = callJsonRpc("JSONRPC.Ping");
+    return result.toString() == "pong";
+}
 
 /** \brief get the media currently playing time?
  *  \param playerid Kodi player id
  *  \return playback/total time*/
-QVariantMap Controls::getPlayBackTime(int playerid) {
-    QJsonArray array;
-    array.push_back("time");
-    array.push_back("totaltime");
-    array.push_back("percentage");
+QVariantMap Controls::getPlayBackTime(int playerId) {
+    QJsonArray properties = {"time", "totaltime", "percentage"};
+    QJsonObject params;
+    params["playerid"] = playerId;
 
-    QJsonObject paramsObj;
-    paramsObj["playerid"] = playerid;
+    QJsonObject playbackData = callJsonRpc("Player.GetProperties", params, properties).toObject();
+    QVariantMap playbackMap = playbackData.toVariantMap();
 
-    QString answer = fetchUrlJson("Player.GetProperties", paramsObj, array);
-
-    if (answer.contains("error")) {
-        delayMilli(500);
-        LOG(VB_GENERAL, LOG_ERR, "getPlayBackTime() error: " + answer);
-    }
-
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
-
-    QVariantMap map2 = mainMap["result"].toMap();
-
-    QVariantMap maptt = map2["totaltime"].toMap();
+    QVariantMap totalTimeMap = playbackMap["totaltime"].toMap();
     QTime totalTime;
-    totalTime.setHMS(maptt["hours"].toInt(), maptt["minutes"].toInt(), maptt["seconds"].toInt());
+    totalTime.setHMS(totalTimeMap["hours"].toInt(), totalTimeMap["minutes"].toInt(), totalTimeMap["seconds"].toInt());
     globalDuration = totalTime.toString("hh:mm:ss");
-    map2["duration"] = globalDuration;
+    playbackMap["duration"] = globalDuration;
 
-    QVariantMap mapct = map2["time"].toMap();
-    QTime currentTime = QTime();
-    currentTime.setHMS(mapct["hours"].toInt(), mapct["minutes"].toInt(), mapct["seconds"].toInt());
+    QVariantMap currentTimeMap = playbackMap["time"].toMap();
+    QTime currentTime;
+    currentTime.setHMS(currentTimeMap["hours"].toInt(), currentTimeMap["minutes"].toInt(), currentTimeMap["seconds"].toInt());
 
-    if (currentTime.addSecs(70) > totalTime) { // if less than 70 seconds of video remaining
-        videoNearEnd = true;
-    } else {
-        videoNearEnd = false;
-    }
+    videoNearEnd = currentTime.addSecs(70) > totalTime; // Determine if video is near the end
 
-    return map2;
+    return playbackMap;
 }
 
 bool Controls::isVideoNearEnd() { return videoNearEnd; }
 
 /** \brief close open dialogs in kodi */
 QString Controls::handleDialogs() {
-    QJsonArray array;
-    array.push_back("System.CurrentWindow");
-    QJsonObject paramsObj;
-    paramsObj["labels"] = array;
+    QJsonArray labels = {"System.CurrentWindow"};
+    QJsonObject params;
+    params["labels"] = labels;
 
-    QString answer = fetchUrlJson("XBMC.GetInfoLabels", paramsObj);
+    QJsonObject result = callJsonRpc("XBMC.GetInfoLabels", params).toObject();
+    QString currentWindow = result.value("System.CurrentWindow").toString();
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
-    QVariantMap map2 = mainMap["result"].toMap();
-
-    if (map2["System.CurrentWindow"].toString().compare("OK dialog") == 0) {
+    if (currentWindow.compare("OK dialog") == 0) {
         inputBack();
-    } else if (map2["System.CurrentWindow"].toString().compare("Virtual keyboard") == 0) {
-        LOG(VB_GENERAL, LOG_ERR, "error - Virtual keyboard still open");
+    } else if (currentWindow.compare("Virtual keyboard") == 0) {
+        LOG(VB_GENERAL, LOG_ERR, "Error – Virtual keyboard still open");
         inputBack();
     }
 
-    return map2["System.CurrentWindow"].toString();
+    return currentWindow;
 }
 
 /**  \brief Open media in Kodi and optionally resume playback */
 void Controls::play(const QString &mediaLocation, const QString &seekAmount) {
     FFspeed = 1;
 
-    QJsonObject itemObj;
-    itemObj["file"] = mediaLocation.trimmed();
+    QJsonObject item;
+    item["file"] = mediaLocation.trimmed();
 
-    QJsonObject openParams;
-    openParams["item"] = itemObj;
+    QJsonObject params;
+    params["item"] = item;
 
     QString trimmedSeek = seekAmount.trimmed();
     if (!trimmedSeek.isEmpty()) {
         QStringList parts = trimmedSeek.split(":");
         if (parts.size() == 3) {
-            QJsonObject resumeObj;
-            resumeObj["hours"] = parts.at(0).toInt();
-            resumeObj["minutes"] = parts.at(1).toInt();
-            resumeObj["seconds"] = parts.at(2).toInt();
+            QJsonObject resume;
+            resume["hours"] = parts.at(0).toInt();
+            resume["minutes"] = parts.at(1).toInt();
+            resume["seconds"] = parts.at(2).toInt();
 
-            QJsonObject optionsObj;
-            optionsObj["resume"] = resumeObj;
-            openParams["options"] = optionsObj;
+            QJsonObject options;
+            options["resume"] = resume;
+            params["options"] = options;
         }
     }
 
-    fetchUrlJson("Player.Open", openParams);
+    callJsonRpc("Player.Open", params);
 }
 
 /** \brief toggle pause the playing media */
-void Controls::pauseToggle(int activePlayerStatus) {
-    QJsonObject paramsObj;
-    paramsObj["playerid"] = activePlayerStatus;
+void Controls::pauseToggle(int playerId) {
+    QJsonObject params;
+    params["playerid"] = playerId;
 
-    fetchUrlJson("Player.PlayPause", paramsObj);
+    callJsonRpc("Player.PlayPause", params);
 }
 
-/** \brief used to determine if media is playing */
-QString Controls::isPlaying() { return fetchUrlJson("Player.GetActivePlayers"); }
+/** \brief Determines if media is currently playing */
+bool Controls::isPlaying() {
+    QString response = callJsonRpcString("Player.GetActivePlayers");
+
+    QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+    QJsonArray players = doc.array();
+    return !players.isEmpty();
+}
 
 /** \brief get videos on the file system in Kodi */
 QVariantMap Controls::getVideos() {
-    QJsonObject paramsObj;
-    paramsObj["media"] = "video";
+    QJsonObject params;
+    params["media"] = "video";
 
-    QString answer = fetchUrlJson("Files.GetSources", paramsObj);
+    QJsonObject result = callJsonRpc("Files.GetSources", params).toObject();
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
+    QVariantMap videoSources;
+    videoSources["sources"] = result["sources"].toVariant();
 
-    QVariantMap map2 = mainMap["result"].toMap();
-    return map2;
+    return videoSources;
 }
 
 /** \brief sent text */
-void Controls::inputSendText(QString text) {
-    QJsonObject jsonObj;
-    jsonObj["id"] = "1";
-    jsonObj["jsonrpc"] = "2.0";
-    jsonObj["method"] = "Input.SendText";
-    QJsonArray array;
-    array.push_back(text);
-    jsonObj["params"] = array;
+void Controls::inputSendText(const QString &text) {
+    QJsonObject params;
+    params["text"] = text;
+    params["done"] = true;
 
-    requestUrl(jsonObj);
+    callJsonRpc("Input.SendText", params);
 }
 
 /** \brief get stream details helper function */
 QString Controls::getStreamDetails(int playerId) {
-    QJsonArray array;
-    array.push_back("dynpath");
-    array.push_back("streamdetails");
+    QJsonArray properties = {"dynpath", "streamdetails"};
+    QJsonObject params;
+    params["playerid"] = playerId;
 
-    QJsonObject paramsObj;
-    paramsObj["playerid"] = playerId;
-    paramsObj["properties"] = array;
-
-    return fetchUrlJson("Player.GetItem", paramsObj);
+    return callJsonRpcString("Player.GetItem", params, properties);
 }
 
-/** \brief format stream details to a string. Codec, Resolution etc */
+/** \brief Format stream details to a string: codec, resolution, etc. */
 QString Controls::getStreamDetailsAll(int playerId) {
-    LOG(VB_GENERAL, LOG_DEBUG, "getStreamDetails()");
-    QString answer = getStreamDetails(playerId);
-
-    if (answer.contains("error") || answer.contains("invaild")) {
+    LOG(VB_GENERAL, LOG_DEBUG, "getStreamDetailsAll()");
+    QString response = getStreamDetails(playerId);
+    if (response.contains("error") || response.contains("invalid"))
         return "";
+
+    QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+    QVariantMap item = doc.object().toVariantMap()["item"].toMap();
+    QVariantMap detailsMap = item["streamdetails"].toMap();
+
+    QString dynPath = item["dynpath"].toString();
+    QString audioCodec, audioChannels = "unknown", videoCodec, durationStr, resolution;
+
+    if (auto audio = detailsMap["audio"].toList().value(0).toMap(); !audio.isEmpty()) {
+        int ch = audio["channels"].toInt();
+        audioChannels = ch > 0 ? QString::number(ch) : "unknown";
+        audioCodec = audio["codec"].toString();
     }
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
-
-    QVariantMap map2 = mainMap["result"].toMap();
-    QVariantMap map3 = map2["item"].toMap();
-    QString dynpath = map3["dynpath"].toString();
-
-    QVariantMap map4 = map3["streamdetails"].toMap();
-
-    QList list5 = map4["audio"].toList();
-
-    QString channels;
-    QString aCodec;
-
-    foreach (QVariant T, list5) {
-        QVariantMap map6 = T.toMap();
-        channels = map6["channels"].toString();
-        aCodec = map6["codec"].toString();
+    if (auto video = detailsMap["video"].toList().value(0).toMap(); !video.isEmpty()) {
+        int durationSec = video["duration"].toInt();
+        durationStr = QTime::fromMSecsSinceStartOfDay(durationSec * 1000).toString("hh:mm:ss");
+        videoCodec = video["codec"].toString();
+        resolution = QString("%1x%2").arg(video["height"].toInt()).arg(video["width"].toInt());
     }
 
-    QString duration;
-    QString vCodec;
-    QString height;
-    QString width;
+    QStringList parts;
+    if (!durationStr.isEmpty())
+        parts << "Duration: " + durationStr;
+    if (!videoCodec.isEmpty() || !audioCodec.isEmpty())
+        parts << "Codecs: " + videoCodec + "/" + audioCodec + ", Channels: " + audioChannels;
+    if (!resolution.isEmpty())
+        parts << "Resolution: " + resolution;
 
-    QList list7 = map4["video"].toList();
-    foreach (QVariant T, list7) {
-        QVariantMap map8 = T.toMap();
-        duration = map8["duration"].toString();
-        vCodec = map8["codec"].toString();
-        height = map8["height"].toString();
-        width = map8["width"].toString();
-    }
+    QString details = parts.join(", ") + "\n";
 
-    QString details = "";
-
-    if (!duration.compare("") == 0) {
-        details = details + ", Duration: " + (duration);
-    }
-    if (!vCodec.compare("") == 0) {
-        details = details + ", Codecs: " + vCodec + "/" + aCodec + ", Channels: " + channels;
-    }
-    if (!height.compare("") == 0) {
-        details = details + ", Resolution: " + height + "x" + width;
-    }
-    details = details + "\n";
-
-    QString kodiDir = GetConfDir().replace(".mythtv", "");
-    QFile KodiLog(kodiDir + ".kodi/temp/kodi.log");
-
-    if (KodiLog.open(QIODevice::ReadOnly)) {
-        QTextStream in(&KodiLog);
-        QString videoInfo = "";
-        QString audioInfo = "";
+    QFile log(GetConfDir().replace(".mythtv", "") + ".kodi/temp/kodi.log");
+    if (log.open(QIODevice::ReadOnly)) {
+        QTextStream in(&log);
+        QString videoInfo, audioInfo;
         while (!in.atEnd()) {
             QString line = in.readLine();
-            if (line.contains("CDVDVideoCodecFFmpeg::Open() Using codec:")) {
+            if (line.contains("CDVDVideoCodecFFmpeg::Open() Using codec:"))
                 videoInfo = line;
-            }
-            if (line.contains("Creating audio stream (codec id:")) {
+            if (line.contains("Creating audio stream (codec id:"))
                 audioInfo = line;
-            }
         }
-        QStringList videoInfoList = videoInfo.split("codec:");
-        if (videoInfoList.size() > 1) {
-            details = details + "Video Details:" + videoInfoList.at(1) + "\n";
-        }
-
-        QStringList audioInfoList = audioInfo.split("Creating audio stream");
-        if (audioInfoList.size() > 1) {
-            details = details + "Audio Details:" + audioInfoList.at(1) + "\n";
-        }
-        KodiLog.close();
+        if (videoInfo.contains("codec:"))
+            details += "Video Details: " + videoInfo.split("codec:").value(1).trimmed() + "\n";
+        if (audioInfo.contains("Creating audio stream"))
+            details += "Audio Details: " + audioInfo.split("Creating audio stream").value(1).trimmed() + "\n";
+        log.close();
     }
 
-    if (!dynpath.compare("") == 0) {
-        details = details + "\nDynpath: " + dynpath;
-    }
-
+    if (!dynPath.isEmpty())
+        details += "\nDynpath: " + dynPath;
     return details;
 }
 
@@ -707,25 +608,25 @@ QString Controls::getStreamDetailsAll(int playerId) {
  * \param  searchTextValue search text to look for.
  * \return fileurl / path of the directory as specified by searchTextValue  */
 QString Controls::getSearchDirectory(QString url, QString searchTextValue) {
-    QString answer = requestUrl(getDirectoryObject(url));
+    QString trimmedUrl = url.trimmed();
+    QJsonObject params;
+    params["directory"] = trimmedUrl;
+    params["media"] = "video";
 
-    QByteArray br = answer.toUtf8();
-    QJsonDocument doc = QJsonDocument::fromJson(br);
-    QJsonObject addons = doc.object();
-    QJsonValue addons2 = addons["result"];
-    QJsonObject o = addons2.toObject();
+    QJsonArray props{"plot", "thumbnail", "file"};
 
-    for (auto oIt = o.constBegin(); oIt != o.constEnd(); ++oIt) {
-        QJsonArray agentsArray = oIt.value().toArray();
+    QJsonObject response = callJsonRpc("Files.GetDirectory", params, props).toObject();
+    QJsonArray entries = response["files"].toArray();
 
-        foreach (const QJsonValue &v, agentsArray) {
-            QString label = removeBBCode(v.toObject().value("label").toString());
-            QString file = v.toObject().value("filetype").toString();
-            QString fileUrl = v.toObject().value("file").toString();
+    for (const QJsonValue &entry : entries) { // Search for matching directory
+        QJsonObject entryObj = entry.toObject();
+        QString label = removeBBCode(entryObj.value("label").toString());
+        QString fileType = entryObj.value("filetype").toString();
+        QString fileUrl = entryObj.value("file").toString();
 
-            if (label.compare(searchTextValue) == 0 and file.compare("directory") == 0) {
-                return fileUrl;
-            }
+        if (label == searchTextValue && fileType == "directory") {
+            LOG(VB_GENERAL, LOG_DEBUG, "getSearchDirectory - match: " + fileUrl);
+            return fileUrl;
         }
     }
     return QString("");
@@ -734,12 +635,11 @@ QString Controls::getSearchDirectory(QString url, QString searchTextValue) {
 /** \brief speed to fast foward at.
  * \param speed. Can be +- 1-32 times speed of the video */
 void Controls::setSpeed(int speed) {
-    QJsonObject paramsObj;
-    paramsObj["playerid"] = getActivePlayer();
-    paramsObj["speed"] = speed;
+    QJsonObject params;
+    params["playerid"] = getActivePlayer();
+    params["speed"] = speed;
 
-    fetchUrlJson("Player.SetSpeed", paramsObj);
-    delayMilli(100);
+    callJsonRpc("Player.SetSpeed", params);
 }
 
 /** \brief fast foward */
@@ -749,7 +649,7 @@ void Controls::setFFWD() {
     } else if (FFspeed < 1) {
         FFspeed = 1;
     } else if (FFspeed < 32) {
-        FFspeed = FFspeed * 2;
+        FFspeed *= 2;
     }
     setSpeed(FFspeed);
 }
@@ -761,47 +661,35 @@ void Controls::setRWND() {
     } else if (FFspeed > 1) {
         FFspeed = 1;
     } else if (FFspeed > -8) {
-        FFspeed = FFspeed * 2;
+        FFspeed *= 2;
     }
     setSpeed(FFspeed);
 }
 
-/** \brief seek foward 30 seconds * the number of times the button is pressed.
- */
-void Controls::seekFoward() {
-    LOG(VB_GENERAL, LOG_DEBUG, "controls_seekFoward()");
-    static int count = 1;
-    static QTime dieTime = QTime::currentTime().addSecs(3);
-    if (QTime::currentTime() > dieTime) {
-        count = 1;
-    }
+/** \brief seek foward 30 seconds * the number of times the button is pressed. */
+void Controls::seekFoward() { queueSeek(30); }
 
-    seek(0, 0, 30 * count);
-    if (count < 8) {
-        count++;
-    }
-}
+/** \brief Seek backward 10 seconds × number of rapid presses (max 8x). */
+void Controls::seekBack() { queueSeek(-10); }
 
-/** \brief seek backwards -10 seconds * the number of times the button is
- * pressed. */
-void Controls::seekBack() {
-    LOG(VB_GENERAL, LOG_DEBUG, "controls_seekBack()");
-    static int count = 1;
-    static QTime dieTime = QTime::currentTime().addSecs(3);
-    if (QTime::currentTime() > dieTime) {
-        count = 1;
-    }
+void Controls::queueSeek(int seconds) {
+    LOG(VB_GENERAL, LOG_DEBUG, "queueSeek()");
+    pendingSeekSeconds += seconds;
 
-    seek(0, 0, -10 * count);
-    if (count < 8) {
-        count++;
+    if (!seekTimer.isActive()) {
+        seekTimer.singleShot(400, this, [this]() {
+            if (pendingSeekSeconds != 0) {
+                seek(0, 0, pendingSeekSeconds);
+                pendingSeekSeconds = 0;
+            }
+        });
     }
 }
 
 void Controls::inputActionHelper(QString action) {
-    QJsonObject obj;
-    obj["action"] = action;
-    fetchUrlJson("Input.ExecuteAction", obj);
+    QJsonObject params;
+    params["action"] = action;
+    callJsonRpc("Input.ExecuteAction", params);
 }
 
 /** \brief switch between Kodi and MythTV on Android
@@ -826,7 +714,7 @@ void Controls::setCrossFade(int seconds) { setKodiSetting("musicplayer.crossfade
 bool Controls::getCrossFade() { return isKodiSetting("musicplayer.crossfade", "0"); }
 
 /** \brief set Audio Library Scan */
-void Controls::setAudioLibraryScan() { fetchUrlJson("AudioLibrary.Scan"); }
+void Controls::setAudioLibraryScan() { callJsonRpc("AudioLibrary.Scan"); }
 
 /** \brief set ProjectM visualization */
 void Controls::setProjectM() { setKodiSetting("musicplayer.visualisation", "visualization.projectm"); }
@@ -838,35 +726,37 @@ void Controls::playListClear(int playerid) {
     if (playerid == 0) {
         return;
     }
-    QJsonObject paramsObj;
-    paramsObj["playlistid"] = playerid;
-    fetchUrlJson("Playlist.Clear", paramsObj);
+
+    QJsonObject params;
+    params["playlistid"] = playerid;
+
+    callJsonRpc("Playlist.Clear", params);
 }
 
 void Controls::playListOpen(int position) {
     LOG(VB_GENERAL, LOG_DEBUG, "playListOpen()");
 
-    QJsonObject obj2;
-    obj2["playlistid"] = 1;
-    obj2["position"] = position;
+    QJsonObject itemObj;
+    itemObj["playlistid"] = 1;
+    itemObj["position"] = position;
 
-    QJsonObject paramsObj;
-    paramsObj["item"] = obj2;
+    QJsonObject params;
+    params["item"] = itemObj;
 
-    fetchUrlJson("Player.Open", paramsObj);
+    callJsonRpc("Player.Open", params);
 }
 
 void Controls::playListAdd(QString file) {
     LOG(VB_GENERAL, LOG_DEBUG, "playListAdd(): " + file);
 
-    QJsonObject obj2;
-    obj2["file"] = file;
+    QJsonObject itemObj;
+    itemObj["file"] = file;
 
-    QJsonObject paramsObj;
-    paramsObj["playlistid"] = 1;
-    paramsObj["item"] = obj2;
+    QJsonObject params;
+    params["playlistid"] = 1;
+    params["item"] = itemObj;
 
-    fetchUrlJson("Playlist.Add", paramsObj);
+    callJsonRpc("Playlist.Add", params);
 }
 
 /** \brief set part mode for music */
@@ -874,10 +764,10 @@ void Controls::setPartyMode() {
     QJsonObject obj2;
     obj2["partymode"] = "music";
 
-    QJsonObject paramsObj;
-    paramsObj["item"] = obj2;
+    QJsonObject params;
+    params["item"] = obj2;
 
-    fetchUrlJson("Player.Open", paramsObj);
+    callJsonRpc("Player.Open", params);
 }
 
 QString Controls::playerGetItem(int playerid) {
@@ -886,17 +776,17 @@ QString Controls::playerGetItem(int playerid) {
     array.push_back("artist");
     array.push_back("thumbnail");
 
-    QJsonObject paramsObj;
-    paramsObj["playerid"] = playerid;
-    paramsObj["properties"] = array;
+    QJsonObject params;
+    params["playerid"] = playerid;
+    params["properties"] = array;
 
-    return fetchUrlJson("Player.GetItem", paramsObj);
+    return callJsonRpcString("Player.GetItem", params, array); // new
 }
 
 void Controls::removeFromPlaylist(int inPlaylistPos) {
-    QJsonObject paramsObj;
-    paramsObj["playlistid"] = 1;
-    paramsObj["position"] = inPlaylistPos;
+    QJsonObject params;
+    params["playlistid"] = 1;
+    params["position"] = inPlaylistPos;
 
-    fetchUrlJson("Playlist.Remove", paramsObj);
+    callJsonRpc("Playlist.Remove", params);
 }

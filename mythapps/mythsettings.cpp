@@ -275,7 +275,7 @@ void MythSettings::button_ResetImageCache() {
 
 void MythSettings::button_ResetSearchList() {
     m_searchSourcesList->Reset();
-    MSqlQuery query(MSqlQuery::InitCon()); 
+    MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("DELETE FROM mythconverg.mythapps_programlink WHERE type = 'searchList'");
     if (!query.exec() || !query.isActive()) {
         MythDB::DBError("mythapps: delete searchlist from db", query);

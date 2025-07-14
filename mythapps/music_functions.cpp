@@ -121,23 +121,20 @@ void MythApps::updateMusicPlayingBarStatus() {
     globalActivePlayer = controls->getActivePlayer();
     QString answer = controls->playerGetItem(globalActivePlayer);
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit().data());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit());
     QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
+    QVariantMap mapItem = jObject["item"].toObject().toVariantMap();
 
-    QVariantMap map2 = mainMap["result"].toMap();
-    QVariantMap map3 = map2["item"].toMap();
+    QString thumbnail = mapItem["thumbnail"].toString();
 
-    QString thumbnail = map3["thumbnail"].toString();
-
-    QList listArtist = map3["artist"].toList();
+    QList listArtist = mapItem["artist"].toList();
     if (listArtist.size() > 0) {
         m_textArtist->SetText(listArtist.at(0).toString());
     }
 
-    QString label = map3["label"].toString();
+    QString label = mapItem["label"].toString();
     m_textSong->SetText(label);
-    m_textAlbum->SetText(map3["album"].toString());
+    m_textAlbum->SetText(mapItem["album"].toString());
 
     if (label.compare("") == 0) {
         showMusicPlayingBar(false);
@@ -351,7 +348,7 @@ void MythApps::addToPlaylistClickedCallback(MythUIButtonListItem *item) {
             controls->playListAdd(friendlyUrl(paramsList.at(0)));
         }
 
-        if (!isPlaying(0)) {
+        if (!controls->isPlaying()) {
             controls->playListOpen(1);
         }
         refreshGuiPlaylist();

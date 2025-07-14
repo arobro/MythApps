@@ -13,6 +13,7 @@
 #include <QString>
 #include <QStringList>
 #include <QTime>
+#include <QTimer>
 #include <QUrlQuery>
 
 // MythApps headers
@@ -33,9 +34,8 @@ class Controls : public QObject {
     ~Controls();
 
     void startKodiIfNotRunning();
-    bool isKodiSetting(QString SettingName, QString SettingValue);
-    template <typename T> void setKodiSetting(QString SettingName, T SettingValue);
-    QString fetchUrlJson(QString method, QJsonObject paramsObj = QJsonObject(), QJsonArray property = QJsonArray());
+    bool isKodiSetting(const QString &SettingName, const QString &SettingValue);
+    template <typename T> void setKodiSetting(const QString &SettingName, const T &SettingValue);
     void seek(int hours, int minutes, int seconds);
 
     void showOSD();
@@ -59,8 +59,7 @@ class Controls : public QObject {
     int getActivePlayer();
     bool isUserNamePasswordCorrect();
 
-    QString isFullscreen();
-    bool isFullscreenBool();
+    bool isFullscreen();
 
     bool isInputAdaptive();
     bool areAddonsInstalled();
@@ -77,10 +76,10 @@ class Controls : public QObject {
     void play(const QString &mediaLocation, const QString &seekAmount);
 
     void pauseToggle(int activePlayerStatus);
-    QString isPlaying();
+    bool isPlaying();
     QVariantMap getVideos();
 
-    void inputSendText(QString text);
+    void inputSendText(const QString &text);
     QString getStreamDetails(int playerId);
 
     QString getStreamDetailsAll(int playerId);
@@ -113,7 +112,14 @@ class Controls : public QObject {
     void removeFromPlaylist(int inPlaylistPos);
 
   private:
-    void checkEventClientConnected();
+    void ensureEventClient();
+    void sendEventAction(const QString &action, bool actionButton);
+    void queueSeek(int seconds);
+    bool isInternalVolEnabled();
+
+    QJsonValue callJsonRpc(const QString &method, const QJsonObject &params = QJsonObject(), const QJsonArray &props = QJsonArray());
+    QString callJsonRpcString(const QString &method, const QJsonObject &params = QJsonObject(), const QJsonArray &props = QJsonArray());
+
     NetRequest *netRequest;
     QString globalDuration;
     int FFspeed = 1;
@@ -124,6 +130,9 @@ class Controls : public QObject {
     bool eventClientConnected = false;
     bool videoNearEnd = false;
     QMap<QString, QString> urlToThumbnailMap;
+
+    QTimer seekTimer;
+    int pendingSeekSeconds = 0;
 
   signals:
     void loadProgramSignal(QString name, QString setdata, QString thumbnailPath);
