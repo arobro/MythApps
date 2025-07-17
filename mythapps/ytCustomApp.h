@@ -40,14 +40,14 @@ class ytCustomApp : public QObject {
     QStringList getlist(int currentPos, bool foward);
     QString translateWordtoRFC3339Date(QString date);
 
-    NetRequest *netRequest;
+    NetRequest *netRequest{nullptr};
 
     QString ytApi;
     QString ytID;
     QString kodiYTProgramData;
     QString kodiYTPluginDomain;
     QString kodiYTPluginIcon;
-    MythUIType *searchSettingsGroup;
+    MythUIType *searchSettingsGroup{nullptr};
 
     QString sortBy;
     QString videodDuration;
@@ -63,7 +63,7 @@ class ytCustomApp : public QObject {
 
     QStringList masterDateListdateBetween;
     QStringList masterDateListPublishedBefore;
-    Browser *browser;
+    Browser *browser{nullptr};
     QString converKodiYTURLtoBrowserUrl(QString url);
     QString getAPIBaseUrl();
 

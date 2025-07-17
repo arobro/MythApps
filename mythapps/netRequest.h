@@ -19,13 +19,11 @@ class NetRequest {
     NetRequest(QString m_username, QString m_password, QString m_ip, QString m_port, bool _longWait);
     ~NetRequest();
 
-    QString requestUrl(QJsonObject value);
     QString requestUrlPublic(QString url, QString authorization);
 
     QByteArray downloadImage(QString imageUrl, bool tryDirectDownload);
 
     QString getFavIconUrl(QString websiteUrl);
-    bool androidAppSwitch(QString app);
 
   private:
     QString username;
@@ -34,13 +32,6 @@ class NetRequest {
     QString port;
     QString globalDuration = "";
 
-    QString contentsGlobal = "";
-
     QNetworkAccessManager *NRmgr;
-    QString requestUrlHelper(QNetworkReply *RUreply, QUrl qurl);
-
-    bool longWait;
-    QWebSocket m_webSocketNR;
-    bool mythAppsServiceconnected = false;
 };
 #endif

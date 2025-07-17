@@ -17,7 +17,7 @@
 #include <QUrlQuery>
 
 // MythApps headers
-#include "netRequest.h"
+#include "netSocketRequest.h"
 #include "shared.h"
 
 // kodi events client
@@ -29,8 +29,9 @@
  */
 class Controls : public QObject {
     Q_OBJECT
+
   public:
-    Controls(QString m_username, QString m_password, QString m_ip, QString m_port);
+    explicit Controls(const QString &ip, const QString &port, QObject *parent = nullptr);
     ~Controls();
 
     void startKodiIfNotRunning();
@@ -58,6 +59,7 @@ class Controls : public QObject {
 
     int getActivePlayer();
     bool isUserNamePasswordCorrect();
+    bool ping();
 
     bool isFullscreen();
 
@@ -68,8 +70,6 @@ class Controls : public QObject {
 
     bool isVirtualKeyboardOpen();
     QJsonObject getDirectoryObject(QString url);
-
-    QString requestUrl(QJsonObject value);
     QVariantMap getPlayBackTime(int playerid);
 
     QString handleDialogs();
@@ -91,12 +91,20 @@ class Controls : public QObject {
     void setRWND();
     void inputActionHelper(QString action);
     bool androidAppSwitch(QString app);
+    void toggleFullscreen();
 
     void setConnected(int connectStatus);
     int getConnected();
     bool isVideoNearEnd();
+    void activateFullscreenVideo();
+    void waitUntilKodiPingable();
+    void initializeWebSocket();
 
     QString getLocationFromUrlAddress(QString urlAddress);
+    QScopedPointer<NetSocketRequest> netSocketRequest;
+
+    QJsonValue callJsonRpc(const QString &method, const QJsonObject &params = QJsonObject(), const QJsonArray &props = QJsonArray());
+    QString callJsonRpcString(const QString &method, const QJsonObject &params = QJsonObject(), const QJsonArray &props = QJsonArray());
 
     // music
     void setCrossFade(int seconds);
@@ -113,17 +121,14 @@ class Controls : public QObject {
 
   private:
     void ensureEventClient();
-    void sendEventAction(const QString &action, bool actionButton);
+    void sendEventAction(const QString &action);
     void queueSeek(int seconds);
     bool isInternalVolEnabled();
 
-    QJsonValue callJsonRpc(const QString &method, const QJsonObject &params = QJsonObject(), const QJsonArray &props = QJsonArray());
-    QString callJsonRpcString(const QString &method, const QJsonObject &params = QJsonObject(), const QJsonArray &props = QJsonArray());
-
-    NetRequest *netRequest;
     QString globalDuration;
     int FFspeed = 1;
     int connected = 0; /*!< is kodi connected? 0 = not connected, 1 = connected, 2 = connected and authenticated*/
+    QString ip, port;
 
     CAddress eventClientIpAddress;
     int sockfd;

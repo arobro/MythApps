@@ -7,6 +7,7 @@
 
 // QT headers
 #include <QDir>
+#include <QProcess>
 #include <QtNetwork/QTcpSocket>
 
 // MythTV headers
@@ -320,3 +321,18 @@ bool checkIfProgramInstalled(const QString &programName) {
 #endif
     return false;
 }
+
+QString GetThemeXmlFile(const QString &theme) {
+    if (theme == "Mythbuntu" || theme == "Willi" || theme == "Functionality" || theme == "Arclight" || theme == "Monochrome" || theme == "MythAeon") {
+        return "mythapps-ui.xml";
+    } else if (theme == "Steppes" || theme == "Steppes-large") {
+        return "mythapps-ui.Steppes.xml";
+    } else if (theme == "MythCenter-wide") {
+        return "mythapps-ui.720.MCW.xml";
+    } else if (theme.contains("XMAS")) {
+        return "mythapps-ui.720.NoAlpha.xml";
+    }
+    return "mythapps-ui.720.xml";
+}
+
+QString formatTimeComponent(const QString &value) { return value.isNull() || value.isEmpty() ? "00" : value.rightJustified(2, '0'); }

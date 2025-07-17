@@ -16,7 +16,6 @@
 /** \class Shared
  *  \brief Contains shared functions or static functions */
 QString createProgramData(QString file, QString plot, QString thumbnail, bool play, QString seek);
-QString requestUrl(QJsonObject value, QString username, QString password, QString ip, QString port);
 
 void delay(int seconds);
 void delayMilli(int milliseconds);
@@ -57,5 +56,8 @@ QString getGlobalPathPrefix();
 QString createImageCachePath(const QString imageFileName);
 
 bool checkIfProgramInstalled(const QString &programName);
+
+QString GetThemeXmlFile(const QString &theme);
+QString formatTimeComponent(const QString &value);
 
 #endif

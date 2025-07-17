@@ -8,8 +8,9 @@
  *  \param m_password Kodi password
  *  \param m_ip Kodi ip
  * 	\param m_port Kodi port */
-Controls::Controls(QString m_username, QString m_password, QString m_ip, QString m_port) {
-    netRequest = new NetRequest(m_username, m_password, m_ip, m_port, false);
+Controls::Controls(const QString &m_ip, const QString &m_port, QObject *parent) : QObject(parent), ip(m_ip), port(m_port) {
+    ip = m_ip;
+    port = m_port;
     eventClientIpAddress = CAddress(m_ip.toLocal8Bit().constData());
     seekTimer.setSingleShot(true);
 }
@@ -17,9 +18,8 @@ Controls::Controls(QString m_username, QString m_password, QString m_ip, QString
 Controls::~Controls() {
     if (eventClientConnected) {
         CPacketBYE bye;
-        bye.Send(sockfd, eventClientIpAddress); // disconnect Kodi EventClient
+        bye.Send(sockfd, eventClientIpAddress);
     }
-    delete netRequest;
 }
 
 /** \brief connect to kodi event client (remote control interface) if not connected */
@@ -35,46 +35,23 @@ void Controls::ensureEventClient() {
     eventClientConnected = true;
 }
 
-/** window-minimize **/
-void Controls::goMinimize() { sendEventAction("Minimize", false); }
-
-/** quit kodi **/
-void Controls::quitKodi() { sendEventAction("Quit", false); }
-
 /** send any remote-control action **/
-void Controls::sendEventAction(const QString &action, bool actionButton) {
+void Controls::sendEventAction(const QString &action) {
     ensureEventClient();
-    CPacketACTION pkt = actionButton ? CPacketACTION(action.toUtf8().constData(), ACTION_BUTTON) : CPacketACTION(action.toUtf8().constData());
+    CPacketACTION pkt = CPacketACTION(action.toUtf8().constData());
     pkt.Send(sockfd, eventClientIpAddress);
 }
 
+/** window-minimize **/
+void Controls::goMinimize() { sendEventAction("Minimize"); }
+
+/** quit kodi **/
+void Controls::quitKodi() { callJsonRpc("Application.Quit"); }
+
+void Controls::initializeWebSocket() { netSocketRequest.reset(new NetSocketRequest(QString("ws://%1:9090").arg(ip))); }
+
 /** high-level JSON-RPC caller; returns the "result" object **/
-QJsonValue Controls::callJsonRpc(const QString &method, const QJsonObject &params, const QJsonArray &props) {
-    QJsonObject req;
-    req["jsonrpc"] = "2.0";
-    req["id"] = 1;
-    req["method"] = method;
-
-    QJsonObject finalParams = params;
-    if (!props.isEmpty()) {
-        finalParams["properties"] = props;
-    }
-
-    if (!finalParams.isEmpty()) {
-        req["params"] = finalParams;
-    }
-
-    QString reply = netRequest->requestUrl(req);
-    QJsonDocument doc = QJsonDocument::fromJson(reply.toUtf8());
-    QJsonObject root = doc.object();
-
-    if (root.contains("error")) {
-        LOG(VB_GENERAL, LOG_ERR, QString("RPC %1 error: %2").arg(method, reply));
-        return QJsonValue();
-    }
-
-    return root.value("result");
-}
+QJsonValue Controls::callJsonRpc(const QString &method, const QJsonObject &params, const QJsonArray &props) { return netSocketRequest->call(method, params, props); }
 
 QString Controls::callJsonRpcString(const QString &method, const QJsonObject &params, const QJsonArray &props) {
     QJsonValue result = callJsonRpc(method, params, props);
@@ -100,17 +77,9 @@ void Controls::togglePlayerDebug(bool doubleclick) {
 
     if (!doubleclick || time > QTime::currentTime()) {
         LOG(VB_GENERAL, LOG_DEBUG, "togglePlayerDebug() -playerdebug");
-        sendEventAction("playerdebug", true);
+        inputActionHelper("playerdebug");
     }
     time = QTime::currentTime().addSecs(1);
-}
-
-/** \brief helper function for netRequest->requestUrl() */
-QString Controls::requestUrl(QJsonObject value) {
-    if (getConnected() == 0) {
-        return "Connection refused";
-    }
-    return netRequest->requestUrl(value);
 }
 
 /** \brief Start kodi if not running */
@@ -415,7 +384,9 @@ bool Controls::isFullscreen() {
 }
 
 /** \brief check if the username and password is correct when connecting to kodi */
-bool Controls::isUserNamePasswordCorrect() {
+bool Controls::isUserNamePasswordCorrect() { return ping(); }
+
+bool Controls::ping() {
     QJsonValue result = callJsonRpc("JSONRPC.Ping");
     return result.toString() == "pong";
 }
@@ -692,10 +663,28 @@ void Controls::inputActionHelper(QString action) {
     callJsonRpc("Input.ExecuteAction", params);
 }
 
+void Controls::activateFullscreenVideo() {
+    QJsonObject params;
+    params["window"] = "fullscreenvideo";
+
+    callJsonRpc("GUI.ActivateWindow", params);
+}
+
+/** \brief toggle kodi fullscreen */
+void Controls::toggleFullscreen() {
+#ifdef __ANDROID__
+    return;
+#endif
+    inputActionHelper("togglefullscreen");
+}
+
 /** \brief switch between Kodi and MythTV on Android
  * 	\param app name of app to switch to
  *  \return is the helper switching app (mythapp services) running? */
-bool Controls::androidAppSwitch(QString app) { return netRequest->androidAppSwitch(app); }
+bool Controls::androidAppSwitch(QString app) {
+    return netSocketRequest->androidAppSwitch(app);
+    return false;
+}
 
 /** \brief set the connection status
  * 	\param connectStatus the new connection status */
@@ -704,6 +693,29 @@ void Controls::setConnected(int connectStatus) { connected = connectStatus; }
 /** \brief get the connection status
  *  \return 0 = not connected, 1 = connected, 2 = connected and authenticated */
 int Controls::getConnected() { return connected; }
+
+void Controls::waitUntilKodiPingable() {
+    QTime deadline = QTime::currentTime().addSecs(4);
+    bool port9090Ok = false;
+    bool eventPortOk = false;
+
+    while (QTime::currentTime() < deadline) {
+        port9090Ok = isKodiPingable(ip, "9090");
+        eventPortOk = isKodiPingable(ip, port);
+
+        if (port9090Ok && eventPortOk) {
+            setConnected(1);
+            return;
+        }
+        delayMilli(50);
+    }
+
+    if (!port9090Ok)
+        LOG(VB_GENERAL, LOG_ERR, "Control port 9090 is not responding to ping");
+
+    if (!eventPortOk)
+        LOG(VB_GENERAL, LOG_ERR, "HTTP port is not responding to ping");
+}
 
 // music
 

@@ -361,32 +361,19 @@ void MythApps::addToPlaylistClickedCallback(MythUIButtonListItem *item) {
 /** \brief refresh/update the playlist. */
 void MythApps::refreshGuiPlaylist() {
     LOG(VB_GENERAL, LOG_DEBUG, "refreshGuiPlaylist()");
-    delayMilli(100);
 
-    QJsonObject obj;
-    obj["id"] = "1";
-    obj["jsonrpc"] = "2.0";
-    obj["method"] = "Playlist.GetItems";
-    QJsonObject obj2;
-    obj2["playlistid"] = globalActivePlayer;
+    QJsonArray properties;
+    QJsonObject params;
+    params["playlistid"] = globalActivePlayer;
 
-    obj["params"] = obj2;
-
-    QString s = controls->requestUrl(obj);
-
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(s.toLocal8Bit().data());
-    QJsonObject jObject = jsonDocument.object();
-    QVariantMap mainMap = jObject.toVariantMap();
-
-    QVariantMap map2 = mainMap["result"].toMap();
-    QList list3 = map2["items"].toList();
+    QJsonValue answer = controls->callJsonRpc("Playlist.GetItems", params, properties);
+    QJsonArray items = answer.toObject().value("items").toArray();
 
     m_playlistVertical->Reset();
-    int pos = 0;
-    foreach (QVariant T, list3) {
-        pos++;
-        QVariantMap map4 = T.toMap();
-        new MythUIButtonListItem(m_playlistVertical, map4["label"].toString());
+    for (const QJsonValue &v : items) {
+        QString label = v.toObject().value("label").toString();
+        if (!label.isEmpty())
+            new MythUIButtonListItem(m_playlistVertical, label);
     }
 }
 
@@ -421,72 +408,62 @@ QMap<QString, QStringList> MythApps::getMusicHelper(QString methodValue, QString
     LOG(VB_GENERAL, LOG_DEBUG, "getMusicHelper()");
 
     QMap<QString, QStringList> artistList;
-    QJsonObject obj;
-    obj["jsonrpc"] = "2.0";
-    obj["method"] = methodValue;
+    QJsonArray properties;
+    properties.push_back("thumbnail");
+    QJsonObject params;
 
-    QJsonArray array;
-    array.push_back("thumbnail");
-
-    if (methodValue.compare("AudioLibrary.GetSongs") == 0) {
-        array.push_back("file");
-    } else if (methodValue.compare("VideoLibrary.GetMusicVideos") == 0) {
-        array.push_back("album");
-        array.push_back("artist");
-        array.push_back("genre");
-        array.push_back("file");
+    if (methodValue == "AudioLibrary.GetSongs") {
+        properties.push_back("file");
+    } else if (methodValue == "VideoLibrary.GetMusicVideos") {
+        properties.push_back("album");
+        properties.push_back("artist");
+        properties.push_back("genre");
+        properties.push_back("file");
     }
 
-    QJsonObject obj2;
-    obj2["properties"] = array;
-
-    if (!filterKey.compare("") == 0) {
-        QJsonObject obj3;
-        obj3["field"] = filterKey;
-        obj3["operator"] = operatorValue;
-        obj3["value"] = filterValue;
-
-        obj2["filter"] = obj3;
+    if (!filterKey.isEmpty()) {
+        QJsonObject filter;
+        filter["field"] = filterKey;
+        filter["operator"] = operatorValue;
+        filter["value"] = filterValue;
+        params["filter"] = filter;
     }
 
-    obj["params"] = obj2;
-    obj["id"] = "1";
+    QJsonValue answer = controls->callJsonRpc(methodValue, params, properties);
+    QJsonObject rootObj = answer.toObject();
+    QJsonArray items = rootObj.value(type).toArray();
 
-    QString answer = controls->requestUrl(obj);
+    for (const QJsonValue &v : items) {
+        QJsonObject obj = v.toObject();
+        QString label = obj.value("label").toString();
+        if (label.isEmpty())
+            continue;
 
-    QByteArray br = answer.toUtf8();
-    QJsonDocument doc = QJsonDocument::fromJson(br);
-    QJsonObject addons = doc.object();
-    QJsonObject addons2 = addons["result"].toObject();
-    QJsonValue addons3 = addons2[type];
+        QString thumbnail = obj.value("thumbnail").toString();
+        QString file, album, artist, genre;
 
-    QJsonArray array2 = addons3.toArray();
-    foreach (const QJsonValue &v, array2) {
-        QString label = v.toObject().value("label").toString();
-        QString image = v.toObject().value("thumbnail").toString();
-        QString file = "";
-        QString album = "";
-        QString artist = "";
-        QString genre = "";
+        if (methodValue == "AudioLibrary.GetSongs") {
+            file = obj.value("file").toString();
+        } else if (methodValue == "VideoLibrary.GetMusicVideos") {
+            file = obj.value("file").toString();
+            album = obj.value("album").toString();
 
-        if (methodValue.compare("AudioLibrary.GetSongs") == 0) {
-            file = v.toObject().value("file").toString();
-        } else if (methodValue.compare("VideoLibrary.GetMusicVideos") == 0) {
-            file = v.toObject().value("file").toString();
-            album = v.toObject().value("album").toString();
-            artist = v.toObject().value("artist").toArray().takeAt(0).toString();
-            genre = v.toObject().value("genre").toArray().takeAt(0).toString();
+            QJsonArray aArr = obj.value("artist").toArray();
+            if (!aArr.isEmpty())
+                artist = aArr.at(0).toString();
+
+            QJsonArray gArr = obj.value("genre").toArray();
+            if (!gArr.isEmpty())
+                genre = gArr.at(0).toString();
+        } else if (methodValue == "AudioLibrary.GetAlbums") {
+            album = QString::number(obj.value("albumid").toInt());
         }
 
-        QStringList stringList;
-        stringList.append(image);
-        stringList.append(file);
-        stringList.append(album);
-        stringList.append(artist);
-        stringList.append(genre);
+        QStringList values{thumbnail, file, album, artist, genre};
 
-        artistList.insert(label, stringList);
+        artistList.insert(label, values);
     }
+
     return artistList;
 }
 
@@ -651,70 +628,58 @@ void MythApps::musicSearch(QString search) {
 
 void MythApps::loadSongs(QString album) {
     m_musicTitle->SetText(album);
-
     toggleSearchVisible(true);
 
-    album = album.replace("[Video,Artist] ", "");
-    album = album.replace("[Video,Album] ", "");
-    album = album.replace("[Video,Genre] ", "");
+    album.replace("[Video,Artist] ", "");
+    album.replace("[Video,Album] ", "");
+    album.replace("[Video,Genre] ", "");
 
     if (musicMode == 2) {
-        loadMusicHelper("", filterQMap(getMusicHelper("VideoLibrary.GetMusicVideos", "musicvideos", "album", album, "is"), ""), m_fileListSongs);
+        auto map = getMusicHelper("VideoLibrary.GetMusicVideos", "musicvideos", "album", album, "is");
+        loadMusicHelper("", filterQMap(map, ""), m_fileListSongs);
         return;
     }
 
-    QJsonObject obj;
-    obj["jsonrpc"] = "2.0";
-    obj["method"] = "AudioLibrary.GetSongs";
+    QJsonArray properties{"artist", "thumbnail", "file", "album"};
 
-    QJsonObject obj3;
-    obj3["order"] = "ascending";
-    obj3["method"] = "artist";
+    QJsonObject params;
+    QJsonObject sort;
+    sort["order"] = "ascending";
+    sort["method"] = "artist";
+    params["sort"] = sort;
 
-    QJsonArray array;
-    array.push_back("artist");
-    array.push_back("thumbnail");
-    array.push_back("file");
-    array.push_back("album");
-
-    QJsonObject obj2;
-    obj2["properties"] = array;
-
-    obj2["sort"] = obj3;
-
-    if (!album.compare("") == 0) {
-        QJsonObject obj4;
-        obj4["album"] = album;
-        obj2["filter"] = obj4;
+    if (!album.isEmpty()) {
+        QJsonObject filter;
+        filter["album"] = album;
+        params["filter"] = filter;
     }
 
-    obj["params"] = obj2;
-    obj["id"] = "1";
-
-    QString answer = controls->requestUrl(obj);
-
-    QByteArray br = answer.toUtf8();
-    QJsonDocument doc = QJsonDocument::fromJson(br);
-    QJsonObject addons = doc.object();
-    QJsonObject addons2 = addons["result"].toObject();
-    QJsonValue addons3 = addons2["songs"];
+    QJsonValue answer = controls->callJsonRpc("AudioLibrary.GetSongs", params, properties);
+    QJsonObject rootObj = answer.toObject();
+    QJsonArray songs = rootObj.value("songs").toArray();
 
     int count = 0;
+    for (const QJsonValue &v : songs) {
+        QJsonObject obj = v.toObject();
+        QString label = obj.value("label").toString();
+        if (label.isEmpty())
+            continue;
 
-    QJsonArray array2 = addons3.toArray();
-    foreach (const QJsonValue &v, array2) {
-        QString label = v.toObject().value("label").toString();
-        QString image = v.toObject().value("thumbnail").toString();
-        QString artist = v.toObject().value("artist").toArray().takeAt(0).toString();
-        QString url = v.toObject().value("file").toString();
+        QString thumbnail = obj.value("thumbnail").toString();
+        QString file = obj.value("file").toString();
 
-        count++;
+        QString artist;
+        QJsonArray aArr = obj.value("artist").toArray();
+        if (!aArr.isEmpty())
+            artist = aArr.at(0).toString();
+
+        ++count;
         QString number = QString::number(count) + "   ";
-        if (count < 10) {
-            number = number + QString(" ");
-        }
+        if (count < 10)
+            number += " ";
 
-        loadProgram(number + label, url + "~" + "" + "|" + image, image, m_fileListSongs);
+        QString payload = file + "~|" + thumbnail;
+        loadProgram(number + label, payload, thumbnail, m_fileListSongs);
     }
 }
 
@@ -906,58 +871,172 @@ void MythApps::loadPlaylists() {
     LOG(VB_GENERAL, LOG_DEBUG, "loadPlaylists()");
     toggleSearchVisible(false);
 
-    QString answer = controls->requestUrl(controls->getDirectoryObject("special://musicplaylists"));
-    QByteArray br = answer.toUtf8();
-    QJsonDocument doc = QJsonDocument::fromJson(br);
-    QJsonObject addons = doc.object();
-    QJsonObject addons2 = addons["result"].toObject();
+    QJsonArray properties{"label", "thumbnail", "file"};
+    QJsonObject params;
+    params["directory"] = "special://musicplaylists";
 
-    QJsonArray array = addons2["files"].toArray();
-    foreach (const QJsonValue &v, array) {
-        QString label = v.toObject().value("label").toString();
-        QString image = v.toObject().value("thumbnail").toString();
-        QString url = v.toObject().value("file").toString();
+    QJsonValue answer = controls->callJsonRpc("Files.GetDirectory", params, properties);
+    QJsonArray files = answer.toObject().value("files").toArray();
+
+    for (const QJsonValue &v : files) {
+        QJsonObject obj = v.toObject();
+        QString label = obj.value("label").toString();
+        if (label.isEmpty())
+            continue;
+
+        QString image = obj.value("thumbnail").toString();
+        QString url = obj.value("file").toString();
         loadProgram(label, createProgramData("playlists", url, image, false, ""), image, m_fileListGrid);
+    }
+}
+
+void MythApps::updateMusicPlaylistUI() {
+    if (m_playlistVertical->GetCount() == 0) {
+        refreshGuiPlaylist();
+    }
+
+    for (int i = 0; i < m_playlistVertical->GetCount(); i++) {
+        MythUIButtonListItem *item = m_playlistVertical->GetItemAt(i);
+        QString label = item->GetText();
+        if (label.compare("") == 0) {
+            label = item->GetText("buttontext2");
+        }
+        item->SetText(label, "");
+        item->SetText("", "buttontext2");
+
+        if (m_textSong->GetText().compare(label) == 0) {
+            item->SetText(label, "");
+            item->SetText(label, "buttontext2");
+        }
     }
 }
 
 void MythApps::playbackTimerSlot() {
     static int count = 0;
-    static int prevPlayBackTimeMap;
+    static QTime prevPlaybackTime;
 
     if (count % 2 == 0) {
-        playBackTimeMap = getPlayBackTime(globalActivePlayer);
-        prevPlayBackTimeMap = playBackTimeMap["seconds"].toInt();
+        playBackTimeMap = controls->getPlayBackTime(globalActivePlayer);
+        updateMusicPlayingBarStatus();
+        m_trackProgress->SetUsed(playBackTimeMap["percentage"].toInt());
+
+        const QVariantMap currentTime = playBackTimeMap["time"].toMap();
+        prevPlaybackTime = QTime(currentTime["hours"].toInt(), currentTime["minutes"].toInt(), currentTime["seconds"].toInt());
     } else {
-        playBackTimeMap["seconds"] = prevPlayBackTimeMap + 1;
+        prevPlaybackTime = prevPlaybackTime.addSecs(1);
+
+        QVariantMap timeMap;
+        timeMap["hours"] = prevPlaybackTime.hour();
+        timeMap["minutes"] = prevPlaybackTime.minute();
+        timeMap["seconds"] = prevPlaybackTime.second();
+
+        playBackTimeMap["time"] = timeMap;
     }
 
-    m_musicDuration->SetText(getPlayBackTimeString(false).replace("00:0", "") + " / " + playBackTimeMap["duration"].toString());
+    m_musicDuration->SetText(getPlayBackTimeString(false).replace("00:0", "") + " / " + playBackTimeMap["duration"].toString().replace("00:", ""));
 
     count++;
     if (count == 4) {
-        handleDialogs(false);
         count = 0;
+        handleDialogs(false);
     }
 
-    if (musicOpen) { // refresh the playlist if the playlist is empty and content is playing
-        if (m_playlistVertical->GetCount() == 0) {
-            refreshGuiPlaylist();
+    if (videoStopReceived)
+        playbackTimer->stop();
+
+    if (musicOpen)
+        updateMusicPlaylistUI();
+}
+
+bool MythApps::handleMusicAction(const QString &action) {
+    if (!musicOpen)
+        return false;
+
+    bool musicPlayerFullscreenOpen = false; // todo: not working
+
+    if (action == "NEXTTRACK") {
+        nextTrack();
+    } else if (action == "PREVTRACK") {
+        previousTrack();
+
+    } else if ((action == "RIGHT") and musicPlayerFullscreenOpen) {
+        nextTrack();
+    } else if ((action == "LEFT") and musicPlayerFullscreenOpen) {
+        previousTrack();
+    } else if ((action == "RIGHT") and GetFocusWidget() == m_fileListSongs and m_playlistVertical->GetCount() > 0) {
+        SetFocusWidget(m_playlistVertical);
+    } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_playlistVertical) {
+        SetFocusWidget(m_fileListSongs);
+    } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_fileListSongs) {
+        int pos = m_fileListMusicGrid->GetCurrentPos();
+        if (pos > 0) {
+            pos = pos - 1;
+        }
+        m_fileListMusicGrid->SetItemCurrent(pos);
+        SetFocusWidget(m_fileListMusicGrid);
+    } else if ((action == "BACK" || action == "ESCAPE") and musicPlayerFullscreenOpen) {
+        stopPlayBack();
+    } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_fileListMusicGrid) {
+        m_filterGrid->SetItemCurrent(0);
+        SetFocusWidget(m_filterGrid);
+    } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_filterGrid) {
+        if (m_SearchTextEdit->IsVisible()) {
+            SetFocusWidget(m_SearchTextEdit);
+        } else {
+            goBack();
         }
 
-        for (int i = 0; i < m_playlistVertical->GetCount(); i++) {
-            MythUIButtonListItem *item = m_playlistVertical->GetItemAt(i);
-            QString label = item->GetText();
-            if (label.compare("") == 0) {
-                label = item->GetText("buttontext2");
-            }
-            item->SetText(label, "");
-            item->SetText("", "buttontext2");
-
-            if (m_textSong->GetText().compare(label) == 0) {
-                item->SetText(label, "");
-                item->SetText(label, "buttontext2");
-            }
+    } else if (action == "SEEKFFWD") {
+        controls->seekFoward();
+    } else if (action == "SEEKRWND") {
+        controls->seekBack();
+    } else if (action == "SELECT") {
+        if (GetFocusWidget() == m_playingOn) {
+            pauseToggle();
+        } else if (GetFocusWidget() == m_ff_buttonOn) {
+            controls->seekFoward();
+        } else if (GetFocusWidget() == m_next_buttonOn) {
+            nextTrack();
         }
+    } else if (action == "UP" && GetFocusWidget() == m_SearchTextEdit) {
+        SetFocusWidget(m_fileListMusicGrid);
+    } else if ((action == "DOWN" || action == "RIGHT") && GetFocusWidget() == m_searchButtonList) {
+        SetFocusWidget(m_fileListMusicGrid);
+    } else if ((action == "RIGHT") and GetFocusWidget() == m_playlistVertical and m_ff_buttonOff->IsVisible()) {
+        m_currentMusicButton = 1; // m_playing
+        showMusicPlayingBar(true);
+    } else if ((action == "RIGHT") and GetFocusWidget() == m_playingOn) {
+        m_currentMusicButton = 2; // m_next_button
+        showMusicPlayingBar(true);
+        SetFocusWidget(m_next_buttonOn);
+    } else if ((action == "RIGHT") and GetFocusWidget() == m_next_buttonOn) {
+        m_currentMusicButton = 3; // m_ff_button
+        showMusicPlayingBar(true);
+    } else if ((action == "RIGHT") and GetFocusWidget() == m_ff_buttonOn) {
+        m_currentMusicButton = 0;
+        showMusicPlayingBar(true);
+        SetFocusWidget(m_playlistVertical);
+    } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_ff_buttonOn) {
+        m_currentMusicButton = 2; // m_next_button
+        showMusicPlayingBar(true);
+    } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_next_buttonOn) {
+        m_currentMusicButton = 1; // m_playing
+        showMusicPlayingBar(true);
+    } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_playingOn) {
+        m_currentMusicButton = 0;
+        showMusicPlayingBar(true);
+        SetFocusWidget(m_playlistVertical);
+    } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_filterOptionsList) {
+        m_filterGrid->SetItemCurrent(0, 0);
+        SetFocusWidget(m_filterGrid);
+    } else if ((action == "RIGHT") and GetFocusWidget() == m_filterOptionsList) {
+        if (m_playlistVertical->GetCount() > 0) {
+            SetFocusWidget(m_playlistVertical);
+        } else {
+            SetFocusWidget(m_fileListMusicGrid);
+        }
+    } else {
+        return false; // Not handled
     }
+    return true; // Handled
 }

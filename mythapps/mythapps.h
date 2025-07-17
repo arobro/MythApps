@@ -3,6 +3,7 @@
 
 // QT headers
 #include <QApplication>
+#include <QDateTime>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -41,24 +42,23 @@ class MythApps : public MythScreenType {
     void customEvent(QEvent *event) override;
 
   private:
-    QWebSocket m_webSocket; /*!< used for messages recieved from Kodi via the websocket. */
-    MythUIText *m_filepath;
-    MythUIText *m_plot;
-    MythUIText *m_streamDetails;
-    MythUIShape *m_streamDetailsbackground;
-    MythUIText *m_title;
-    MythUITextEdit *m_SearchTextEdit;
-    MythUIText *m_SearchTextEditBackgroundText;
-    MythUIImage *m_screenshotMainMythImage; /*!< used to create thumbnail for pause menu */
-    QImage m_screenshotMainQimage;          /*!< used to create thumbnail for pause menu */
-    MythUIImage *m_loaderImage;
-    MythUIType *m_searchButtonListGroup;
-    MythUIType *m_searchSettingsGroup;
-    MythUIType *m_help;
-    MythUIButton *m_androidMenuBtn;
+    MythUIText *m_filepath{nullptr};
+    MythUIText *m_plot{nullptr};
+    MythUIText *m_streamDetails{nullptr};
+    MythUIShape *m_streamDetailsbackground{nullptr};
+    MythUIText *m_title{nullptr};
+    MythUITextEdit *m_SearchTextEdit{nullptr};
+    MythUIText *m_SearchTextEditBackgroundText{nullptr};
+    MythUIImage *m_screenshotMainMythImage{nullptr}; /*!< used to create thumbnail for pause menu */
+    QImage m_screenshotMainQimage;                   /*!< used to create thumbnail for pause menu */
+    MythUIImage *m_loaderImage{nullptr};
+    MythUIType *m_searchButtonListGroup{nullptr};
+    MythUIType *m_searchSettingsGroup{nullptr};
+    MythUIType *m_help{nullptr};
+    MythUIButton *m_androidMenuBtn{nullptr};
 
-    ProgramData *currentselectionDetails; /*!<  current selection in the file browser */
-    ProgramData *lastPlayedDetails;       /*!< last media played. used by the watch list feature */
+    ProgramData *currentselectionDetails{nullptr}; /*!<  current selection in the file browser */
+    ProgramData *lastPlayedDetails{nullptr};       /*!< last media played. used by the watch list feature */
 
     QTimer *exitToMainMenuSleepTimer; /*!< return to main menu after inactivty for power save. */
     QTimer *searchTimer;
@@ -72,10 +72,10 @@ class MythApps : public MythScreenType {
     QTimer *nextPageTimer;        /*!< micro singleshot timer to load any next pages. Stops race conditions with multithreaded code. */
     QTimer *openSettingTimer;     /*!< micro singleshot timer to delay opening setting. */
 
-    ProgramLink *previouslyPlayedLink; /*!< load previously played videos	 */
-    ProgramLink *favLink;              /*!< load Favourites */
-    ProgramLink *watchedLink;          /*!< load Watched List */
-    ProgramLink *searchListLink;       /*!< load Search Sources */
+    ProgramLink *previouslyPlayedLink{nullptr}; /*!< load previously played videos	 */
+    ProgramLink *favLink{nullptr};              /*!< load Favourites */
+    ProgramLink *watchedLink{nullptr};          /*!< load Watched List */
+    ProgramLink *searchListLink{nullptr};       /*!< load Search Sources */
 
     QString username;              /*!< username for Kodi */
     QString password;              /*!< password for Kodi */
@@ -100,6 +100,7 @@ class MythApps : public MythScreenType {
     bool musicOpen = false;        /*!< is the music player open? */
     bool ytNativeOpen = false;     /*!< is ytNative open? */
     bool allowAutoMinimize = true; /*!< is auto minimizing kodi enabled? */
+    bool videoStopReceived = false;
     bool isPreviouslyPlayed = false;
     bool allShowsFolderFound = false;
     bool enableHiddenFolders = false;
@@ -138,6 +139,7 @@ class MythApps : public MythScreenType {
 
     int stopPlayBack();
     void pauseToggle();
+    void toggleStreamDetails();
 
     void openOSD(QString screenType);
     bool takeScreenshot();
@@ -149,7 +151,6 @@ class MythApps : public MythScreenType {
     void refreshFileListGridSelection();
     void addToUnWatchedList(bool menu);
 
-    void toggleFullscreen();
     void goFullscreen();
     void goMinimize(bool fullscreenCheck);
 
@@ -179,7 +180,7 @@ class MythApps : public MythScreenType {
     void niceClose(bool forceClose);
     int getThreadCount();
     void waitForThreads(int maxThreadsRunning);
-    bool folderAllowed(QString label, QStringList previousSearchTerms);
+    bool folderAllowed(const QString &label, const QStringList &previousSearchTerms);
     QString getLabel(MythUIButtonListItem *item);
 
     QString getNewSearch(QString url);
@@ -192,10 +193,10 @@ class MythApps : public MythScreenType {
 
     MythDialogBox *m_menuPopup{nullptr};
     MythUIBusyDialog *m_busyPopup{nullptr};
-    MythUIButtonListItem *nextPageitem;
+    MythUIButtonListItem *nextPageitem{nullptr};
 
-    QScreen *screen;
-    Controls *controls;
+    QScreen *screen{nullptr};
+    Controls *controls{nullptr};
 
     QString mm_albums_icon;    /*!< stores physical image location for the corresponding button */
     QString mm_alltracks_icon; /*!< stores physical image location for the corresponding button */
@@ -214,6 +215,7 @@ class MythApps : public MythScreenType {
     void returnFocus();
     void setButtonWatched(bool watched);
     void addToPreviouslyPlayed();
+    void coolDown();
 
     Browser *browser;
     FileBrowserHistory *fileBrowserHistory;
@@ -221,25 +223,25 @@ class MythApps : public MythScreenType {
     // music app
     int m_currentMusicButton = 0;
 
-    MythUIType *m_musicDetailsUIGroup;
+    MythUIType *m_musicDetailsUIGroup{nullptr};
 
-    MythUIText *m_textSong;
-    MythUIText *m_textArtist;
-    MythUIText *m_textAlbum;
-    MythUIText *m_musicDuration;
+    MythUIText *m_textSong{nullptr};
+    MythUIText *m_textArtist{nullptr};
+    MythUIText *m_textAlbum{nullptr};
+    MythUIText *m_musicDuration{nullptr};
     MythUIText *m_hint; /*!< hint used in music app */
-    MythUIShape *m_seekbar;
+    MythUIShape *m_seekbar{nullptr};
 
-    MythUIText *m_musicTitle;
-    MythUIProgressBar *m_trackProgress;
-    MythUIImage *m_coverart;
-    MythUIImage *m_blackhole_border;
-    MythUIImage *m_playingOn;
-    MythUIImage *m_next_buttonOn;
-    MythUIImage *m_ff_buttonOn;
-    MythUIImage *m_playingOff;
-    MythUIImage *m_next_buttonOff;
-    MythUIImage *m_ff_buttonOff;
+    MythUIText *m_musicTitle{nullptr};
+    MythUIProgressBar *m_trackProgress{nullptr};
+    MythUIImage *m_coverart{nullptr};
+    MythUIImage *m_blackhole_border{nullptr};
+    MythUIImage *m_playingOn{nullptr};
+    MythUIImage *m_next_buttonOn{nullptr};
+    MythUIImage *m_ff_buttonOn{nullptr};
+    MythUIImage *m_playingOff{nullptr};
+    MythUIImage *m_next_buttonOff{nullptr};
+    MythUIImage *m_ff_buttonOff{nullptr};
 
     int musicMode; /*!< 1 for music, 2 for video in the music app */
 
@@ -274,14 +276,17 @@ class MythApps : public MythScreenType {
     void loadMusicHelper(QString labelPrefix, QMap<QString, QStringList> loadMusicType, MythUIButtonList *m_fileList);
     void loadMusicSetup();
     void loadPlaylists();
-    QVariantMap getPlayBackTime(int playerid); /*!< used in music app for the songs playing time */
+
+    bool handleMusicAction(const QString &action);
+    void updateMusicPlaylistUI();
+
+    void CleanupResources();
 
   Q_SIGNALS:
     void closedWS();
 
   private Q_SLOTS:
-    void onConnectedWS();
-    void onTextMessageReceived(QString message);
+    void onTextMessageReceived(const QString &method, const QString &message);
 
   private slots:
     void appsCallback(MythUIButtonListItem *item);
@@ -328,17 +333,17 @@ class MythApps : public MythScreenType {
     QNetworkRequest request;
 
     MythUIImage *m_thumbnailImage{nullptr};
-    MythUIButtonList *m_fileListGrid;
-    MythUIButtonList *m_searchButtonList;
-    MythUIButtonList *m_searchSettingsButtonList;
+    MythUIButtonList *m_fileListGrid{nullptr};
+    MythUIButtonList *m_searchButtonList{nullptr};
+    MythUIButtonList *m_searchSettingsButtonList{nullptr};
 
-    MythUIButtonList *m_fileListMusicGrid;
-    MythUIButtonList *m_fileListSongs;
-    MythUIButtonList *m_filterGrid;
-    MythUIButtonList *m_filterOptionsList;
-    MythUIButtonList *m_playlistVertical;
+    MythUIButtonList *m_fileListMusicGrid{nullptr};
+    MythUIButtonList *m_fileListSongs{nullptr};
+    MythUIButtonList *m_filterGrid{nullptr};
+    MythUIButtonList *m_filterOptionsList{nullptr};
+    MythUIButtonList *m_playlistVertical{nullptr};
 
-    ytCustomApp *ytNative;
+    ytCustomApp *ytNative{nullptr};
     bool ytNativeEnabled = false;
     QString firstDirectoryName;
 

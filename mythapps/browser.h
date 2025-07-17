@@ -27,7 +27,7 @@ class Browser : public QObject {
 
   private:
     bool browserOpen = false; /*!< is the web browser open? */
-    Controls *controls;
+    Controls *controls{nullptr};
     QString browserName = "";
 };
 #endif

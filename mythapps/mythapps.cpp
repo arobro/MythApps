@@ -25,6 +25,7 @@
 #include "mythapps.h"
 #include "mythinput.h"
 #include "mythsettings.h"
+#include "netSocketRequest.h"
 #include "searchSuggestions.h"
 #include "shared.h"
 
@@ -32,6 +33,8 @@
 #include <iostream>
 #include <windows.h>
 #endif
+
+static QDateTime gLastPluginUnloadTime;
 
 /** \brief Creates a new MythApps Screen
  *  \param parent Pointer to the screen stack
@@ -74,111 +77,21 @@ MythApps::MythApps(MythScreenStack *parent, QString name) : MythScreenType(paren
     connect(nextPageTimer, SIGNAL(timeout()), this, SLOT(nextPageTimerSlot()));
     connect(openSettingTimer, SIGNAL(timeout()), this, SLOT(runMythSettingsSlot()));
 
-    // Listens to Kodi's websocket for receiving push requests. Please note most json requests use NetRequest object.
-    connect(&m_webSocket, &QWebSocket::connected, this, &MythApps::onConnectedWS);
-    connect(&m_webSocket, &QWebSocket::disconnected, this, &MythApps::closedWS);
-
     screen = QGuiApplication::primaryScreen();
 }
 
 /** \brief MythApps deconstructer to clean up timers on addon closing */
 MythApps::~MythApps() {
-    m_webSocket.close();
-    exitToMainMenuSleepTimer->disconnect();
-    minimizeTimer->disconnect();
-    isKodiConnectedTimer->disconnect();
-    playbackTimer->disconnect();
-    searchTimer->disconnect();
-    hintTimer->disconnect();
-    musicBarOnStopTimer->disconnect();
-    searchSuggestTimer->disconnect();
-    searchFocusTimer->disconnect();
-    nextPageTimer->disconnect();
-    openSettingTimer->disconnect();
-    managerFileBrowser->disconnect();
-
-    delete controls;
-    delete m_filepath;
-    delete m_plot;
-    delete m_streamDetails;
-    delete m_streamDetailsbackground;
-    delete m_title;
-    delete m_SearchTextEdit;
-    delete m_screenshotMainMythImage;
-    delete m_loaderImage;
-    delete exitToMainMenuSleepTimer;
-    delete minimizeTimer;
-    delete isKodiConnectedTimer;
-    delete playbackTimer;
-    delete searchTimer;
-    delete hintTimer;
-    delete musicBarOnStopTimer;
-    delete searchSuggestTimer;
-    delete searchFocusTimer;
-    delete nextPageTimer;
-    delete openSettingTimer;
-    delete previouslyPlayedLink;
-    delete favLink;
-    delete watchedLink;
-    delete searchListLink;
-    delete managerFileBrowser;
-    delete m_thumbnailImage;
-    delete m_fileListGrid;
-    delete m_searchButtonList;
-    delete m_searchSettingsButtonList;
-    delete m_fileListMusicGrid;
-    delete m_fileListSongs;
-    delete m_filterGrid;
-    delete m_filterOptionsList;
-    delete m_playlistVertical;
-    delete m_androidMenuBtn;
-    delete currentselectionDetails;
-    delete lastPlayedDetails;
-    delete browser;
-    delete fileBrowserHistory;
-    // music app
-    delete m_textSong;
-    delete m_textArtist;
-    delete m_textAlbum;
-    delete m_musicDuration;
-    delete m_hint;
-    delete m_seekbar;
-    delete m_musicTitle;
-    delete m_trackProgress;
-    delete m_coverart;
-    delete m_blackhole_border;
-    delete m_playingOn;
-    delete m_next_buttonOn;
-    delete m_ff_buttonOn;
-    delete m_playingOff;
-    delete m_next_buttonOff;
-    delete m_ff_buttonOff;
-    delete ytNative;
-
-    // Clean up QThreads in imageThreadList
-    for (QThread *thread : imageThreadList) {
-        thread->quit();
-        if (!thread->wait(2000)) {
-            thread->terminate(); // last resort
-            thread->wait();
-        }
-        delete thread;
-    }
-    imageThreadList.clear();
-}
-
-/** \brief The Websocket connection to Kodi has been establised.  */
-void MythApps::onConnectedWS() {
-    LOG(VB_GENERAL, LOG_DEBUG, "WebSocket connected");
-    connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &MythApps::onTextMessageReceived);
+    CleanupResources();
+    gLastPluginUnloadTime = QDateTime::currentDateTime();
 }
 
 /** \brief Listens to OnPause,OnStop,OnPlay,OnInputRequested messages recieved from Kodi via the websocket.
  * \param kodi websocket message  */
-void MythApps::onTextMessageReceived(QString message) {
+void MythApps::onTextMessageReceived(const QString &method, const QString &message) {
     LOG(VB_GENERAL, LOG_DEBUG, "onTextMessageReceived():" + message);
 
-    if (message.contains("Player.OnStop")) {
+    if (method == "Player.OnStop") {
         if (musicOpen || isHome) { // music
             musicBarOnStopTimer->start(500);
             if (controls->isFullscreen()) {
@@ -189,8 +102,7 @@ void MythApps::onTextMessageReceived(QString message) {
             returnFocus();
             exitToMainMenuSleepTimer->start();
         }
-    }
-    if (message.contains("Player.OnPlay")) {
+    } else if (method == "Player.OnPlay") {
         musicBarOnStopTimer->stop();
 
         // if music video, ask if you want to open in fullscreen.
@@ -202,9 +114,7 @@ void MythApps::onTextMessageReceived(QString message) {
                 }
             }
         }
-    }
-
-    if (message.contains("Input.OnInputRequested") and !searching) {
+    } else if (method == "input.OnInputRequested" and !searching) {
         displayInputBox(message);
     }
 }
@@ -268,14 +178,15 @@ PluginManager MythApps::pluginManager;
 /** \brief create the main screen and initialize the setting and state*/
 bool MythApps::Create() {
     LOG(VB_GENERAL, LOG_INFO, "Opening MythApp");
+    coolDown();
 
     username = QString(gCoreContext->GetSetting("MythAppsusername"));
     password = QString(gCoreContext->GetSetting("MythAppspassword"));
     ip = QString(gCoreContext->GetSetting("MythAppsip"));
     port = QString(gCoreContext->GetSetting("MythAppsport"));
 
-    controls = new Controls(username, password, ip, port);
-    connect(controls, SIGNAL(loadProgramSignal(QString, QString, QString)), this, SLOT(loadProgramSlot(QString, QString, QString)));
+    controls = new Controls(ip, port);
+    connect(controls, &Controls::loadProgramSignal, this, &MythApps::loadProgramSlot);
 
     showsAZfolderNames = gCoreContext->GetSetting("MythAppsShowsAZfolderNames").split("~");
 
@@ -285,26 +196,10 @@ bool MythApps::Create() {
     fileBrowserHistory = new FileBrowserHistory();
 
     bool foundtheme = false;
-
     QString theme = gCoreContext->GetSetting("Theme");
-
-    if (theme.compare("Mythbuntu") == 0 || theme.compare("Willi") == 0 || theme.compare("Functionality") == 0 || theme.compare("Arclight") == 0 || theme.compare("Monochrome") == 0 ||
-        theme.compare("MythAeon") == 0) {
-        LOG(VB_GENERAL, LOG_INFO, "Loading mythapps-ui.xml");
-        foundtheme = LoadWindowFromXML("mythapps-ui.xml", "mythapps", this);
-    } else if (theme.compare("Steppes") == 0 || theme.compare("Steppes-large") == 0) {
-        LOG(VB_GENERAL, LOG_INFO, "Loading mythapps-ui.Steppes.xml");
-        foundtheme = LoadWindowFromXML("mythapps-ui.Steppes.xml", "mythapps", this);
-    } else if (theme.compare("MythCenter-wide") == 0) {
-
-        foundtheme = LoadWindowFromXML("mythapps-ui.720.MCW.xml", "mythapps", this);
-    } else if (theme.contains("XMAS")) {
-        LOG(VB_GENERAL, LOG_INFO, "Loading mythapps-ui.720.NoAlpha.xml");
-        foundtheme = LoadWindowFromXML("mythapps-ui.720.NoAlpha.xml", "mythapps", this);
-    } else {
-        LOG(VB_GENERAL, LOG_INFO, "Loading mythapps-ui.720.xml");
-        foundtheme = LoadWindowFromXML("mythapps-ui.720.xml", "mythapps", this);
-    }
+    QString xmlFile = GetThemeXmlFile(theme);
+    LOG(VB_GENERAL, LOG_INFO, "Loading " + xmlFile);
+    foundtheme = LoadWindowFromXML(xmlFile, "mythapps", this);
 
     if (!foundtheme) {
         return false;
@@ -367,18 +262,10 @@ bool MythApps::Create() {
     connect(m_searchButtonList, SIGNAL(LosingFocus()), this, SLOT(searchTextEditLosingFocus()));
 
     controls->startKodiIfNotRunning();
-
-    QTime time = QTime::currentTime().addSecs(4);
-    while (time > QTime::currentTime()) {
-        if (isKodiPingable(ip, port)) {
-            controls->setConnected(1);
-            goMinimize(true);
-            break;
-        }
-        delayMilli(50);
-    }
-
-    m_webSocket.open(QUrl("ws://" + ip + ":9090"));
+    controls->waitUntilKodiPingable();
+    goMinimize(true);
+    controls->initializeWebSocket();
+    connect(controls->netSocketRequest.data(), &NetSocketRequest::receivedFromSocket, this, &MythApps::onTextMessageReceived);
 
     createDirectoryIfDoesNotExist(getGlobalPathPrefix() + "00cache/"); // Setup cache directories
 
@@ -455,25 +342,26 @@ void MythApps::loadApps() {
     musicOpen = false;
     ytNativeOpen = false;
     m_filepath->SetText("");
+
     if (controls->getConnected() == 1) {
         if (!controls->isUserNamePasswordCorrect()) {
-            delayMilli(200); // retry incase slow to start
+            delayMilli(400); // retry incase slow to start
             if (!controls->isUserNamePasswordCorrect()) {
-                createAutoClosingBusyDialog(tr("Authentication Error. Please check Kodi username/password in settings. (Setting m key)"), 6);
+                createAutoClosingBusyDialog(tr("authentication error. please check kodi username/password in settings. (setting m key)"), 6);
                 openSettingTimer->start(200);
                 return;
             }
         } else if (!controls->areAddonsInstalled()) {
-            m_filepath->SetText(tr("No video addons installed. Press F3 to open Kodi and install some addons."));
-            LOG(VB_GENERAL, LOG_ERR, "No Kodi video addons installed");
+            m_filepath->SetText(tr("no video addons installed. press f3 to open kodi and install some addons."));
+            LOG(VB_GENERAL, LOG_DEBUG, "no kodi video addons installed");
         } else if (!controls->isInputAdaptive()) {
-            LOG(VB_GENERAL, LOG_ERR, "Please install the inputstream adaptive addon.");
+            LOG(VB_GENERAL, LOG_DEBUG, "please install the inputstream adaptive addon.");
         }
 
         isKodiConnectedTimer->start(10 * 1000);
         controls->setConnected(2);
     } else if (controls->getConnected() == 0) {
-        createAutoClosingBusyDialog(tr("Failed to Connect. Is Kodi installed/running with remote control enabled? (Setting m key)"), 6);
+        createAutoClosingBusyDialog(tr("failed to connect. is kodi installed/running with remote control enabled? (setting m key)"), 6);
         openSettingTimer->start(200);
         return;
     }
@@ -514,16 +402,13 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
     bool handled = false;
     QStringList actions;
     handled = GetMythMainWindow()->TranslateKeyPress("mythapps", event, actions);
-    bool musicPlayerFullscreenOpen = false;
-    if (musicOpen) {
-        musicPlayerFullscreenOpen = controls->isFullscreen();
-    }
 
     for (int i = 0; i < actions.size() && !handled; i++) {
         QString action = actions[i];
-        LOG(VB_GENERAL, LOG_DEBUG, "keyPressEvent()" + action);
+        LOG(VB_GENERAL, LOG_DEBUG, "keyPressEvent(): " + action + "  GetFocusWidget(): " + GetFocusWidget()->objectName());
         handled = true;
 
+        // generic key events
         if (m_busyPopup) {
             LOG(VB_GENERAL, LOG_WARNING, "Too busy. Not handling keypress");
         } else if (action == "CLOSE") {
@@ -536,18 +421,17 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             addToUnWatchedList(true);
         } else if (action == "HELP") {
             m_help->SetVisible(!m_help->IsVisible());
-
         } else if (browser->proccessRemote(action)) {
 
-        } else if ((action == "FULLSCREEN")) { // generic key events
-            toggleFullscreen();
+        } else if ((action == "FULLSCREEN")) {
+            controls->toggleFullscreen();
             createAutoClosingBusyDialog(tr("Toggling Fullscreen"), 2, false);
         } else if ((action == "MINIMIZE")) {
             toggleAutoMinimize();
 
             // player key events
-        } else if ((action == "BACK" || action == "ESCAPE") and (kodiPlayerOpen || musicPlayerFullscreenOpen || GetFocusWidget() == m_filepath)) {
-            stopPlayBack(); // Kodi player running. Lets stop
+        } else if ((action == "BACK" || action == "ESCAPE") and (kodiPlayerOpen || GetFocusWidget() == m_filepath) and !musicOpen) {
+            stopPlayBack(); // Kodi player running.
         } else if ((action == "PLAY" || action == "PAUSE") and (kodiPlayerOpen || musicOpen)) {
             pauseToggle();
         } else if (action == "ShowVideoSettings" and kodiPlayerOpen) {
@@ -556,15 +440,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             controls->showInfo();
             controls->togglePlayerDebug(true); // requires double press
         } else if ((action == "DETAILS")) {
-            if (m_streamDetailsbackground->IsVisible() == false) {
-                m_streamDetailsbackground->Show();
-                m_streamDetails->Show();
-                m_streamDetails->SetText(streamDetails);
-                LOG(VB_GENERAL, LOG_DEBUG, streamDetails);
-            } else {
-                m_streamDetailsbackground->Hide();
-                m_streamDetails->Hide();
-            }
+            toggleStreamDetails();
         } else if ((action == "MENU") and kodiPlayerOpen) {
             controls->showPlayerProcessInfo();
         } else if ((action == "MUTE") and (kodiPlayerOpen || musicOpen)) {
@@ -584,80 +460,8 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             // ytCustomApp
         } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_searchSettingsButtonList) {
             SetFocusWidget(m_fileListGrid);
-        } else if (action == "NEXTTRACK" and musicOpen) {
-            // music key events
-            nextTrack();
-        } else if (action == "PREVTRACK" and musicOpen) {
-            previousTrack();
-        } else if ((action == "RIGHT") and musicPlayerFullscreenOpen) {
-            nextTrack();
-        } else if ((action == "LEFT") and musicPlayerFullscreenOpen) {
-            previousTrack();
-        } else if ((action == "RIGHT") and GetFocusWidget() == m_fileListSongs and m_playlistVertical->GetCount() > 0) {
-            SetFocusWidget(m_playlistVertical);
-        } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_playlistVertical) {
-            SetFocusWidget(m_fileListSongs);
-        } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_fileListSongs) {
-            int pos = m_fileListMusicGrid->GetCurrentPos();
-            if (pos > 0) {
-                pos = pos - 1;
-            }
-            m_fileListMusicGrid->SetItemCurrent(pos);
-            SetFocusWidget(m_fileListMusicGrid);
-        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_fileListMusicGrid) {
-            m_filterGrid->SetItemCurrent(0);
-            SetFocusWidget(m_filterGrid);
-        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_filterGrid) {
-            if (m_SearchTextEdit->IsVisible()) {
-                SetFocusWidget(m_SearchTextEdit);
-            } else {
-                goBack();
-            }
-        } else if ((action == "UP") and GetFocusWidget() == m_SearchTextEdit and musicOpen) {
-            SetFocusWidget(m_fileListMusicGrid);
-        } else if ((action == "SEEKFFWD") and musicOpen) {
-            controls->seekFoward();
-        } else if ((action == "SEEKRWND") and musicOpen) {
-            controls->seekBack();
-        } else if ((action == "SELECT") and musicOpen and (GetFocusWidget() == m_playingOn)) {
-            pauseToggle();
-        } else if ((action == "SELECT") and musicOpen and (GetFocusWidget() == m_ff_buttonOn)) {
-            controls->seekFoward();
-        } else if ((action == "SELECT") and musicOpen and (GetFocusWidget() == m_next_buttonOn)) {
-            nextTrack();
-        } else if ((action == "RIGHT") and GetFocusWidget() == m_playlistVertical and m_ff_buttonOff->IsVisible()) {
-            m_currentMusicButton = 1; // m_playing
-            showMusicPlayingBar(true);
-        } else if ((action == "RIGHT") and GetFocusWidget() == m_playingOn) {
-            m_currentMusicButton = 2; // m_next_button
-            showMusicPlayingBar(true);
-            SetFocusWidget(m_next_buttonOn);
-        } else if ((action == "RIGHT") and GetFocusWidget() == m_next_buttonOn) {
-            m_currentMusicButton = 3; // m_ff_button
-            showMusicPlayingBar(true);
-        } else if ((action == "RIGHT") and GetFocusWidget() == m_ff_buttonOn) {
-            m_currentMusicButton = 0;
-            showMusicPlayingBar(true);
-            SetFocusWidget(m_playlistVertical);
-        } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_ff_buttonOn) {
-            m_currentMusicButton = 2; // m_next_button
-            showMusicPlayingBar(true);
-        } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_next_buttonOn) {
-            m_currentMusicButton = 1; // m_playing
-            showMusicPlayingBar(true);
-        } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_playingOn) {
-            m_currentMusicButton = 0;
-            showMusicPlayingBar(true);
-            SetFocusWidget(m_playlistVertical);
-        } else if ((action == "LEFT" || action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_filterOptionsList) {
-            m_filterGrid->SetItemCurrent(0, 0);
-            SetFocusWidget(m_filterGrid);
-        } else if ((action == "RIGHT") and GetFocusWidget() == m_filterOptionsList) {
-            if (m_playlistVertical->GetCount() > 0) {
-                SetFocusWidget(m_playlistVertical);
-            } else {
-                SetFocusWidget(m_fileListMusicGrid);
-            }
+        } else if (handleMusicAction(action)) {
+
             // mythapps key events
         } else if (kodiPlayerOpen) { // do nothing.
 
@@ -1156,7 +960,7 @@ void MythApps::toggleAutoMinimize() {
     } else {
         createAutoClosingBusyDialog(tr("Warning - Auto Minimize Off"), 2);
         goFullscreen();
-        toggleFullscreen();
+        controls->toggleFullscreen();
         controls->activateWindow("home");
     }
 }
@@ -1194,25 +998,18 @@ void MythApps::inputSendText(QString text) {
  *  \param  label - folder name
  *  \param  previousSearchTerms - list of search terms than should not appear as a folder name. (helps to filter out previous searches)
  * \return is the folder allowed?*/
-bool MythApps::folderAllowed(QString label, QStringList previousSearchTerms) {
-    QList<QString> list = {"Bookmarks", "Settings", "Logout", "Search", "New Search", "Switch User", "Select Profile", "Quick Search (Incognito)"};
-    QList<QString> list2 = {"Live", "Playlists"};
+bool MythApps::folderAllowed(const QString &label, const QStringList &previousSearchTerms) {
+    static const QSet<QString> blacklist = {"Bookmarks", "Settings", "Logout", "Search", "New Search", "Switch User", "Select Profile", "Quick Search (Incognito)"};
+    static const QSet<QString> searchBlacklist = {"Live", "Playlists"};
 
-    if (enableHiddenFolders) {
+    if (enableHiddenFolders)
         return true;
-    }
 
-    if (list.contains(label)) {
+    if (blacklist.contains(label))
         return false;
-    }
 
-    if (searching and list2.contains(label)) {
+    if (searching && (searchBlacklist.contains(label) || previousSearchTerms.contains(label)))
         return false;
-    }
-
-    if (searching and previousSearchTerms.contains(label)) {
-        return false;
-    }
 
     return true;
 }
@@ -1456,46 +1253,19 @@ void MythApps::refreshPage(bool enableDialog) {
     }
 }
 
-/** \brief gets the playback time of the playing media and updates the track progress bar in the music player gui
- * \param playerid - The kodi player id
- * \return  returns hours, minutes and seconds */
-QVariantMap MythApps::getPlayBackTime(int playerid) {
-    QVariantMap map1 = controls->getPlayBackTime(playerid);
-    QVariantMap map2 = map1["time"].toMap();
-
-    m_trackProgress->SetUsed(map1["percentage"].toInt());
-
-    updateMusicPlayingBarStatus();
-    return map2;
-}
-
 /** \return the playback time of the playing media as a string
  * \param adjustEnd - return 0 if close to end of the video */
 QString MythApps::getPlayBackTimeString(bool adjustEnd) {
-    QString playback = "00:00:00";
-    if (!playBackTimeMap["hours"].isNull()) {
-        QString hours = playBackTimeMap["hours"].toString();
-        QString minutes = playBackTimeMap["minutes"].toString();
-        QString seconds = playBackTimeMap["seconds"].toString();
-
-        if (hours.size() == 1) {
-            hours = "0" + hours;
-        }
-        if (minutes.size() == 1) {
-            minutes = "0" + minutes;
-        }
-        if (seconds.size() == 1) {
-            seconds = "0" + seconds;
-        }
-
-        playback = hours + ":" + minutes + ":" + seconds;
-    }
-
-    if (adjustEnd && controls->isVideoNearEnd()) {
+    if (adjustEnd && controls->isVideoNearEnd())
         return "00:00:00";
-    }
 
-    return playback;
+    QVariantMap map = playBackTimeMap["time"].toMap();
+
+    QString hours = formatTimeComponent(map["hours"].toString());
+    QString minutes = formatTimeComponent(map["minutes"].toString());
+    QString seconds = formatTimeComponent(map["seconds"].toString());
+
+    return hours + ":" + minutes + ":" + seconds;
 }
 
 /** \brief play the video
@@ -1506,15 +1276,7 @@ void MythApps::play(QString mediaLocation, QString seekAmount) {
     controls->play(mediaLocation, seekAmount);
 }
 
-/** \brief toggle kodi fullscreen */
-void MythApps::toggleFullscreen() {
-#ifdef __ANDROID__
-    return;
-#endif
-    controls->inputActionHelper("togglefullscreen");
-}
-
-/** \brief make kodi go fullscreen with verification */
+/** \brief make kodi go fullscreen */
 void MythApps::goFullscreen() {
     LOG(VB_GENERAL, LOG_DEBUG, "goFullscreen()");
 
@@ -1538,24 +1300,24 @@ void MythApps::goFullscreen() {
     wchar_t kodi_wchar[] = L"Kodi";
     ShowWindow(FindWindow(NULL, kodi_wchar), SW_SHOWMAXIMIZED);
     delayMilli(100);
-    toggleFullscreen();
+    controls->toggleFullscreen();
 #else // linux
     if (isGnomeWayland()) { // use activate-window-by-title
         activateWindowWayland("Kodi");
         if (!controls->isFullscreen()) {
             delayMilli(350);
-            toggleFullscreen();
+            controls->inputActionHelper("togglefullscreen");
         }
 
     } else { // X11
         for (int i = 0; i < 2; i++) {
             if (controls->isFullscreen()) { // fullscreen toggle from fullscreen to window mode and then full screen to bring kodi to the front of mythtv.
                 delayMilli(50);
-                toggleFullscreen();
+                controls->toggleFullscreen();
                 delayMilli(20);
-                toggleFullscreen();
+                controls->toggleFullscreen();
             } else { // window
-                toggleFullscreen();
+                controls->toggleFullscreen();
             }
             delayMilli(100);
             if (controls->isFullscreen()) {
@@ -1575,7 +1337,7 @@ void MythApps::goMinimize(bool fullscreenCheck) {
     }
     if (fullscreenCheck && isX11()) {
         if (controls->isFullscreen()) {
-            toggleFullscreen();
+            controls->toggleFullscreen();
         }
     }
 #ifdef __ANDROID__
@@ -1596,9 +1358,8 @@ void MythApps::handleDialogs(bool forceFullScreenVideo) {
     QString systemCurrentWindow = controls->handleDialogs();
     LOG(VB_GENERAL, LOG_DEBUG, "handleDialogs() -" + systemCurrentWindow);
 
-    if (systemCurrentWindow.compare("Home") == 0) { // socket used as more efficient
-        m_webSocket.sendTextMessage(QString("{\"jsonrpc\": \"2.0\", \"method\": \"GUI.ActivateWindow\", "
-                                            "\"params\": { \"window\": \"fullscreenvideo\" }, \"id\": \"1\"}"));
+    if (systemCurrentWindow.compare("Home") == 0) {
+        controls->activateFullscreenVideo();
     }
 
     if (systemCurrentWindow.compare("Fullscreen OSD") == 0 and forceFullScreenVideo) {
@@ -2341,6 +2102,7 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
 
     goFullscreen();
     play(mediaLocation, seekAmount); // play the media
+    videoStopReceived = false;
 
     QTime dieTime = QTime::currentTime().addSecs(9); // check the media is playing
     while (controls->isPlaying()) {                  // not playing
@@ -2353,6 +2115,9 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
     if (controls->getConnected() == 2) {
         handleDialogs(true);
 
+        globalActivePlayer = controls->getActivePlayer();
+        playbackTimer->start(1 * 1000);
+
         delayMilli(50);
         if (!takeScreenshot()) { // take a screenshot and retry if black screen
             delay(3);
@@ -2360,10 +2125,6 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
                 m_screenshotMainQimage.load(getStandarizedImagePath(lastPlayedDetails->getImageUrl()) + ".processed");
             }
         }
-
-        globalActivePlayer = controls->getActivePlayer();
-        playbackTimer->start(1 * 1000);
-
         streamDetails = controls->getStreamDetailsAll(globalActivePlayer);
     }
     LOG(VB_GENERAL, LOG_DEBUG, "play_Kodi() Finsihed");
@@ -2395,6 +2156,18 @@ void MythApps::createPlayBackMenu() {
 /** \brief calls minimize kodi */
 void MythApps::minimizeTimerSlot() { goMinimize(false); }
 
+/** \brief Delays execution based on the time elapsed since last closed. */
+void MythApps::coolDown() {
+    if (!gLastPluginUnloadTime.isValid())
+        return;
+
+    int elapsed = gLastPluginUnloadTime.msecsTo(QDateTime::currentDateTime());
+    int remaining = 2000 - elapsed;
+
+    if (remaining > 0)
+        delayMilli(remaining);
+}
+
 /** \brief closes any hung searchs */
 void MythApps::searchTimerSlot() {
     closeBusyDialog();
@@ -2415,6 +2188,7 @@ void MythApps::openOSD(QString screenType) {
     }
 
     if (screenType.compare("Player.OnStop") == 0) {
+        videoStopReceived = true;
         playbackTimer->stop();
         createPlayBackMenu();
         goMinimize(true);
@@ -2518,3 +2292,13 @@ void MythApps::addToPreviouslyPlayed() {
 
 /** \brief display the options menu when the Android menu button is clicked*/
 void MythApps::androidMenuBtnSlot() { showOptionsMenu(); }
+
+void MythApps::toggleStreamDetails() {
+    if (!m_streamDetailsbackground->IsVisible()) {
+        m_streamDetailsbackground->Show();
+        m_streamDetails->Show();
+        m_streamDetails->SetText(streamDetails);
+    } else {
+        m_streamDetailsbackground->Hide();
+    }
+}
