@@ -83,7 +83,6 @@ class MythApps : public MythScreenType {
     QString port;                  /*!< port for Kodi */
     QString currentSearchUrl = ""; /*!< the current search source url to append the search text. Used by the search box. */
 
-    QList<QThread *> imageThreadList; /*!< thread pool */
     QString getPlayBackTimeString(bool adjustEnd);
 
     QString searchText = ""; /*!< text entered into the search box */
@@ -109,6 +108,7 @@ class MythApps : public MythScreenType {
     int nextPagePosm_apps = 0;
     int nextPagePosm_fileListGrid = 0;
     int globalActivePlayer = 0; /*!< the id of the active player in kodi */
+    static QAtomicInteger<quint64> currentLoadId;
 
     void toggleSearchVisible(bool visible);
     void setSearchButtonListVisible(bool visible);
@@ -158,8 +158,8 @@ class MythApps : public MythScreenType {
     void goSearch(QString overrideCurrentSearchUrl);
     void delayWhileStopScroll(int maxDelay);
 
-    void loadProgram(QString name, QString setdata, QString thumbnailPath);
-    void loadProgram(QString name, QString setdata, QString thumbnailPath, MythUIButtonList *mythUIButtonList);
+    void loadProgram(QString name, QString setdata, QString thumbnailUrl);
+    void loadProgram(QString name, QString setdata, QString thumbnailUrl, MythUIButtonList *mythUIButtonList);
     void play_Kodi(QString mediaLocation, QString seekAmount);
     void play(QString mediaLocation, QString seekAmount = "");
 
@@ -168,7 +168,7 @@ class MythApps : public MythScreenType {
     bool appsCallbackPlugins(ProgramData *programData, QString label, QString data);
     void appsCallback(QString label, QString data, bool allowBack = true);
     void waitforRequests();
-    void downloadImage(QString thumbnailPath);
+    void downloadImage(QString thumbnailUrl);
     void displayImage(MythUIButtonListItem *item, MythUIButtonList *m_fileList);
     void displayFileBrowser(QString answer, QStringList previousSearchTerms, bool m_loadBackButton);
     void handleDialogs(bool forceFullScreenVideo);
@@ -178,18 +178,16 @@ class MythApps : public MythScreenType {
 
     void fetchSearch(QString searchUrl);
     void niceClose(bool forceClose);
-    int getThreadCount();
-    void waitForThreads(int maxThreadsRunning);
     bool folderAllowed(const QString &label, const QStringList &previousSearchTerms);
     QString getLabel(MythUIButtonListItem *item);
 
     QString getNewSearch(QString url);
 
-    void loadImage(MythUIButtonList *mythUIButtonList, QString name, QString setdata, QString thumbnailPath);
+    void loadImage(MythUIButtonList *mythUIButtonList, QString name, QString setdata, QString thumbnailUrl);
     void createPlayBackMenu();
     void displayInputBox(QString jsonMessage);
     QVariantMap playBackTimeMap;
-    QString getStandarizedImagePath(QString imagePath);
+    QString getStandardizedImagePath(QString imagePath);
 
     MythDialogBox *m_menuPopup{nullptr};
     MythUIBusyDialog *m_busyPopup{nullptr};
@@ -319,10 +317,10 @@ class MythApps : public MythScreenType {
     void isKodiConnectedSlot();
     void nextPageTimerSlot();
 
-    void loadProgramSlot(QString name, QString setdata, QString thumbnailPath);
+    void loadProgramSlot(QString name, QString setdata, QString thumbnailUrl);
 
   public slots:
-    void handleImageSlot(int, MythUIButtonList *);
+    void handleImageSlot(int, const QString, MythUIButtonList *);
     void setFocusWidgetSlot(QString);
 
   protected:

@@ -35,6 +35,7 @@
 #endif
 
 static QDateTime gLastPluginUnloadTime;
+QAtomicInteger<quint64> MythApps::currentLoadId{0};
 
 /** \brief Creates a new MythApps Screen
  *  \param parent Pointer to the screen stack
@@ -293,7 +294,7 @@ bool MythApps::Create() {
 
     m_streamDetailsbackground->Hide();
 
-    pluginManager.setLoadProgramCallback([this](const QString &name, const QString &setdata, const QString &thumbnailPath) { this->loadProgram(name, setdata, thumbnailPath); });
+    pluginManager.setLoadProgramCallback([this](const QString &name, const QString &setdata, const QString &thumbnailUrl) { this->loadProgram(name, setdata, thumbnailUrl); });
     pluginManager.setToggleSearchVisibleCallback([this](bool visible) { this->toggleSearchVisible(visible); });
 
     loadApps();
@@ -524,45 +525,17 @@ void MythApps::niceClose(bool forceClose) {
     Close();
 }
 
-/** \brief get the number of threads running. Also remove finished threads from the thread pool
- \return returns the number of threads running */
-int MythApps::getThreadCount() {
-    int currentThreadsRunning = 0;
-    int imageThreadListCount = 0;
-    foreach (QThread *thread, imageThreadList) {
-        if (thread->isRunning()) {
-            currentThreadsRunning++;
-        }
-        if (thread->isFinished()) {
-            thread->quit();
-            if (imageThreadListCount < imageThreadList.count()) {
-                imageThreadList.removeAt(imageThreadListCount);
-            }
-        }
-        imageThreadListCount++;
-    }
-    return currentThreadsRunning;
-}
-
-/** \brief wait for threads to complete
- *  \param  maxThreadsRunning what is the max threads that should be running?*/
-void MythApps::waitForThreads(int maxThreadsRunning) {
-    while (getThreadCount() > maxThreadsRunning) {
-        delayMilli(50);
-    }
-}
+/** \brief helper function for loadProgram */
+void MythApps::loadProgramSlot(QString name, QString setdata, QString thumbnailUrl) { loadProgram(name, setdata, thumbnailUrl); }
 
 /** \brief helper function for loadProgram */
-void MythApps::loadProgramSlot(QString name, QString setdata, QString thumbnailPath) { loadProgram(name, setdata, thumbnailPath); }
-
-/** \brief helper function for loadProgram */
-void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath) { loadProgram(name, setdata, thumbnailPath, m_fileListGrid); }
+void MythApps::loadProgram(QString name, QString setdata, QString thumbnailUrl) { loadProgram(name, setdata, thumbnailUrl, m_fileListGrid); }
 
 /** \brief prepares to load the image onscreen. Will insert the image on a new line and sort the images if required \param name directory or file name.
  * \param setdata - all the parameters that need to be retrived on click or hover
- * \param thumbnailPath
+ * \param thumbnailUrl
  * \param mythUIButtonList The button to load the image*/
-void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath, MythUIButtonList *mythUIButtonList) {
+void MythApps::loadProgram(QString name, QString setdata, QString thumbnailUrl, MythUIButtonList *mythUIButtonList) {
     // should ytNative be enabled?
     if (ytNativeEnabled && name.compare(ytNative->getKodiYTPluginAppName()) == 0) {
         ytNative->setKodiYTProgramData(setdata);
@@ -575,9 +548,6 @@ void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath,
     if (name.contains(tr("Back"))) {
         count = 0;
     }
-
-    waitForThreads(512); // wait if there are too many threads running to avoid crashs
-
     count++;
 
     if (count == max) {
@@ -597,41 +567,40 @@ void MythApps::loadProgram(QString name, QString setdata, QString thumbnailPath,
         count = 0;
     } else {
         // load the image on the screen
-        loadImage(mythUIButtonList, name, setdata, thumbnailPath);
+        loadImage(mythUIButtonList, name, setdata, thumbnailUrl);
     }
 }
 
 /** \brief converts local file or a http link into a cached image full path.
- * \param thumbnailPath - Can be blank, a local file or a http link
+ * \param thumbnailUrl - Can be blank, a local file or a http link
  * \return cached image full path */
-QString MythApps::getStandarizedImagePath(QString imagePath) {
-    QString imageLocation = "";
+QString MythApps::getStandardizedImagePath(QString imagePath) {
+    QString localImagePath = "";
 
     if (imagePath.contains(QString("file://"), Qt::CaseInsensitive)) { // local file location, such as the favourite image
-        imageLocation = imagePath.replace(QString("file://"), QString(""));
+        localImagePath = imagePath.replace(QString("file://"), QString(""));
     } else if (imagePath.compare(QString("")) == 0) { // no image file or link
-        imageLocation = QString("%1%2").arg(GetShareDir()).arg("themes/default/ma_mv_browse_nocover.png");
+        localImagePath = QString("%1%2").arg(GetShareDir()).arg("themes/default/ma_mv_browse_nocover.png");
     } else { // download image file from http (Kodi json)
         QString imgID = QString(QCryptographicHash::hash((imagePath.toUtf8()), QCryptographicHash::Md5).toHex());
-        imageLocation = getGlobalPathPrefix() + imgID;
+        localImagePath = getGlobalPathPrefix() + imgID;
     }
-    return imageLocation;
+    return localImagePath;
 }
 
 /** \brief creates the data later used to load the image onscreen as a file or directory.
  * \param mythUIButtonList The button to load the image
  * \param name directory or file name.
- * \param etdata all the parameters that need to be retrived on click or hover
- * \param thumbnailPath */
-void MythApps::loadImage(MythUIButtonList *mythUIButtonList, QString name, QString setdata, QString thumbnailPath) {
+ * \param setdata all the parameters that need to be retrived on click or hover
+ * \param thumbnailUrl */
+void MythApps::loadImage(MythUIButtonList *mythUIButtonList, QString name, QString setdata, QString thumbnailUrl) {
     auto *item = new MythUIButtonListItem(mythUIButtonList, "");
 
     if (name.compare("BlankR") == 0) { // no image and no click or hover
         item->setVisible(false);
         item->SetData("BlankR");
         return;
-    }
-    if (name.compare("Blank") == 0) { // no image
+    } else if (name.compare("Blank") == 0) { // no image
         item->setVisible(false);
         return;
     }
@@ -643,38 +612,42 @@ void MythApps::loadImage(MythUIButtonList *mythUIButtonList, QString name, QStri
         item->SetText(name, "buttontext2"); // set the image title / name
     }
 
-    QString imageLocation = getStandarizedImagePath(thumbnailPath);
-    QString appIcon = getStandarizedImagePath(controls->getLocationFromUrlAddress(programDataTemp->getUrl()));
+    QString localImagePath = getStandardizedImagePath(thumbnailUrl);
+    QString appIcon = getStandardizedImagePath(controls->getLocationFromUrlAddress(programDataTemp->getUrl()));
     delete programDataTemp;
 
-    // to speedup the loading, save the parameters in a list. When the image is
-    // displayed onscreen, the parameters are used to create a thread to display
-    // the image.
-    QStringList threadInfo;
-    threadInfo.append("threadInfo");
-    threadInfo.append(thumbnailPath);
-    threadInfo.append(imageLocation);
-    threadInfo.append(appIcon);
-    threadInfo.append(setdata);
+    QVariantMap imageInfo;
+    imageInfo.insert("thumbnailUrl", thumbnailUrl);
+    imageInfo.insert("localImagePath", localImagePath);
+    imageInfo.insert("appIcon", appIcon);
+    imageInfo.insert("setData", setdata);
 
-    item->SetData(threadInfo);
+    item->SetData(imageInfo);
 }
 
 /** \brief receives result from image thread and displays the corresponding image onscreen.
  *  \param id id of the button to update with the new image
  *  \param fileListType button list or file browser to update*/
-void MythApps::handleImageSlot(int id, MythUIButtonList *fileListType) {
+void MythApps::handleImageSlot(int id, const QString thumbnailUrl, MythUIButtonList *fileListType) {
     if (id <= fileListType->GetCount()) {
-        QString itemData = fileListType->GetItemAt(id)->GetData().toString();
-        if (itemData.contains("*_")) {
-            QStringList imageFileLocation = itemData.split("*_");
-            fileListType->GetItemAt(id)->SetImage(imageFileLocation.at(1));
+        auto *item = fileListType->GetItemAt(id);
+        QVariant itemData = item->GetData();
 
-            QString imageFileLocationCombined = imageFileLocation.at(0);
-            fileListType->GetItemAt(id)->SetData(imageFileLocationCombined);
+        if (itemData.canConvert<QVariantMap>()) {
+            QVariantMap map = itemData.toMap();
+
+            // Verify that this item actually matches the filename
+            if (map.value("thumbnailUrl").toString() == thumbnailUrl) {
+                item->SetData(map.value("setData").toString());
+                item->SetImage(map.value("localImagePath").toString() + ".processed");
+                return;
+            } else {
+                LOG(VB_GENERAL, LOG_DEBUG, QString("handleImageSlot() error: index %1, thumbnailUrl '%2'").arg(id).arg(thumbnailUrl));
+                return;
+            }
         }
     } else {
-        LOG(VB_GENERAL, LOG_ERR, "handleImageSlot() error");
+        LOG(VB_GENERAL, LOG_DEBUG, "handleImageSlot() error");
     }
 }
 
@@ -1068,75 +1041,70 @@ void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerm
     toggleSearchVisible(false);
     bool alphabeticalFolderFound = false;
 
+    const quint64 loadId = QDateTime::currentMSecsSinceEpoch();
+    currentLoadId.store(loadId);
+
     QString hash = QString(QCryptographicHash::hash((answer.toUtf8()), QCryptographicHash::Md5).toHex());
     QByteArray br = answer.toUtf8(); // parse json
     QJsonDocument doc = QJsonDocument::fromJson(br);
     QJsonObject addons = doc.object();
     QJsonValue addons2 = addons["result"];
     QJsonObject o = addons2.toObject();
+    QJsonArray agentsArray = o["files"].toArray();
 
     loadBackButtonIfRequired(m_loadBackButton);
     bool showAZsearch = loadAZSearch(hash);
 
-    QElapsedTimer loadingTimer;
-    loadingTimer.start();
     int searchCount = 0;
     int count = 0;
 
-    for (auto oIt = o.constBegin(); oIt != o.constEnd(); ++oIt) {
-        QJsonArray agentsArray = oIt.value().toArray();
-        // loop throught each file/folder in the file browser
-        foreach (const QJsonValue &v, agentsArray) {
-            QString label = removeBBCode(v.toObject().value("label").toString());
-            QString thumbnail = v.toObject().value("thumbnail").toString();
-            QString plot = v.toObject().value("plot").toString(); // art
-            QString file = v.toObject().value("filetype").toString();
-            QString fileUrl = v.toObject().value("file").toString();
+    foreach (const QJsonValue &v, agentsArray) { // loop throught each file/folder in the file browser
+        if (currentLoadId.loadRelaxed() != loadId) {
+            LOG(VB_GENERAL, LOG_DEBUG, "displayFileBrowser() Cancelled");
+            return;
+        }
 
-            count++;
-            if (count > 25) {
-                QCoreApplication::processEvents();
-            }
+        QString label = removeBBCode(v.toObject().value("label").toString());
+        QString thumbnail = v.toObject().value("thumbnail").toString();
+        QString plot = v.toObject().value("plot").toString(); // art
+        QString file = v.toObject().value("filetype").toString();
+        QString fileUrl = v.toObject().value("file").toString();
 
-            if (loadingTimer.elapsed() > 3000) { // 3 seconds
-                LOG(VB_GENERAL, LOG_DEBUG, "displayFileBrowser() -" + label + " count:" + QString::number(count));
-                loadingTimer.restart();
-            }
+        count++;
+        if (count > 25)
+            QCoreApplication::processEvents();
 
-            if (searching and searchNoDuplicateCheck.contains(fileUrl)) {
-                LOG(VB_GENERAL, LOG_DEBUG, "displayFileBrowser() duplicate found");
+        if (searching and searchNoDuplicateCheck.contains(fileUrl)) {
+            LOG(VB_GENERAL, LOG_DEBUG, "displayFileBrowser() duplicate found");
+            continue;
+        }
+        searchNoDuplicateCheck.append(fileUrl);
+
+        // only display items starting with the corrosponding start leter when using the a-z filter
+        if (searchStartLeter.compare("") != 0 and label.size() > 0) {
+            if (searchStartLeter.compare(QString(label.at(0)), Qt::CaseInsensitive) != 0) {
                 continue;
             }
-            searchNoDuplicateCheck.append(fileUrl);
-
-            // only display items starting with the corrosponding start leter when using the a-z filter
-            if (searchStartLeter.compare("") != 0 and label.size() > 0) {
-                if (searchStartLeter.compare(QString(label.at(0)), Qt::CaseInsensitive) != 0) {
-                    continue;
-                }
-            }
-
-            if (label.compare("a", Qt::CaseInsensitive) == 0) { // does a folder named a leter exist.
-                alphabeticalFolderFound = true;
-            }
-
-            if (folderAllowed(label, previousSearchTerms)) { // if not a banned folder such as logout etc, load / display folder
-                bool playVideo = false;
-                if (file.compare("file") == 0) {
-                    playVideo = true;
-                }
-                loadProgram(label, createProgramData(fileUrl, plot, thumbnail, playVideo, ""), thumbnail);
-
-                if (searching and isHome) { // return max of 5 items when using global search
-                    if (searchCount >= 4) {
-                        return;
-                    }
-                }
-                searchCount++;
-            }
-
-            discoverSearchURLs(label, v.toObject().value("file").toString()); // discover if the directory is a search source url
         }
+
+        if (label.compare("a", Qt::CaseInsensitive) == 0) // does a folder named a leter exist.
+            alphabeticalFolderFound = true;
+
+        if (folderAllowed(label, previousSearchTerms)) { // if not a banned folder such as logout etc, load / display folder
+            bool playVideo = false;
+            if (file.compare("file") == 0) {
+                playVideo = true;
+            }
+            loadProgram(label, createProgramData(fileUrl, plot, thumbnail, playVideo, ""), thumbnail);
+
+            if (searching and isHome) { // return max of 5 items when using global search
+                if (searchCount >= 4)
+                    return;
+            }
+            searchCount++;
+        }
+
+        discoverSearchURLs(label, v.toObject().value("file").toString()); // discover if the directory is a search source url
     }
 
     // if alphabetical folders are natively supported by the app, remove the
@@ -1215,6 +1183,7 @@ QString MythApps::getNewSearch(QString url) {
 /** \brief go to the previous url in the file browser*/
 void MythApps::goBack() {
     searchNoDuplicateCheck = QStringList();
+    currentLoadId.fetchAndAddOrdered(0);
     fileBrowserHistory->goBack();
 
     if (fileBrowserHistory->isEmpty()) {
@@ -1669,29 +1638,23 @@ void MythApps::visibleAppsCallback(MythUIButtonListItem *item) {
 /** \brief Called from visibleAppsCallback. Creates a thread to download and process the image.
  * \param item The mythui button
  * \param m_fileList The file browser */
-void MythApps::displayImage(MythUIButtonListItem *item, MythUIButtonList *m_fileList) {
-    // get thread data from the visible onscreen button/app in the file list
-    if (item->GetData().userType() == QMetaType::QStringList) {
-        QStringList threadInfo = item->GetData().toStringList();
-        QString type = threadInfo.at(0);
-        QString thumbnailPath = threadInfo.at(1);
-        QString fileName = threadInfo.at(2);
-        QString fav_icon2 = threadInfo.at(3);
-        QString setdata = threadInfo.at(4);
-        int buttonPosition = m_fileList->GetItemPos(item);
+void MythApps::displayImage(MythUIButtonListItem *item, MythUIButtonList *fileList) {
+    if (!item->GetData().canConvert<QVariantMap>())
+        return;
 
-        QThread *_thread = new QThread(); // create image thread in the imageThreadList pool to download / process the image.
-        ImageThread *_rdr = new ImageThread(buttonPosition, thumbnailPath, fileName, fav_icon2, username, password, ip, port, m_fileList);
-        _rdr->moveToThread(_thread);
-        connect(_thread, &QThread::started, _rdr, &ImageThread::startRead);
-        connect(_thread, &QThread::finished, _rdr, &ImageThread::deleteLater);
-        connect(_rdr, SIGNAL(renderImage(int, MythUIButtonList *)), _thread, SLOT(quit())); // tried terminate() also
-        connect(_rdr, SIGNAL(renderImage(int, MythUIButtonList *)), this, SLOT(handleImageSlot(int, MythUIButtonList *)));
-        _thread->start();
-        imageThreadList.append(_thread);
+    QVariantMap info = item->GetData().toMap();
+    Params p{fileList->GetItemPos(item), info["thumbnailUrl"].toString(), info["localImagePath"].toString(), info["appIcon"].toString(), username, password, ip, port, fileList};
 
-        item->SetData(setdata + "*_" + fileName + ".processed");
-    }
+    auto *worker = new ImageThread(p);
+    connect(worker, &ImageThread::finished, this, &MythApps::handleImageSlot, Qt::QueuedConnection);
+    QThreadPool::globalInstance()->start(worker);
+
+    QVariantMap handleImageMap;
+    handleImageMap.insert("setData", info["setData"].toString());
+    handleImageMap.insert("localImagePath", p.localImagePath);
+    handleImageMap.insert("thumbnailUrl", p.thumbnailUrl);
+
+    item->SetData(QVariant::fromValue(handleImageMap));
 }
 
 /** \brief send a request to load the clicked directory. A cache is used to speed up the requests
@@ -2122,7 +2085,7 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
         if (!takeScreenshot()) { // take a screenshot and retry if black screen
             delay(3);
             if (!takeScreenshot()) { // use thumbnail instead
-                m_screenshotMainQimage.load(getStandarizedImagePath(lastPlayedDetails->getImageUrl()) + ".processed");
+                m_screenshotMainQimage.load(getStandardizedImagePath(lastPlayedDetails->getImageUrl()) + ".processed");
             }
         }
         streamDetails = controls->getStreamDetailsAll(globalActivePlayer);

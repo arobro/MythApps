@@ -84,14 +84,11 @@ void MythApps::CleanupResources() {
     SafeDelete(m_ff_buttonOff);
     SafeDelete(ytNative);
 
-    // Clean up QThreads in imageThreadList
-    for (QThread *thread : imageThreadList) {
-        thread->quit();
-        if (!thread->wait(2000)) {
-            thread->terminate(); // last resort
-            thread->wait();
-        }
-        delete thread;
-    }
-    imageThreadList.clear();
+    currentLoadId.fetchAndAddOrdered(0);
+
+    clearThreads();
+
+    QList<ImageThread *> liveWorkers;
+    for (ImageThread *worker : liveWorkers)
+        worker->requestAbort();
 }

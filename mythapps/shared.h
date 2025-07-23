@@ -60,4 +60,8 @@ bool checkIfProgramInstalled(const QString &programName);
 QString GetThemeXmlFile(const QString &theme);
 QString formatTimeComponent(const QString &value);
 
+int getThreadCount();
+void waitForThreads(int maxThreadsRunning);
+void clearThreads();
+
 #endif

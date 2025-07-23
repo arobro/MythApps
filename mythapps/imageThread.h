@@ -1,46 +1,48 @@
-#ifndef MYTHREAD_H
-#define MYTHREAD_H
+#ifndef IMAGETHREAD_H
+#define IMAGETHREAD_H
 
 // QT headers
-#include <QFile>
+#include <QAtomicInt>
 #include <QObject>
+#include <QRunnable>
 #include <QString>
-#include <QThread>
 
 // MythTV headers
 #include <libmythui/mythuibuttonlist.h>
 
-// MythApps headers
-#include "netRequest.h"
+class NetRequest;
+class MythUIButtonList;
 
-/** \class ImageThread
- *  \brief Downloads and processes an image thumbnail into an image button. This can be multithreaded*/
-class ImageThread : public QObject {
-    Q_OBJECT
-
-  public:
-    explicit ImageThread(int buttonPosition, QString _thumbnailPath, QString _fileName, QString _appIcon, QString _username, QString _password, QString _ip, QString _port,
-                         MythUIButtonList *_fileListType);
-
-  signals:
-    void renderImage(int, MythUIButtonList *);
-
-  public slots:
-    void startRead();
-
-  private:
-    int buttonPosition;
-    QString thumbnailPath;
-    QString fileName;
+struct Params {
+    int position;
+    QString thumbnailUrl;
+    QString localImagePath;
     QString appIcon;
     QString username;
     QString password;
     QString ip;
     QString port;
-    MythUIButtonList *fileListType;
-
-    void downloadAppIconImage(NetRequest &nr);
-    void proccessImage(NetRequest &nr);
+    MythUIButtonList *fileList;
 };
 
-#endif // MYTHREAD_H
+class ImageThread : public QObject, public QRunnable {
+    Q_OBJECT
+
+  public:
+    explicit ImageThread(const Params &p);
+    void run() override;
+    void requestAbort();
+
+  signals:
+    void finished(int position, const QString thumbnailUrl, MythUIButtonList *fileList);
+
+  private:
+    Params params;
+    QAtomicInt abortRequested{0}; // 0 = running, 1 = aborted
+
+    void downloadAppIcon(NetRequest &nr, const QString &fn);
+    void processImage(NetRequest &nr, const QString &fn);
+    bool isAppIconEnabled(const QString &fn);
+};
+
+#endif // IMAGETHREAD_H

@@ -1,128 +1,128 @@
 #include "imageThread.h"
 
 // QT headers
-#include <QApplication>
-#include <QEvent>
+#include <QBrush>
 #include <QFile>
 #include <QFileInfo>
 #include <QImage>
+#include <QMetaObject>
 #include <QPainter>
-#include <QTime>
+#include <QPainterPath>
+#include <QPen>
+#include <QUrl>
+
+// MythTV headers
+#include <libmyth/mythcontext.h>
 
 // MythApps headers
-#include "shared.h"
+#include "netRequest.h"
 
-/** \param _buttonPosition The postion of the button to update the image on.
- *  \param _thumbnailPath path of the thumbnail
- *  \param _encodedThumbnailPath encoded thumbnail path
- *  \param _fileName filename of the thumbnail
- *  \param _appIcon application icon
- *  \param m_username Kodi username
- *  \param m_password Kodi password
- *  \param m_ip Kodi ip
- * 	\param m_port Kodi port
- * 	\param _fileListType what MythUIButtonList instance to render the image on */
+static QString urlEncode(const QString &s) { return QUrl::toPercentEncoding(s); }
 
-ImageThread::ImageThread(int _buttonPosition, QString _thumbnailPath, QString _fileName, QString _appIcon, QString _username, QString _password, QString _ip, QString _port,
-                         MythUIButtonList *_fileListType)
-    : buttonPosition(_buttonPosition), thumbnailPath(_thumbnailPath), fileName(_fileName), appIcon(_appIcon), username(_username), password(_password), ip(_ip), port(_port),
-      fileListType(_fileListType) {}
+ImageThread::ImageThread(const Params &p) : params(p) { setAutoDelete(false); }
 
 /** \brief download and proccess the image if required. Emit the completed result */
-void ImageThread::startRead() {
-    this->fileName.replace("//", "/");
+void ImageThread::run() {
+    if (params.appIcon.isEmpty())
+        LOG(VB_GENERAL, LOG_DEBUG, "ImageThread::run() thumbnailUrl: " + params.thumbnailUrl);
 
-    NetRequest nr(username, password, ip, port, false);
-    if (!QFileInfo::exists(this->fileName + ".processed")) {
-        downloadAppIconImage(nr);
-        proccessImage(nr);
+    QString fn = params.localImagePath;
+    fn.replace("//", "/");
+
+    NetRequest nr(params.username, params.password, params.ip, params.port, false);
+
+    if (!QFileInfo::exists(fn + ".processed")) {
+        downloadAppIcon(nr, fn);
+        processImage(nr, fn);
     }
-    emit renderImage(buttonPosition, this->fileListType);
+
+    if (!abortRequested.load())
+        emit finished(params.position, params.thumbnailUrl, params.fileList);
+
+    deleteLater();
 }
+
+void ImageThread::requestAbort() { abortRequested.store(1); }
 
 /** \brief Download the app icon image using net request if required */
-void ImageThread::downloadAppIconImage(NetRequest &nr) {
-    if (this->fileName.compare(this->appIcon) == 0) { // if app icon, save it to overlay source on thumbnails
-        if (!QFileInfo::exists(fileName)) {
-            QFile file(fileName);
-            file.open(QIODevice::WriteOnly);
-            file.write(nr.downloadImage(urlEncode(this->thumbnailPath), false));
-            file.close();
+void ImageThread::downloadAppIcon(NetRequest &nr, const QString &fn) {
+    if (fn == params.appIcon && !QFileInfo::exists(fn)) {
+        QFile out(fn);
+        if (out.open(QIODevice::WriteOnly)) {
+            out.write(nr.downloadImage(urlEncode(params.thumbnailUrl), false));
         }
+        out.close();
     }
 }
 
+/** \brief checks whether the application icon should be considered "enabled" or valid */
+bool ImageThread::isAppIconEnabled(const QString &fn) { return !params.appIcon.isEmpty() && params.appIcon != fn && !params.appIcon.contains("ma_mv_browse_nocover.png"); }
+
 /** \brief convert the image from a thumbnail to a button */
-void ImageThread::proccessImage(NetRequest &nr) {
-    // convert the image from a thumbnail to a button
-    QImage originalImage;
-    if (QFileInfo::exists(fileName)) { // only for icons
-        originalImage.load(fileName);
-    } else { // all the thumbnails from Kodi
-        originalImage.loadFromData(nr.downloadImage(thumbnailPath, true), "");
+void ImageThread::processImage(NetRequest &nr, const QString &fn) {
+    QImage orig;
+    if (QFileInfo::exists(fn)) {
+        orig.load(fn);
+    } else {
+        orig.loadFromData(nr.downloadImage(params.thumbnailUrl, true));
+    }
+    if (orig.isNull())
+        return;
+
+    double ratio = (16.0 / 9.0);
+    int mainH = orig.height();
+    int mainW = int(mainH * ratio);
+    int reflH = int(mainH * 0.20);
+    int finalH = mainH + reflH;
+    int xOff = (mainW - orig.width()) / 2;
+
+    // Create padded image with background color and draw original image centered
+    QImage padded(mainW, mainH, QImage::Format_ARGB32_Premultiplied);
+    QColor bg(orig.pixel(2, 2));
+    padded.fill(bg);
+    QPainter pd(&padded);
+    pd.setRenderHint(QPainter::SmoothPixmapTransform);
+    pd.drawImage(xOff, 0, orig);
+    pd.end();
+    if (abortRequested.load())
+        return;
+
+    // Create reflection image from top slice of padded image and apply opacity mask
+    QRect slice(0, 0, mainW, reflH);
+    QImage reflection = padded.copy(slice).mirrored(false, true);
+    QImage mask(reflection.size(), QImage::Format_ARGB32_Premultiplied);
+    mask.fill(Qt::black);
+    QPainter pr(&reflection);
+    pr.setCompositionMode(QPainter::CompositionMode_SourceAtop);
+    pr.setOpacity(0.85);
+    pr.drawImage(0, 0, mask);
+    pr.end();
+    if (abortRequested.load())
+        return;
+
+    // Compose final image with rounded corners and clipped path
+    QImage result(mainW, finalH, QImage::Format_ARGB32_Premultiplied);
+    result.fill(Qt::transparent);
+    QPainter p(&result);
+    p.setRenderHints(QPainter::Antialiasing | QPainter::HighQualityAntialiasing | QPainter::SmoothPixmapTransform);
+    QPainterPath path;
+    path.addRoundedRect(result.rect(), 30, 30);
+    p.setClipPath(path);
+
+    p.drawImage(0, 0, reflection);
+    p.drawImage(0, reflH, padded);
+
+    // Optionally overlay app icon
+    if (isAppIconEnabled(fn)) {
+        QImage icon(params.appIcon);
+        if (!icon.isNull()) {
+            icon = icon.scaled(40, 40, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+            QPoint pos(mainW - icon.width(), (finalH - icon.height()) / 2);
+            p.drawImage(pos, icon);
+        }
     }
 
-    QColor originalImageColor(originalImage.pixel(2, 2)); // get image colour
-
-    // get image ratio and scale
-    int hRatio = originalImage.height() * ((16 / 9) * 1.75);
-    int widthDiff = (hRatio - originalImage.width()) / 2;
-
-    QImage destBackground(hRatio, originalImage.height(), QImage::Format_ARGB32);
-    destBackground.fill(originalImageColor);
-
-    QPainter pI(&destBackground);
-    pI.setCompositionMode(QPainter::CompositionMode_SourceAtop);
-    pI.drawImage(widthDiff, 0, originalImage);
-    pI.end();
-
-    // reflection
-    QImage reflectionImage = destBackground.mirrored();
-
-    // crop
-    QRect rectI(0, destBackground.height() / 1.25, destBackground.width(), destBackground.height());
-    QImage reflectionCroppedImage = reflectionImage.copy(rectI);
-
-    // black opacity
-    QImage blackImage(reflectionCroppedImage.width(), reflectionCroppedImage.height(), QImage::Format_ARGB32);
-    blackImage.fill(Qt::black);
-    QPainter imagepainter(&reflectionCroppedImage);
-    imagepainter.setOpacity(0.85);
-    imagepainter.setCompositionMode(QPainter::CompositionMode_SourceOver); // Set the overlay effect
-    imagepainter.drawImage(0, 0, blackImage);
-    imagepainter.end();
-
-    // combine image and reflectionImage
-    QImage result(destBackground.width(), destBackground.height() + destBackground.height() * .20,
-                  QImage::Format_ARGB32); // image to hold the join of image 1 & 2
-    QPainter painterII(&result);
-    painterII.drawImage(0, 0, reflectionCroppedImage);
-    painterII.drawImage(0, destBackground.height() * .20, destBackground);
-    painterII.end();
-
-    // app icon
-    QImage appIconImage(appIcon);
-    appIconImage = appIconImage.scaled(40, 40, Qt::IgnoreAspectRatio);
-
-    // rounded corners
-    QImage roundedCornersImage(result.width(), result.height(), QImage::Format_ARGB32);
-    roundedCornersImage.fill(Qt::transparent);
-    QBrush brush(result);
-    QPen pen;
-    pen.setColor(Qt::darkGray);
-    pen.setJoinStyle(Qt::RoundJoin);
-    QPainter painter(&roundedCornersImage);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
-    painter.setBrush(brush);
-    painter.setPen(pen);
-    painter.drawRoundedRect(0, 0, result.width(), result.height(), 30, 30);
-    if (appIcon != fileName && !appIcon.contains("ma_mv_browse_nocover.png")) {
-        painter.drawImage(result.width() - 40, result.height() / 2, appIconImage);
-    }
-    painter.end();
-
-    roundedCornersImage.save(fileName + ".processed", "PNG");
+    // Persist
+    p.end();
+    result.save(fn + ".processed", "PNG");
 }

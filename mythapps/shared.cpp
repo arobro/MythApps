@@ -8,6 +8,7 @@
 // QT headers
 #include <QDir>
 #include <QProcess>
+#include <QThreadPool>
 #include <QtNetwork/QTcpSocket>
 
 // MythTV headers
@@ -336,3 +337,19 @@ QString GetThemeXmlFile(const QString &theme) {
 }
 
 QString formatTimeComponent(const QString &value) { return value.isNull() || value.isEmpty() ? "00" : value.rightJustified(2, '0'); }
+
+/** \brief get the number of threads running. Also remove finished threads from the thread pool
+ \return returns the number of threads running */
+int MgetThreadCount() { return QThreadPool::globalInstance()->activeThreadCount(); }
+
+/** \brief wait for threads to complete
+ *  \param  maxThreadsRunning what is the max threads that should be running?*/
+void waitForThreads(int maxThreadsRunning) {
+    QThreadPool *pool = QThreadPool::globalInstance();
+
+    while (pool->activeThreadCount() > maxThreadsRunning)
+        QThread::msleep(50);
+}
+
+/** \brief clear running threads */
+void clearThreads() { QThreadPool::globalInstance()->clear(); }
