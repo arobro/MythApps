@@ -64,4 +64,6 @@ int getThreadCount();
 void waitForThreads(int maxThreadsRunning);
 void clearThreads();
 
+QString getKodiLogPath();
+
 #endif

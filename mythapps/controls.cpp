@@ -551,7 +551,7 @@ QString Controls::getStreamDetailsAll(int playerId) {
 
     QString details = parts.join(", ") + "\n";
 
-    QFile log(GetConfDir().replace(".mythtv", "") + ".kodi/temp/kodi.log");
+    QFile log(getKodiLogPath());
     if (log.open(QIODevice::ReadOnly)) {
         QTextStream in(&log);
         QString videoInfo, audioInfo;

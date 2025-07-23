@@ -10,6 +10,7 @@
 #include <QProcess>
 #include <QThreadPool>
 #include <QtNetwork/QTcpSocket>
+#include <QStandardPaths>
 
 // MythTV headers
 #include <libmyth/mythcontext.h>
@@ -353,3 +354,30 @@ void waitForThreads(int maxThreadsRunning) {
 
 /** \brief clear running threads */
 void clearThreads() { QThreadPool::globalInstance()->clear(); }
+
+QString getKodiLogPath() {
+    QStringList possiblePaths;
+    QString newestLogPath;
+    QDateTime newestTime;
+
+#ifdef _WIN32
+    QString userProfile = qEnvironmentVariable("USERPROFILE");
+    possiblePaths << userProfile + "\\AppData\\Roaming\\Kodi\\kodi.log";
+#else
+    QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    possiblePaths << home + "/.kodi/temp/kodi.log";
+    possiblePaths << home + "/.var/app/tv.kodi.Kodi/data/temp/kodi.log";
+#endif
+
+    for (const QString &path : possiblePaths) {
+        QFileInfo fileInfo(path);
+        if (fileInfo.exists() && fileInfo.isFile()) {
+            if (newestLogPath.isEmpty() || fileInfo.lastModified() > newestTime) {
+                newestLogPath = path;
+                newestTime = fileInfo.lastModified();
+            }
+        }
+    }
+
+    return newestLogPath;
+}
