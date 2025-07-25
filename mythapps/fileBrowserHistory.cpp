@@ -18,14 +18,14 @@ void FileBrowserHistory::removeCurrentUrlFromList() {
 /** \brief go to the previous url in the file browser history. */
 void FileBrowserHistory::goBack() {
     LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory::goBack() Start");
-
-    // foreach (QStringList previousList, previousListItem) {
-    // LOG(VB_GENERAL, LOG_DEBUG, previousList.at(0) + " - " + previousList.at(1) );
-    //}
-
     removeCurrentUrlFromList();
-
     LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory::goBack() Finished");
+}
+
+void FileBrowserHistory::debug() {
+    foreach (QStringList previousList, previousListItem) {
+        LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory::debug(): " + previousList.at(1));
+    }
 }
 
 /** \brief append the current url in the file browser */

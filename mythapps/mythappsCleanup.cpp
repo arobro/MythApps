@@ -45,7 +45,6 @@ void MythApps::CleanupResources() {
     SafeDelete(m_title);
     SafeDelete(m_SearchTextEdit);
     SafeDelete(m_screenshotMainMythImage);
-    SafeDelete(m_loaderImage);
     SafeDelete(previouslyPlayedLink);
     SafeDelete(favLink);
     SafeDelete(watchedLink);
@@ -64,6 +63,7 @@ void MythApps::CleanupResources() {
     SafeDelete(lastPlayedDetails);
     SafeDelete(browser);
     SafeDelete(fileBrowserHistory);
+    SafeDelete(dialog);
 
     // Music app
     SafeDelete(m_textSong);

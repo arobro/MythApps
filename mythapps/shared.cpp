@@ -8,9 +8,9 @@
 // QT headers
 #include <QDir>
 #include <QProcess>
+#include <QStandardPaths>
 #include <QThreadPool>
 #include <QtNetwork/QTcpSocket>
-#include <QStandardPaths>
 
 // MythTV headers
 #include <libmyth/mythcontext.h>
@@ -54,6 +54,9 @@ void delayMilli(int milliseconds) {
         QThread::msleep(25);
     }
 }
+
+/** \brief the sockets has no reponse, on older versions of Kodi, a delay was requried here.  */
+void smartDelay() {}
 
 /** \brief remove the plugin prefix from the url
  * \param url - url address

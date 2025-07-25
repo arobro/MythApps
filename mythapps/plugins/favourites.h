@@ -18,8 +18,10 @@ class Favourites : public PluginAPI {
     QString getPluginName() const override;
     QString getPluginDisplayName() const override;
     QString getPluginIcon() const override;
+    void setDialog(Dialog *d) override;
+    void setFileBrowserHistory(FileBrowserHistory *f) override;
 
-    void load() override;
+    void load(const QString filePath) override;
     void displayHomeScreenItems() override;
     void loadFavourites(bool displayOnHome);
 

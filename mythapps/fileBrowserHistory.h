@@ -15,6 +15,7 @@ class FileBrowserHistory {
     void goBack();
     void append(QString label, QString data);
     bool isEmpty();
+    void debug();
 
     QString getCurrentLabel();
     QString getCurrentData();

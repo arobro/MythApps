@@ -9,9 +9,15 @@
 #include <QString>
 #include <functional>
 
-#include "favourites.h"
+// MythApps headers
+#include "controls.h"
+#include "dialog.h"
+#include "fileBrowserHistory.h"
 
-// Move this struct outside the class
+// Plugins
+#include "favourites.h"
+#include "videos.h"
+
 struct PluginDisplayInfo {
     QString name;
     QString iconPath;
@@ -24,16 +30,18 @@ class PluginManager {
     ~PluginManager();
 
     bool loadFavouritesPlugin();
-    QList<PluginDisplayInfo> getPluginsForDisplay() const;
+    bool loadVideosPlugin();
 
-    // Add these lines:
+    QList<PluginDisplayInfo> getPluginsForDisplay(bool start) const;
+
     bool loadPlugin(const QString &pluginPath);
-
-    // Add this method
     void setLoadProgramCallback(PluginAPI::LoadProgramCallback cb);
-
-    // Add this method
     void setToggleSearchVisibleCallback(PluginAPI::ToggleSearchVisibleCallback cb);
+    void setGoBackCallback(PluginAPI::GoBackCallback cb);
+
+    void setControls(Controls *c);
+    void setDialog(Dialog *d);
+    void setFileBrowserHistory(FileBrowserHistory *f);
 
     bool isFavouritesPluginOpen(bool isHome);
 
@@ -42,8 +50,10 @@ class PluginManager {
   private:
     QMap<QString, PluginAPI *> m_plugins;
     QMap<QString, QString> m_pluginIcons;
-    Favourites *m_favourites = nullptr;
     QString openPluginName;
+
+    Favourites *m_favourites{nullptr};
+    Videos *m_videos{nullptr};
 };
 
 #endif /* PLUGIN_MANAGER_H */

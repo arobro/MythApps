@@ -34,11 +34,13 @@ INSTALLS += installfiles
 # Input
 HEADERS += mythapps.h mythsettings.h mythinput.h imageThread.h searchSuggestions.h shared.h controls.h programData.h programLink.h netRequest.h
 HEADERS += mythappsdbcheck.h container.h libs/xbmcclient.h ytCustomApp.h browser.h fileBrowserHistory.h NetSocketRequest.cpp
-HEADERS += plugins/plugin_manager.h plugins/plugin_api.h plugins/favourites.h netSocketRequest.h
+HEADERS += plugins/plugin_manager.h plugins/plugin_api.h netSocketRequest.h dialog.h 
+HEADERS += plugins/favourites.h plugins/videos.h
 
 SOURCES += main.cpp mythapps.cpp mythsettings.cpp mythinput.cpp imageThread.cpp music_functions.cpp searchSuggestions.cpp netRequest.cpp 
 SOURCES += shared.cpp controls.cpp programData.cpp programLink.cpp mythappsdbcheck.cpp ytCustomApp.cpp browser.cpp fileBrowserHistory.cpp
-SOURCES += plugins/plugin_manager.cpp plugins/favourites.cpp netSocketRequest.cpp mythappsCleanup.cpp
+SOURCES += plugins/plugin_manager.cpp netSocketRequest.cpp mythappsCleanup.cpp dialog.cpp
+SOURCES += plugins/favourites.cpp plugins/videos.cpp
 
 DEFINES += MPLUGIN_API
 

@@ -21,7 +21,10 @@ QString Favourites::getPluginDisplayName() const {
 
 QString Favourites::getPluginIcon() const { return pluginIcon; }
 
-void Favourites::load() {
+void Favourites::setDialog(Dialog *d) {}
+void Favourites::setFileBrowserHistory(FileBrowserHistory *f) {}
+
+void Favourites::load(const QString filePath) {
     m_toggleSearchVisibleCallback(false);
     loadFavourites(false);
 }
@@ -38,8 +41,3 @@ void Favourites::loadFavourites(bool displayOnHome) {
         }
     }
 }
-
-// Register the plugin with the PluginManager
-extern "C" PluginAPI *createPlugin() { return new Favourites(); }
-
-extern "C" void destroyPlugin(PluginAPI *plugin) { delete plugin; }

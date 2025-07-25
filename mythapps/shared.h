@@ -65,5 +65,6 @@ void waitForThreads(int maxThreadsRunning);
 void clearThreads();
 
 QString getKodiLogPath();
+void smartDelay();
 
 #endif

@@ -19,6 +19,7 @@
 #include "browser.h"
 #include "container.h"
 #include "controls.h"
+#include "dialog.h"
 #include "fileBrowserHistory.h"
 #include "imageThread.h"
 #include "plugins/plugin_manager.h"
@@ -119,11 +120,9 @@ class MythApps : public MythScreenType {
 
     void showOptionsMenu();
     void goBack();
-    void createAutoClosingBusyDialog(QString dialogText, int delaySeconds, bool wait = true);
     void refreshPage(bool enableDialog);
 
     void loadWatched(bool unwatched);
-    void loadVideos();
     void loadYTNative(QString searchString, QString directory);
     void loadShowsAZ();
     void loadBackButtonIfRequired(bool m_loadBackButton);
@@ -188,9 +187,9 @@ class MythApps : public MythScreenType {
     void displayInputBox(QString jsonMessage);
     QVariantMap playBackTimeMap;
     QString getStandardizedImagePath(QString imagePath);
+    void loadPlugins(bool start);
 
     MythDialogBox *m_menuPopup{nullptr};
-    MythUIBusyDialog *m_busyPopup{nullptr};
     MythUIButtonListItem *nextPageitem{nullptr};
 
     QScreen *screen{nullptr};
@@ -217,6 +216,7 @@ class MythApps : public MythScreenType {
 
     Browser *browser;
     FileBrowserHistory *fileBrowserHistory;
+    Dialog *dialog;
 
     // music app
     int m_currentMusicButton = 0;
@@ -268,7 +268,6 @@ class MythApps : public MythScreenType {
     bool partyMode;
     bool initializeMusic();
     void clearAndStopPlaylist();
-    void closeBusyDialog();
 
     void musicSearch(QString search);
     void loadMusicHelper(QString labelPrefix, QMap<QString, QStringList> loadMusicType, MythUIButtonList *m_fileList);
@@ -322,9 +321,6 @@ class MythApps : public MythScreenType {
   public slots:
     void handleImageSlot(int, const QString, MythUIButtonList *);
     void setFocusWidgetSlot(QString);
-
-  protected:
-    void createBusyDialog(const QString &title);
 
   private:
     QNetworkAccessManager *managerFileBrowser;

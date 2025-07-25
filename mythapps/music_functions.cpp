@@ -306,11 +306,11 @@ void MythApps::removeFromPlaylist(QString label) {
 
 void MythApps::addToPlaylistClickedCallback(MythUIButtonListItem *item) {
     LOG(VB_GENERAL, LOG_DEBUG, "addToPlaylistClickedCallback()");
-    if (m_loaderImage->IsVisible()) { // button debounce
+    if (dialog->getLoader()->IsVisible()) { // button debounce
         return;
     }
 
-    m_loaderImage->SetVisible(true);
+    dialog->getLoader()->SetVisible(true);
 
     QString label = item->GetText();
     if (item->GetText("buttontext2").size() > label.size()) {
@@ -355,7 +355,7 @@ void MythApps::addToPlaylistClickedCallback(MythUIButtonListItem *item) {
     } else { // already in playlist
         controls->playListOpen(inPlaylist);
     }
-    m_loaderImage->SetVisible(false);
+    dialog->getLoader()->SetVisible(false);
 }
 
 /** \brief refresh/update the playlist. */
@@ -789,12 +789,12 @@ void MythApps::loadMusic() {
 }
 
 void MythApps::clearAndStopPlaylist() {
-    createBusyDialog(tr("Stopping Music..."));
+    dialog->createBusyDialog(tr("Stopping Music..."));
     int playerID = controls->stopPlayBack();
     controls->playListClear(playerID);
     controls->playListClear(1);
     delayMilli(100);
-    closeBusyDialog();
+    dialog->closeBusyDialog();
 }
 
 /** \brief hide the helpful hint text after it has displayed once. */

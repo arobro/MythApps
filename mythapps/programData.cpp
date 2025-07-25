@@ -149,15 +149,6 @@ bool ProgramData::hasUnwatchedList() {
     return false;
 }
 
-/** \brief is the folder an app called Back?
- * \return is the corresponding folder Videos? */
-bool ProgramData::hasVideos() {
-    if (getPlot().compare("Videos") == 0) {
-        return true;
-    }
-    return false;
-}
-
 bool ProgramData::hasYTnative() {
     if (getFilePathParam().startsWith("YTNative")) {
         return true;

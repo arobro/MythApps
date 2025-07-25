@@ -9,6 +9,7 @@
 #include <QtWidgets>
 
 // MythTV headers
+#include "libmythbase/mythlogging.h"
 #include "libmythui/mythuistatetracker.h"
 #include <libmyth/mythcontext.h>
 #include <libmythui/mythdialogbox.h>
@@ -20,7 +21,6 @@
 
 // MythApps headers
 #include "imageThread.h"
-#include "libmythbase/mythlogging.h"
 #include "music_functions.cpp"
 #include "mythapps.h"
 #include "mythinput.h"
@@ -231,6 +231,7 @@ bool MythApps::Create() {
     m_help->SetEnabled(false);
 
     m_SearchTextEdit->SetKeyboardPosition(VK_POSTOPDIALOG);
+    dialog = new Dialog(this, m_loaderImage);
 
     MythUIButtonListItem *searchBtnList = new MythUIButtonListItem(m_searchButtonList, "");
     searchBtnList->SetText("Search", "buttontext2");
@@ -296,6 +297,11 @@ bool MythApps::Create() {
 
     pluginManager.setLoadProgramCallback([this](const QString &name, const QString &setdata, const QString &thumbnailUrl) { this->loadProgram(name, setdata, thumbnailUrl); });
     pluginManager.setToggleSearchVisibleCallback([this](bool visible) { this->toggleSearchVisible(visible); });
+    pluginManager.setGoBackCallback([this]() { this->goBack(); });
+
+    pluginManager.setControls(controls);
+    pluginManager.setDialog(dialog);
+    pluginManager.setFileBrowserHistory(fileBrowserHistory);
 
     loadApps();
 
@@ -322,7 +328,7 @@ void MythApps::loadApps() {
     toggleSearchVisible(true);
     ytNative->setSearchSettingsGroupVisibilty(false);
     m_hint->SetVisible(false);
-    m_loaderImage->SetVisible(false);
+    dialog->getLoader()->SetVisible(false);
     musicMode = 1;
     resetScreenshot();
     firstDirectoryName = tr("All");
@@ -348,7 +354,7 @@ void MythApps::loadApps() {
         if (!controls->isUserNamePasswordCorrect()) {
             delayMilli(400); // retry incase slow to start
             if (!controls->isUserNamePasswordCorrect()) {
-                createAutoClosingBusyDialog(tr("authentication error. please check kodi username/password in settings. (setting m key)"), 6);
+                dialog->createAutoClosingBusyDialog(tr("authentication error. please check kodi username/password in settings. (setting m key)"), 6);
                 openSettingTimer->start(200);
                 return;
             }
@@ -362,15 +368,12 @@ void MythApps::loadApps() {
         isKodiConnectedTimer->start(10 * 1000);
         controls->setConnected(2);
     } else if (controls->getConnected() == 0) {
-        createAutoClosingBusyDialog(tr("failed to connect. is kodi installed/running with remote control enabled? (setting m key)"), 6);
+        dialog->createAutoClosingBusyDialog(tr("failed to connect. is kodi installed/running with remote control enabled? (setting m key)"), 6);
         openSettingTimer->start(200);
         return;
     }
 
-    QList<PluginDisplayInfo> plugins = pluginManager.getPluginsForDisplay();
-    for (const auto &plugin : plugins) {
-        loadImage(m_fileListGrid, plugin.name, plugin.setData, plugin.iconPath);
-    }
+    loadPlugins(true);
 
     // load the app plugins and watch list before sorting
     loadImage(m_fileListGrid, QString(tr("Watched List")), QString("Watched List~Watched List"), recent_icon);
@@ -378,10 +381,9 @@ void MythApps::loadApps() {
     controls->loadAddons();
     SetFocusWidget(m_fileListGrid); // set the focus to the file list grid
 
-    // load the my videos and my music after sorting if enabled
-    if (gCoreContext->GetSetting("MythAppsmyVideo").compare("1") == 0) {
-        loadImage(m_fileListGrid, tr("My Videos"), QString("Videos~Videos"), videos_icon);
-    }
+    // load plugins after sorting
+    loadPlugins(false);
+
     if (gCoreContext->GetSetting("MythAppsMusic").compare("1") == 0) {
         loadImage(m_fileListGrid, tr("Music"), QString("Music~Music"), music_icon);
     }
@@ -389,6 +391,13 @@ void MythApps::loadApps() {
     pluginManager.getPluginByName("Favourites")->displayHomeScreenItems();
 
     LOG(VB_GENERAL, LOG_DEBUG, "loadApps() Finished");
+}
+
+void MythApps::loadPlugins(bool start) {
+    QList<PluginDisplayInfo> plugins = pluginManager.getPluginsForDisplay(start);
+    for (const auto &plugin : plugins) {
+        loadImage(m_fileListGrid, plugin.name, plugin.setData, plugin.iconPath);
+    }
 }
 
 /** \brief handle key press events  */
@@ -426,7 +435,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
 
         } else if ((action == "FULLSCREEN")) {
             controls->toggleFullscreen();
-            createAutoClosingBusyDialog(tr("Toggling Fullscreen"), 2, false);
+            dialog->createAutoClosingBusyDialog(tr("Toggling Fullscreen"), 2);
         } else if ((action == "MINIMIZE")) {
             toggleAutoMinimize();
 
@@ -709,25 +718,10 @@ void MythApps::selectSearchList(MythUIButtonListItem *item) {
     }
 }
 
-/** \brief  creates a text dialog that auto closes
- *  \param  dialogTex to display onscreen
- *  \param  delaySeconds seconds to autoclose
- *  \param  wait should the dialog block code from running?*/
-void MythApps::createAutoClosingBusyDialog(QString dialogText, int delaySeconds, bool wait) {
-    createBusyDialog(dialogText);
-    if (wait) {
-        delay(delaySeconds);
-        closeBusyDialog();
-    } else {
-        searchTimer->stop();
-        searchTimer->start(delaySeconds * 1000);
-    }
-}
-
 /** \brief clicked callback for the search list. */
 void MythApps::clickedSearchList(MythUIButtonListItem *item) {
     if (searchListLink->getListSizeEnabled() == 0) { // display error is no search sources
-        createAutoClosingBusyDialog(tr("Please setup search sources in M->Setting"), 3);
+        dialog->createAutoClosingBusyDialog(tr("Please setup search sources in M->Setting"), 3);
         return;
     }
 
@@ -851,7 +845,7 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
         return;
     }
 
-    createBusyDialog(tr("Retrieving Search Results..."));
+    dialog->createBusyDialog(tr("Retrieving Search Results..."));
 
     searching = true;
     QCoreApplication::processEvents();
@@ -881,7 +875,7 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
     searchSubFoldersList.clear();
     makeSearchTextEditEmpty();
 
-    closeBusyDialog(); // close the Retrieving Search Results dialog
+    dialog->closeBusyDialog(); // close the Retrieving Search Results dialog
     m_filepath->SetText(tr("Finished Searching - ") + m_filepath->GetText());
 }
 
@@ -917,9 +911,9 @@ void MythApps::fetchSearch(QString searchUrl) {
 /** \brief toggle showing and hiding hidden folders such as login, logout etc*/
 void MythApps::toggleHiddenFolders() {
     if (enableHiddenFolders) {
-        createAutoClosingBusyDialog(tr("Hiding Folders"), 3, false);
+        dialog->createAutoClosingBusyDialog(tr("Hiding Folders"), 3);
     } else {
-        createAutoClosingBusyDialog(tr("Showing Hidden Folders"), 2, false);
+        dialog->createAutoClosingBusyDialog(tr("Showing Hidden Folders"), 2);
     }
     enableHiddenFolders = !enableHiddenFolders;
     refreshPage(false);
@@ -929,9 +923,9 @@ void MythApps::toggleHiddenFolders() {
 void MythApps::toggleAutoMinimize() {
     allowAutoMinimize = !allowAutoMinimize;
     if (allowAutoMinimize) {
-        createAutoClosingBusyDialog(tr("Auto Minimize On"), 3);
+        dialog->createAutoClosingBusyDialog(tr("Auto Minimize On"), 3);
     } else {
-        createAutoClosingBusyDialog(tr("Warning - Auto Minimize Off"), 2);
+        dialog->createAutoClosingBusyDialog(tr("Warning - Auto Minimize Off"), 2);
         goFullscreen();
         controls->toggleFullscreen();
         controls->activateWindow("home");
@@ -1017,7 +1011,7 @@ void MythApps::loadBackButtonIfRequired(bool m_loadBackButton) {
     if (m_loadBackButton) {
         m_fileListGrid->Reset();
         loadBackButton();
-        m_loaderImage->SetVisible(false);
+        dialog->getLoader()->SetVisible(false);
     }
 }
 
@@ -1119,7 +1113,7 @@ void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerm
     searchStartLeter = "";
 
     if (stopScroll) { // used for next page
-        m_loaderImage->SetVisible(false);
+        dialog->getLoader()->SetVisible(false);
         stopScroll = false;
     }
     LOG(VB_GENERAL, LOG_DEBUG, "displayFileBrowser() Finished");
@@ -1202,7 +1196,7 @@ void MythApps::refreshPage(bool enableDialog) {
 
     if (!fileBrowserHistory->isEmpty() || isHome) {
         if (enableDialog) {
-            createAutoClosingBusyDialog(tr("Refreshing Page"), 2, false);
+            dialog->createAutoClosingBusyDialog(tr("Refreshing Page"), 2);
         }
         if (isHome) {
             controls->getAddons(true);
@@ -1260,9 +1254,9 @@ void MythApps::goFullscreen() {
 
 #ifdef __ANDROID__
     if (!controls->androidAppSwitch("Kodi")) {
-        createAutoClosingBusyDialog(tr("Myth Apps Services (anroid app - apk) is either not installed or "
-                                       "running. Have you opened the app?"),
-                                    3);
+        dialog->createAutoClosingBusyDialog(tr("Myth Apps Services (anroid app - apk) is either not installed or "
+                                               "running. Have you opened the app?"),
+                                            3);
         niceClose(true);
     }
 #elif _WIN32
@@ -1460,7 +1454,7 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
             m_fileListGrid->Reset();
             loadBackButton();
             isHome = false;
-            plugin->load();
+            plugin->load(programData->get().url);
         }
         return;
     }
@@ -1510,7 +1504,7 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
 \param  item - the selected button */
 bool MythApps::appsCallbackPlugins(ProgramData *programData, QString label, QString data) {
     LOG(VB_GENERAL, LOG_DEBUG, "appsCallbackPlugins()");
-    m_loaderImage->SetVisible(true);
+    dialog->getLoader()->SetVisible(true);
 
     m_androidMenuBtn->SetVisible(false);
     m_androidMenuBtn->SetEnabled(false);
@@ -1542,7 +1536,7 @@ bool MythApps::appsCallbackPlugins(ProgramData *programData, QString label, QStr
             seek = programData->getSeek(); // retrive seek value if specified
         }
 
-        m_loaderImage->SetVisible(false);
+        dialog->getLoader()->SetVisible(false);
         play_Kodi(fileURL, seek);
         return true;
     }
@@ -1596,11 +1590,11 @@ void MythApps::nextPageTimerSlot() {
     nextPageitem->SetData(createProgramData(tr("Back"), "", "", false, ""));
     delayWhileStopScroll(2);
     if (stopScroll) {
-        createBusyDialog(tr("Loading Next Page"));
+        dialog->createBusyDialog(tr("Loading Next Page"));
         delayWhileStopScroll(8); // timeout message and the stopscroll incase it gets hung
-        closeBusyDialog();
+        dialog->closeBusyDialog();
         stopScroll = false;
-        m_loaderImage->SetVisible(false);
+        dialog->getLoader()->SetVisible(false);
     }
 }
 
@@ -1792,40 +1786,13 @@ void MythApps::loadWatched(bool unwatched) {
     }
 }
 
-/** \brief load the myvideos app */
-void MythApps::loadVideos() {
-    LOG(VB_GENERAL, LOG_DEBUG, "loadVideos()");
-    m_fileListGrid->Reset();
-    loadBackButton();
-    toggleSearchVisible(false);
-    isHome = false;
-
-    musicMode = 2;
-    if (gCoreContext->GetSetting("MythAppsMusic").compare("1") == 0) {
-        loadImage(m_fileListGrid, tr("Music Videos"), QString("Music~Music"), music_icon);
-    }
-
-    QVariantMap map = controls->getVideos();
-    QList list3 = map["sources"].toList();
-
-    foreach (QVariant T, list3) { // load videos and folders in the file manager
-        QVariantMap map4 = T.toMap();
-
-        QString label = map4["label"].toString();
-        QString url = map4["file"].toString();
-        QString image = "";
-
-        loadProgram(label, createProgramData(url, "", image, false, ""), image);
-    }
-}
-
 void MythApps::loadYTNative(QString searchString, QString directory) {
     if (gCoreContext->GetSetting("MythAppsYTnative").compare("1") == 0) {
         LOG(VB_GENERAL, LOG_DEBUG, "loadYTNative()" + searchString + " dir:" + directory);
 
         if (gCoreContext->GetSetting("MythAppsYTapi").length() < 10) {
             LOG(VB_GENERAL, LOG_DEBUG, "No API key");
-            createAutoClosingBusyDialog(tr("Please enter in your API key under MythApps->Settings"), 3);
+            dialog->createAutoClosingBusyDialog(tr("Please enter in your API key under MythApps->Settings"), 3);
             return;
         }
         toggleSearchVisible(true);
@@ -2041,13 +2008,13 @@ void MythApps::addToUnWatchedList(bool menu) {
             currentselectionDetails->setUnWatched();
             watchedLink->append(currentselectionDetails->get());
             if (menu) {
-                createAutoClosingBusyDialog(tr("Added to Watch List for Later Viewing"), 3);
+                dialog->createAutoClosingBusyDialog(tr("Added to Watch List for Later Viewing"), 3);
             }
         } else {
-            createAutoClosingBusyDialog(tr("Already in Watch List"), 3);
+            dialog->createAutoClosingBusyDialog(tr("Already in Watch List"), 3);
         }
     } else {
-        createAutoClosingBusyDialog(tr("Unable to add to Watch List as not a video"), 3);
+        dialog->createAutoClosingBusyDialog(tr("Unable to add to Watch List as not a video"), 3);
     }
 }
 /** \brief plays a video in kodi and seeks if required.
@@ -2064,6 +2031,7 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
     exitToMainMenuSleepTimer->stop();
 
     goFullscreen();
+    smartDelay();
     play(mediaLocation, seekAmount); // play the media
     videoStopReceived = false;
 
@@ -2133,7 +2101,7 @@ void MythApps::coolDown() {
 
 /** \brief closes any hung searchs */
 void MythApps::searchTimerSlot() {
-    closeBusyDialog();
+    dialog->closeBusyDialog();
     searchTimer->stop();
 }
 
@@ -2159,31 +2127,6 @@ void MythApps::openOSD(QString screenType) {
 #ifdef __ANDROID__
         controls->androidAppSwitch("MythTV");
 #endif
-    }
-}
-
-/** \brief create the busy dialog
- * \param title lablel for the dialog*/
-void MythApps::createBusyDialog(const QString &title) {
-    if (m_busyPopup) {
-        return;
-    }
-
-    MythScreenStack *popupStack = GetMythMainWindow()->GetStack("popup stack");
-    m_busyPopup = new MythUIBusyDialog(title, popupStack, "mythvideobusydialog");
-
-    if (m_busyPopup->Create()) {
-        popupStack->AddScreen(m_busyPopup, false);
-    } else {
-        m_busyPopup = nullptr;
-    }
-}
-
-/** \brief close the busy dialoge */
-void MythApps::closeBusyDialog() {
-    if (m_busyPopup) {
-        m_busyPopup->Close();
-        m_busyPopup = nullptr;
     }
 }
 
