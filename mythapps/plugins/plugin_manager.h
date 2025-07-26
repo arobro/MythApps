@@ -12,7 +12,6 @@
 // MythApps headers
 #include "controls.h"
 #include "dialog.h"
-#include "fileBrowserHistory.h"
 
 // Plugins
 #include "favourites.h"
@@ -41,7 +40,6 @@ class PluginManager {
 
     void setControls(Controls *c);
     void setDialog(Dialog *d);
-    void setFileBrowserHistory(FileBrowserHistory *f);
 
     bool isFavouritesPluginOpen(bool isHome);
 

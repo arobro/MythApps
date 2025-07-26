@@ -230,3 +230,5 @@ void ProgramData::setSeek(QString seek) { fileFolderContainer.seek = seek; }
 void ProgramData::setUnWatched() { fileFolderContainer.seek = "false"; }
 
 bool ProgramData::isYTWrappedApp() { return (fileFolderContainer.title.compare("Wrapped App") == 0); }
+
+QString ProgramData::getDataWithoutAppName(QString data) { return data.replace("app://" + getAppPluginName() + "/", ""); }

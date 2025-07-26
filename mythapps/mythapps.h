@@ -7,6 +7,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QScopedPointer>
 
 // MythTV headers
 #include <libmythui/mythscreentype.h>
@@ -164,7 +165,7 @@ class MythApps : public MythScreenType {
 
     void ReplyFinishedFileBrowser(QNetworkReply *reply);
     void requestFileBrowser(QString url, QStringList previousSearches, bool loadBackButton, QString itemData);
-    bool appsCallbackPlugins(ProgramData *programData, QString label, QString data);
+    bool appsCallbackPlugins(QScopedPointer<ProgramData> &programData, QString label, QString data);
     void appsCallback(QString label, QString data, bool allowBack = true);
     void waitforRequests();
     void downloadImage(QString thumbnailUrl);

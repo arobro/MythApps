@@ -9,7 +9,6 @@
 // MythApps headers
 #include "controls.h"
 #include "dialog.h"
-#include "fileBrowserHistory.h"
 
 class PluginAPI : public QObject {
     Q_OBJECT
@@ -24,11 +23,10 @@ class PluginAPI : public QObject {
     virtual QString getPluginName() const = 0;
     virtual QString getPluginIcon() const = 0;
     virtual QString getPluginDisplayName() const = 0;
-    virtual void load(const QString filePath = "") = 0;
+    virtual void load(const QString data = "") = 0;
     virtual void displayHomeScreenItems() = 0;
 
     virtual void setDialog(Dialog *d) = 0;
-    virtual void setFileBrowserHistory(FileBrowserHistory *f) = 0;
 
     virtual void setLoadProgramCallback(LoadProgramCallback cb) { m_loadProgramCallback = cb; }
     virtual void setToggleSearchVisibleCallback(ToggleSearchVisibleCallback cb) { m_toggleSearchVisibleCallback = cb; }

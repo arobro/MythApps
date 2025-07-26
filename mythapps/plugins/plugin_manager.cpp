@@ -115,8 +115,3 @@ void PluginManager::setDialog(Dialog *d) {
     for (auto plugin : m_plugins.values())
         plugin->setDialog(d);
 }
-
-void PluginManager::setFileBrowserHistory(FileBrowserHistory *f) {
-    for (auto plugin : m_plugins.values())
-        plugin->setFileBrowserHistory(f);
-}

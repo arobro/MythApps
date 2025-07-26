@@ -16,11 +16,7 @@ void FileBrowserHistory::removeCurrentUrlFromList() {
 }
 
 /** \brief go to the previous url in the file browser history. */
-void FileBrowserHistory::goBack() {
-    LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory::goBack() Start");
-    removeCurrentUrlFromList();
-    LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory::goBack() Finished");
-}
+void FileBrowserHistory::goBack() { removeCurrentUrlFromList(); }
 
 void FileBrowserHistory::debug() {
     foreach (QStringList previousList, previousListItem) {
@@ -30,15 +26,16 @@ void FileBrowserHistory::debug() {
 
 /** \brief append the current url in the file browser */
 void FileBrowserHistory::append(QString label, QString data) {
-    LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory:: Append()");
-
     ProgramData *programData = new ProgramData(label, data);
-    if (!programData->isPlayRequest()) {
+    if (!programData->isPlayRequest() || data.contains("app://")) {
+        LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory:: Append(): " + data);
         QStringList previousList;
         previousList.append(label);
         previousList.append(data);
 
         previousListItem.append(previousList);
+    } else {
+        LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory:: Append(): no play file: " + data);
     }
     delete programData;
 }

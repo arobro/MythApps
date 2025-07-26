@@ -22,7 +22,6 @@ QString Favourites::getPluginDisplayName() const {
 QString Favourites::getPluginIcon() const { return pluginIcon; }
 
 void Favourites::setDialog(Dialog *d) {}
-void Favourites::setFileBrowserHistory(FileBrowserHistory *f) {}
 
 void Favourites::load(const QString filePath) {
     m_toggleSearchVisibleCallback(false);

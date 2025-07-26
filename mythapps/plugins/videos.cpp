@@ -11,13 +11,14 @@
 #include <QVariantList>
 #include <QVariantMap>
 
-// MythApps headers
-#include "plugin_api.h"
-#include "shared.h"
-
 // MythTV headers
 #include "libmyth/mythcontext.h"
 #include "libmythui/mythmainwindow.h"
+
+// MythApps headers
+#include "plugin_api.h"
+#include "programData.h"
+#include "shared.h"
 
 // Globals
 const QString appPathName = "app://Videos/";
@@ -36,20 +37,14 @@ QString Videos::getPluginIcon() const { return pluginIcon; }
 
 void Videos::setDialog(Dialog *d) { dialog = d; }
 
-void Videos::setFileBrowserHistory(FileBrowserHistory *f) { fileBrowserHistory = f; }
-
-void Videos::load(const QString filePath) {
-    LOG(VB_GENERAL, LOG_DEBUG, "Videos::load()");
-    QString cleanedFilePath = filePath;
-    cleanedFilePath.remove(appPathName);
-
+void Videos::load(const QString data) {
     m_toggleSearchVisibleCallback(false);
 
-    if (cleanedFilePath == "") {
+    if (data.length() < 3) {
         loadDirectory(QDir::homePath() + "/Videos", /* recursive = */ false);
         loadVideos();
     } else {
-        updateMediaListCallback(cleanedFilePath);
+        updateMediaListCallback(data);
     }
 }
 
@@ -81,13 +76,11 @@ void Videos::loadDirectory(const QString &folderPath, bool recursive) {
     auto subdirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (const QString &sd : subdirs) {
         QString fullPath = dir.absoluteFilePath(sd);
-        QString payload = makeAppPayload(fullPath, /*play=*/false);
         QString title = sd;
         QString thumb;
 
-        bool isDir = true;
-        QString data = createProgramData(payload, QString(), thumb, isDir, QString());
-        m_loadProgramCallback(title, data, thumb);
+        QString data = createProgramData(fullPath, QString(), thumb, false, QString());
+        m_loadProgramCallback(title, appPathName + data, thumb);
     }
 
     // Handle video files
@@ -98,9 +91,8 @@ void Videos::loadDirectory(const QString &folderPath, bool recursive) {
         const QString filePath = it.filePath();
         QFileInfo fi(filePath);
 
-        // isDir should always be false for files discovered by QDirIterator + videoFilters
         bool isDir = false;
-        generateMythTVThumbnailAsync(filePath, isDir);
+        generateMythTVThumbnailAsync(filePath, true);
     }
 
     if (m_activeThumbnailTasks > 0) {
@@ -110,7 +102,7 @@ void Videos::loadDirectory(const QString &folderPath, bool recursive) {
 
 void Videos::setControls(Controls *c) { controls = c; }
 
-void Videos::generateMythTVThumbnailAsync(const QString &videoFilePath, bool isDir) {
+void Videos::generateMythTVThumbnailAsync(const QString &videoFilePath, bool isPlay) {
     QString previewDir = getGlobalPathPrefix() + "preview/";
 
     QDir dir(previewDir);
@@ -123,7 +115,7 @@ void Videos::generateMythTVThumbnailAsync(const QString &videoFilePath, bool isD
     QString outputThumbnail = dir.filePath(fi.completeBaseName() + "_thumb.jpg");
 
     if (QFile::exists(outputThumbnail)) {
-        handleThumbnailReady(videoFilePath, outputThumbnail, isDir);
+        handleThumbnailReady(videoFilePath, outputThumbnail, isPlay);
         return;
     }
 
@@ -138,7 +130,7 @@ void Videos::generateMythTVThumbnailAsync(const QString &videoFilePath, bool isD
 
     connect(process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, [=](int exitCode, QProcess::ExitStatus exitStatus) {
         if (exitStatus == QProcess::NormalExit && QFile::exists(outputThumbnail)) {
-            handleThumbnailReady(videoFilePath, outputThumbnail, isDir);
+            handleThumbnailReady(videoFilePath, outputThumbnail, isPlay);
         } else {
             LOG(VB_GENERAL, LOG_DEBUG, "Thumbnail generation failed: " + videoFilePath);
         }
@@ -148,14 +140,13 @@ void Videos::generateMythTVThumbnailAsync(const QString &videoFilePath, bool isD
     process->start("mythpreviewgen", args);
 }
 
-void Videos::handleThumbnailReady(const QString &videoFilePath, const QString &thumbnailPath, bool isDir) {
+void Videos::handleThumbnailReady(const QString &videoFilePath, const QString &thumbnailPath, bool isPlay) {
     QFileInfo fi(videoFilePath);
-    QString payload = makeAppPayload(videoFilePath, true);
     QString title = fi.completeBaseName();
     QString thumbnail = QStringLiteral("file://%1").arg(thumbnailPath);
 
-    QString data = createProgramData(payload, QString(), thumbnail, !isDir, QString());
-    m_loadProgramCallback(title, data, thumbnail);
+    QString data = createProgramData(videoFilePath, QString(), thumbnail, isPlay, QString());
+    m_loadProgramCallback(title, appPathName + data, thumbnail);
     m_activeThumbnailTasks--;
 
     if (m_activeThumbnailTasks == 0) {
@@ -163,38 +154,23 @@ void Videos::handleThumbnailReady(const QString &videoFilePath, const QString &t
     }
 }
 
-void Videos::updateMediaListCallback(const QString filePath) {
-    LOG(VB_GENERAL, LOG_DEBUG, "updateMediaListCallback(): " + filePath);
+void Videos::updateMediaListCallback(const QString &data) {
+    LOG(VB_GENERAL, LOG_DEBUG, "updateMediaListCallback(): " + data);
 
-    QJsonDocument doc = QJsonDocument::fromJson(filePath.toUtf8());
-    if (!doc.isObject())
-        return;
+    ProgramData programData("", data);
+    QString path = programData.getFilePathParam();
 
-    QVariantMap map = doc.object().toVariantMap();
-    bool play = map.value("play").toBool();
-    QString path = map.value("filePath").toString();
-
-    if (play) {
+    if (programData.isPlayRequest()) {
         internalPlay(path);
         m_GoBackCallback();
     } else {
-        // fileBrowserHistory->append(appPathName + filePath, appPathName + filePath);
         loadDirectory(path, false);
     }
-
-    fileBrowserHistory->debug();
 }
 
 void Videos::internalPlay(const QString url) {
     LOG(VB_GENERAL, LOG_DEBUG, "internalPlay()");
+    QCoreApplication::processEvents();
     GetMythMainWindow()->HandleMedia("Internal", url, "", "", "", "", 0, 0, "", 0min, "", "", false);
-}
-
-QString Videos::makeAppPayload(const QString &filePath, bool play) {
-    QJsonObject payloadObj;
-    payloadObj["filePath"] = filePath;
-    payloadObj["play"] = play;
-
-    QJsonDocument doc(payloadObj);
-    return appPathName + QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
+    QCoreApplication::processEvents();
 }

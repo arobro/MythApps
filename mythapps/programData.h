@@ -58,6 +58,8 @@ class ProgramData {
     void setFirstDirectory(bool m_FirstDirectory);
     QString getAppName(QString currentFirstDirectoryName);
 
+    QString getDataWithoutAppName(QString data);
+
   private:
     bool plotandImageUrl = false;
     bool hasPlotText = false;

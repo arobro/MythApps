@@ -301,7 +301,6 @@ bool MythApps::Create() {
 
     pluginManager.setControls(controls);
     pluginManager.setDialog(dialog);
-    pluginManager.setFileBrowserHistory(fileBrowserHistory);
 
     loadApps();
 
@@ -614,16 +613,15 @@ void MythApps::loadImage(MythUIButtonList *mythUIButtonList, QString name, QStri
         return;
     }
 
-    ProgramData *programDataTemp = new ProgramData(name, setdata);
-    if (previouslyPlayedLink->contains(programDataTemp->getUrl()) and !isHome) { // disable on home screen
-        item->SetText(name, "buttontextWatched");                                // set the image title / name
+    ProgramData programData(name, setdata);
+    if (previouslyPlayedLink->contains(programData.getUrl()) and !isHome) { // disable on home screen
+        item->SetText(name, "buttontextWatched");                           // set the image title / name
     } else {
         item->SetText(name, "buttontext2"); // set the image title / name
     }
 
     QString localImagePath = getStandardizedImagePath(thumbnailUrl);
-    QString appIcon = getStandardizedImagePath(controls->getLocationFromUrlAddress(programDataTemp->getUrl()));
-    delete programDataTemp;
+    QString appIcon = getStandardizedImagePath(controls->getLocationFromUrlAddress(programData.getUrl()));
 
     QVariantMap imageInfo;
     imageInfo.insert("thumbnailUrl", thumbnailUrl);
@@ -1206,10 +1204,10 @@ void MythApps::refreshPage(bool enableDialog) {
 
         searchNoDuplicateCheck = QStringList();
 
-        ProgramData *programData = new ProgramData(fileBrowserHistory->getCurrentLabel(), fileBrowserHistory->getCurrentData());
-        QString url = programData->getFilePathParam();
+        ProgramData programData(fileBrowserHistory->getCurrentLabel(), fileBrowserHistory->getCurrentData());
+        QString url = programData.getFilePathParam();
         if (url.contains("plugin") and !url.contains("YTNative")) {
-            requestFileBrowser("plugin://" + friendlyUrl(programData->getFilePathParam()), QStringList(), true, "refresh");
+            requestFileBrowser("plugin://" + friendlyUrl(programData.getFilePathParam()), QStringList(), true, "refresh");
         } else {
             LOG(VB_GENERAL, LOG_DEBUG, "This app does not support refreshing -" + url);
         }
@@ -1400,7 +1398,7 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
 
     searching = false;
 
-    ProgramData *programData = new ProgramData(label, data);
+    QScopedPointer<ProgramData> programData(new ProgramData(label, data));
     programData->setFirstDirectory(isHome);
     firstDirectoryName = programData->getAppName(firstDirectoryName);
     showSearchTextEditBackgroundText();
@@ -1448,13 +1446,13 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
     }
 
     if (programData->hasApp()) {
-        QString pluginName = programData->getAppPluginName();
-        PluginAPI *plugin = pluginManager.getPluginByName(pluginName);
+        QString appName = programData->getAppPluginName();
+        PluginAPI *plugin = pluginManager.getPluginByName(appName);
         if (plugin) {
             m_fileListGrid->Reset();
             loadBackButton();
             isHome = false;
-            plugin->load(programData->get().url);
+            plugin->load(programData->getDataWithoutAppName(data));
         }
         return;
     }
@@ -1502,7 +1500,7 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
 
 /** \brief handle any app directories clicked. Used to load the next directory or open a video
 \param  item - the selected button */
-bool MythApps::appsCallbackPlugins(ProgramData *programData, QString label, QString data) {
+bool MythApps::appsCallbackPlugins(QScopedPointer<ProgramData> &programData, QString label, QString data) {
     LOG(VB_GENERAL, LOG_DEBUG, "appsCallbackPlugins()");
     dialog->getLoader()->SetVisible(true);
 
@@ -1526,7 +1524,6 @@ bool MythApps::appsCallbackPlugins(ProgramData *programData, QString label, QStr
             allShowsFolderFound = true;
         }
     }
-    requestFileBrowser(fileURL, QStringList(), loadBackButton, data); // request the url to load the next directory
 
     if (programData->isPlayRequest()) {
         lastPlayedDetails->set(label, fileURL + "~" + programData->getPlot() + "~" + programData->getImageUrl() + "~play");
@@ -1540,6 +1537,8 @@ bool MythApps::appsCallbackPlugins(ProgramData *programData, QString label, QStr
         play_Kodi(fileURL, seek);
         return true;
     }
+    requestFileBrowser(fileURL, QStringList(), loadBackButton, data); // request the url to load the next directory
+
     return false;
 }
 
@@ -1548,9 +1547,9 @@ bool MythApps::appsCallbackPlugins(ProgramData *programData, QString label, QStr
 void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
     m_title->SetText(removeBBCode(item->GetText("buttontext2")));
 
-    ProgramData *programData = new ProgramData(item->GetText("buttontext2"), item->GetData().toString());
+    ProgramData programData(item->GetText("buttontext2"), item->GetData().toString());
 
-    if (programData->hasPlotandImageUrl()) { // figure out if 'video' home screen item
+    if (programData.hasPlotandImageUrl()) { // figure out if 'video' home screen item
         currentselectionDetails->set(getLabel(item), item->GetData().toString());
     } else {
         currentselectionDetails->set("", "");
@@ -1558,14 +1557,14 @@ void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
 
     m_plot->SetText("");
 
-    if (programData->getPlot().size() > 30) {
-        if (previouslyPlayedLink->contains(programData->getUrl())) {
+    if (programData.getPlot().size() > 30) {
+        if (previouslyPlayedLink->contains(programData.getUrl())) {
             isPreviouslyPlayed = true;
         } else {
             isPreviouslyPlayed = false;
         }
 
-        m_plot->SetText(removeBBCode(programData->getPlot()));
+        m_plot->SetText(removeBBCode(programData.getPlot()));
     }
 
     if (stopScroll) {

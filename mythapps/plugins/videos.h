@@ -20,9 +20,8 @@ class Videos : public PluginAPI {
     QString getPluginDisplayName() const override;
     QString getPluginIcon() const override;
     void setDialog(Dialog *d) override;
-    void setFileBrowserHistory(FileBrowserHistory *f) override;
 
-    void load(const QString filePath) override;
+    void load(const QString data) override;
     void displayHomeScreenItems() override;
 
     void setControls(Controls *c);
@@ -31,9 +30,9 @@ class Videos : public PluginAPI {
     void loadVideos();
     void loadDirectory(const QString &folderPath, bool recursive);
 
-    void generateMythTVThumbnailAsync(const QString &videoFilePath, bool isDir);
+    void generateMythTVThumbnailAsync(const QString &videoFilePath, bool isPlay);
 
-    void handleThumbnailReady(const QString &videoFilePath, const QString &thumbnailPath, bool isDir);
+    void handleThumbnailReady(const QString &videoFilePath, const QString &thumbnailPath, bool isPlay);
 
     QString pluginName;
     QString pluginIcon;
@@ -42,11 +41,8 @@ class Videos : public PluginAPI {
 
     Controls *controls = nullptr;
     Dialog *dialog{nullptr};
-    FileBrowserHistory *fileBrowserHistory{nullptr};
 
-    void updateMediaListCallback(const QString filePath);
-
-    QString makeAppPayload(const QString &filePath, bool play);
+    void updateMediaListCallback(const QString &data);
 };
 
 #endif // VIDEOS_H
