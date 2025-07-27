@@ -14,16 +14,15 @@ Favourites::~Favourites() {}
 
 QString Favourites::getPluginName() const { return pluginName; }
 
-QString Favourites::getPluginDisplayName() const {
-    ProgramLink favLink("allFavourites");
-    return getPluginName() + favLink.getListSize();
-}
+QString Favourites::getPluginDisplayName() { return getPluginName() + favLink.getListSize(); }
+
+bool Favourites::getPluginStartPos() const { return true; }
 
 QString Favourites::getPluginIcon() const { return pluginIcon; }
 
 void Favourites::setDialog(Dialog *d) {}
 
-void Favourites::load(const QString filePath) {
+void Favourites::load(const QString data) {
     m_toggleSearchVisibleCallback(false);
     loadFavourites(false);
 }
@@ -35,8 +34,6 @@ void Favourites::loadFavourites(bool displayOnHome) {
         if (displayOnHome && !favourite.pinnedToHome) // Skip items not pinned to home
             continue;
 
-        if (m_loadProgramCallback) {
-            m_loadProgramCallback(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image);
-        }
+        m_loadProgramCallback(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image);
     }
 }

@@ -16,6 +16,7 @@
 // Plugins
 #include "favourites.h"
 #include "videos.h"
+#include "watchlist.h"
 
 struct PluginDisplayInfo {
     QString name;
@@ -27,9 +28,6 @@ class PluginManager {
   public:
     PluginManager();
     ~PluginManager();
-
-    bool loadFavouritesPlugin();
-    bool loadVideosPlugin();
 
     QList<PluginDisplayInfo> getPluginsForDisplay(bool start) const;
 
@@ -46,12 +44,15 @@ class PluginManager {
     PluginAPI *getPluginByName(const QString &name);
 
   private:
+    template <typename T> bool initializePlugin(QScopedPointer<T> &pluginInstance, const QString &pluginName);
+
     QMap<QString, PluginAPI *> m_plugins;
     QMap<QString, QString> m_pluginIcons;
     QString openPluginName;
 
-    Favourites *m_favourites{nullptr};
-    Videos *m_videos{nullptr};
+    QScopedPointer<Favourites> m_favourites;
+    QScopedPointer<Videos> m_videos;
+    QScopedPointer<WatchList> m_watchlist;
 };
 
 #endif /* PLUGIN_MANAGER_H */

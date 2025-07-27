@@ -22,25 +22,28 @@
 
 // Globals
 const QString appPathName = "app://Videos/";
-const QStringList videoFilters = {"*.mp4", "*.mkv", "*.avi", "*.mov", "*.flv", "*.wmv"};
+const QStringList videoFilters = {"*.mp4", "*.mkv", "*.avi", "*.mov", "*.flv", "*.wmv", "*.ts"};
 int m_activeThumbnailTasks = 0;
 const int m_maxConcurrentTasks = QThread::idealThreadCount();
 
-Videos::Videos() : pluginName("Videos"), pluginIcon("ma_video.png") {}
+Videos::Videos() : pluginName("Videos"), pluginIcon("ma_video.png") { videos_icon = createImageCachePath("ma_video.png"); }
+
 Videos::~Videos() = default;
 
 QString Videos::getPluginName() const { return pluginName; }
 
-QString Videos::getPluginDisplayName() const { return pluginName; }
+QString Videos::getPluginDisplayName() { return pluginName; }
 
 QString Videos::getPluginIcon() const { return pluginIcon; }
+
+bool Videos::getPluginStartPos() const { return false; }
 
 void Videos::setDialog(Dialog *d) { dialog = d; }
 
 void Videos::load(const QString data) {
     m_toggleSearchVisibleCallback(false);
 
-    if (data.length() < 3) {
+    if (data.length() < 2) {
         loadDirectory(QDir::homePath() + "/Videos", /* recursive = */ false);
         loadVideos();
     } else {
@@ -60,6 +63,9 @@ void Videos::loadVideos() {
         QString url = map.value("file").toString();
         QString image = map.value("image").toString();
 
+        if (image == "")
+            image = videos_icon;
+
         QString data = createProgramData(url, "", image, false, "");
         m_loadProgramCallback(title, data, image);
     }
@@ -77,10 +83,9 @@ void Videos::loadDirectory(const QString &folderPath, bool recursive) {
     for (const QString &sd : subdirs) {
         QString fullPath = dir.absoluteFilePath(sd);
         QString title = sd;
-        QString thumb;
 
-        QString data = createProgramData(fullPath, QString(), thumb, false, QString());
-        m_loadProgramCallback(title, appPathName + data, thumb);
+        QString data = createProgramData(fullPath, QString(), videos_icon, false, QString());
+        m_loadProgramCallback(title, appPathName + data, videos_icon);
     }
 
     // Handle video files

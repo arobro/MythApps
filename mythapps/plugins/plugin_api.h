@@ -22,7 +22,8 @@ class PluginAPI : public QObject {
 
     virtual QString getPluginName() const = 0;
     virtual QString getPluginIcon() const = 0;
-    virtual QString getPluginDisplayName() const = 0;
+    virtual QString getPluginDisplayName() = 0;
+    virtual bool getPluginStartPos() const = 0;
     virtual void load(const QString data = "") = 0;
     virtual void displayHomeScreenItems() = 0;
 

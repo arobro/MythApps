@@ -9,21 +9,21 @@
 #include "shared.h"
 
 PluginManager::PluginManager() {
-    loadFavouritesPlugin();
-    if (m_favourites)
-        m_plugins[m_favourites->getPluginName()] = m_favourites;
-
-    loadVideosPlugin();
-    if (m_videos)
-        m_plugins[m_videos->getPluginName()] = m_videos;
+    initializePlugin(m_favourites, "Favourites");
+    initializePlugin(m_videos, "Videos");
+    initializePlugin(m_watchlist, "WatchList");
 }
 
-PluginManager::~PluginManager() {
-    if (m_favourites)
-        delete m_favourites;
+PluginManager::~PluginManager(){};
 
-    if (m_videos)
-        delete m_videos;
+template <typename T> bool PluginManager::initializePlugin(QScopedPointer<T> &pluginInstance, const QString &pluginName) {
+    if (!pluginInstance)
+        pluginInstance.reset(new T);
+    if (pluginInstance) {
+        m_plugins[pluginName] = pluginInstance.data();
+        return true;
+    }
+    return false;
 }
 
 bool PluginManager::loadPlugin(const QString &pluginPath) {
@@ -40,36 +40,32 @@ bool PluginManager::loadPlugin(const QString &pluginPath) {
     return false;
 }
 
-bool PluginManager::loadFavouritesPlugin() {
-    if (!m_favourites)
-        m_favourites = new Favourites();
-    return m_favourites != nullptr;
-}
-
-bool PluginManager::loadVideosPlugin() {
-    if (!m_videos)
-        m_videos = new Videos();
-    return m_videos != nullptr;
-}
-
 QList<PluginDisplayInfo> PluginManager::getPluginsForDisplay(bool start) const {
     QList<PluginDisplayInfo> list;
-    if (m_favourites && start) {
-        PluginDisplayInfo info;
-        info.name = m_favourites->getPluginDisplayName();
-        info.iconPath = createImageCachePath(m_favourites->getPluginIcon());
-        info.setData = "app://" + m_favourites->getPluginName() + "/~";
-        list.append(info);
-    }
 
-    if (m_videos && !start) {
-        if (gCoreContext->GetSetting("MythAppsmyVideo").compare("1") == 0) {
-            PluginDisplayInfo info;
-            info.name = m_videos->getPluginDisplayName();
-            info.iconPath = createImageCachePath(m_videos->getPluginIcon());
-            info.setData = "app://" + m_videos->getPluginName() + "/~";
-            list.append(info);
+    auto addDisplayInfo = [&](PluginAPI *plugin) {
+        if (!plugin)
+            return;
+
+        // Respect plugin start position
+        if (plugin->getPluginStartPos() != start)
+            return;
+
+        // Special condition for Videos plugin
+        if (plugin == m_videos.data() && start == plugin->getPluginStartPos()) {
+            if (gCoreContext->GetSetting("MythAppsmyVideo") != "1")
+                return;
         }
+
+        PluginDisplayInfo info;
+        info.name = plugin->getPluginDisplayName();
+        info.iconPath = createImageCachePath(plugin->getPluginIcon());
+        info.setData = "app://" + plugin->getPluginName() + "/~";
+        list.append(info);
+    };
+
+    for (auto plugin : m_plugins.values()) {
+        addDisplayInfo(plugin);
     }
 
     return list;

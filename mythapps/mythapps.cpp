@@ -277,8 +277,6 @@ bool MythApps::Create() {
     mm_artists_icon = createImageCachePath("ma_mm_artists.png");
     mm_genres_icon = createImageCachePath("ma_mm_genres.png");
     mm_playlist_icon = createImageCachePath("ma_mm_playlists.png");
-    recent_icon = createImageCachePath("ma_recent.png");
-    videos_icon = createImageCachePath("ma_video.png");
     music_icon = createImageCachePath("ma_music.png");
     back_icon = createImageCachePath("ma_mv_gallery_dir_up.png");
     ma_tv_icon = createImageCachePath("ma_tv.png");
@@ -374,14 +372,10 @@ void MythApps::loadApps() {
 
     loadPlugins(true);
 
-    // load the app plugins and watch list before sorting
-    loadImage(m_fileListGrid, QString(tr("Watched List")), QString("Watched List~Watched List"), recent_icon);
-
     controls->loadAddons();
     SetFocusWidget(m_fileListGrid); // set the focus to the file list grid
 
-    // load plugins after sorting
-    loadPlugins(false);
+    loadPlugins(false); // load plugins after sorting
 
     if (gCoreContext->GetSetting("MythAppsMusic").compare("1") == 0) {
         loadImage(m_fileListGrid, tr("Music"), QString("Music~Music"), music_icon);
@@ -1473,19 +1467,6 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
         loadMusic();
         return;
     }
-    if (programData->hasWatchedList()) { // Watched List
-        m_fileListGrid->Reset();
-        loadBackButton();
-        loadWatched(false);
-        return;
-    }
-
-    if (programData->hasUnwatchedList()) { // Unwatched List
-        m_fileListGrid->Reset();
-        loadBackButton();
-        loadWatched(true);
-        return;
-    }
 
     if (programData->hasYTnative()) { // YT Native
         loadYTNative("", programData->getFilePathParam());
@@ -1758,33 +1739,6 @@ void MythApps::requestFileBrowser(QString url, QStringList previousSearches, boo
     cacheFile.close();
 }
 
-/** \brief load the watched list */
-void MythApps::loadWatched(bool unwatched) {
-    LOG(VB_GENERAL, LOG_DEBUG, "loadWatched()");
-    m_fileListGrid->Reset();
-    loadBackButton();
-    toggleSearchVisible(false);
-    int limit = 0;
-
-    if (!unwatched) {
-        loadImage(m_fileListGrid, QString(tr("Unwatched") + watchedLink->getUnWatchedSize()), QString("Unwatched~Unwatched"), recent_icon);
-        limit = 22;
-    }
-
-    Q_FOREACH (const FileFolderContainer &watched, watchedLink->getList(true, limit)) {
-
-        QString seek = watched.seek;
-        if (seek.compare("false") == 0 and !unwatched) {
-            seek = "";
-            continue;
-        } else if (!seek.compare("false") == 0 and unwatched) {
-            continue;
-        }
-
-        loadProgram(watched.title, createProgramData(watched.url, watched.plot, watched.image, watched.autoPlay, seek), watched.image);
-    }
-}
-
 void MythApps::loadYTNative(QString searchString, QString directory) {
     if (gCoreContext->GetSetting("MythAppsYTnative").compare("1") == 0) {
         LOG(VB_GENERAL, LOG_DEBUG, "loadYTNative()" + searchString + " dir:" + directory);
@@ -1944,7 +1898,7 @@ void MythApps::customEvent(QEvent *event) {
 
                 m_fileListGrid->Reset();
                 loadBackButton();
-                loadWatched(false);
+                // loadWatched(false);
             } else if (resulttext == tr("Add to Watch List for Later Viewing")) {
                 addToUnWatchedList(false);
             }

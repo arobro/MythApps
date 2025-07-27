@@ -1,5 +1,5 @@
-#ifndef FAVOURITES_H
-#define FAVOURITES_H
+#ifndef WATCHLIST_H
+#define WATCHLIST_H
 
 #include "plugin_api.h"
 
@@ -10,25 +10,28 @@
 #include "programData.h"
 #include "programLink.h"
 
-class Favourites : public PluginAPI {
+class WatchList : public PluginAPI {
   public:
-    Favourites();
-    ~Favourites();
+    WatchList();
+    ~WatchList();
 
     QString getPluginName() const override;
     QString getPluginDisplayName() override;
     bool getPluginStartPos() const override;
     QString getPluginIcon() const override;
-    void setDialog(Dialog *d) override;
 
+    void setDialog(Dialog *d) override;
     void load(const QString data) override;
     void displayHomeScreenItems() override;
-    void loadFavourites(bool displayOnHome);
 
   private:
+    void loadWatchList(bool unwatched);
+
     QString pluginName;
     QString pluginIcon;
-    ProgramLink favLink; /*!< load Favourites */
+    ProgramLink watchedLink;
+
+    QString recent_icon;
 };
 
-#endif /* FAVOURITES_H */
+#endif // WATCHLIST_H

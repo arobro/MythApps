@@ -131,24 +131,6 @@ bool ProgramData::hasMusic() {
     return false;
 }
 
-/** \brief is the folder an app called Watched List?
- * \return is the corresponding folder type? */
-bool ProgramData::hasWatchedList() {
-    if (getPlot().compare("Watched List") == 0) {
-        return true;
-    }
-    return false;
-}
-
-/** \brief is the folder an app called Unwatched?
- * \return is the corresponding folder type? */
-bool ProgramData::hasUnwatchedList() {
-    if (getPlot().compare("Unwatched") == 0) {
-        return true;
-    }
-    return false;
-}
-
 bool ProgramData::hasYTnative() {
     if (getFilePathParam().startsWith("YTNative")) {
         return true;

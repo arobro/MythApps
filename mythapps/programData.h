@@ -38,8 +38,6 @@ class ProgramData {
     bool hasShowsAZ();
     bool hasSearchShowsAZ();
     bool hasMusic();
-    bool hasWatchedList();
-    bool hasUnwatchedList();
 
     bool hasYTnative();
     bool hasApp();

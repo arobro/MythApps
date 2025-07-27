@@ -123,7 +123,6 @@ class MythApps : public MythScreenType {
     void goBack();
     void refreshPage(bool enableDialog);
 
-    void loadWatched(bool unwatched);
     void loadYTNative(QString searchString, QString directory);
     void loadShowsAZ();
     void loadBackButtonIfRequired(bool m_loadBackButton);
@@ -201,8 +200,6 @@ class MythApps : public MythScreenType {
     QString mm_artists_icon;   /*!< stores physical image location for the corresponding button */
     QString mm_genres_icon;    /*!< stores physical image location for the corresponding button */
     QString mm_playlist_icon;  /*!< stores physical image location for the corresponding button */
-    QString recent_icon;       /*!< stores physical image location for the corresponding button */
-    QString videos_icon;       /*!< stores physical image location for the corresponding button */
     QString music_icon;        /*!< stores physical image location for the corresponding button */
     QString back_icon;         /*!< stores physical image location for the corresponding button */
     QString ma_tv_icon;        /*!< stores physical image location for the corresponding button */
