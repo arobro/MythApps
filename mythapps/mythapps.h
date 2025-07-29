@@ -75,8 +75,6 @@ class MythApps : public MythScreenType {
     QTimer *openSettingTimer;     /*!< micro singleshot timer to delay opening setting. */
 
     ProgramLink *previouslyPlayedLink{nullptr}; /*!< load previously played videos	 */
-    ProgramLink *favLink{nullptr};              /*!< load Favourites */
-    ProgramLink *watchedLink{nullptr};          /*!< load Watched List */
     ProgramLink *searchListLink{nullptr};       /*!< load Search Sources */
 
     QString username;              /*!< username for Kodi */
@@ -102,7 +100,6 @@ class MythApps : public MythScreenType {
     bool ytNativeOpen = false;     /*!< is ytNative open? */
     bool allowAutoMinimize = true; /*!< is auto minimizing kodi enabled? */
     bool videoStopReceived = false;
-    bool isPreviouslyPlayed = false;
     bool allShowsFolderFound = false;
     bool enableHiddenFolders = false;
     QStringList azShowOnUrl;
@@ -121,7 +118,7 @@ class MythApps : public MythScreenType {
 
     void showOptionsMenu();
     void goBack();
-    void refreshPage(bool enableDialog);
+    void refreshPage();
 
     void loadYTNative(QString searchString, QString directory);
     void loadShowsAZ();
@@ -148,7 +145,6 @@ class MythApps : public MythScreenType {
     void toggleAutoMinimize();
     void reload();
     void refreshFileListGridSelection();
-    void addToUnWatchedList(bool menu);
 
     void goFullscreen();
     void goMinimize(bool fullscreenCheck);

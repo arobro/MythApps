@@ -46,8 +46,6 @@ void MythApps::CleanupResources() {
     SafeDelete(m_SearchTextEdit);
     SafeDelete(m_screenshotMainMythImage);
     SafeDelete(previouslyPlayedLink);
-    SafeDelete(favLink);
-    SafeDelete(watchedLink);
     SafeDelete(searchListLink);
     SafeDelete(m_thumbnailImage);
     SafeDelete(m_fileListGrid);

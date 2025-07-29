@@ -214,3 +214,19 @@ void ProgramData::setUnWatched() { fileFolderContainer.seek = "false"; }
 bool ProgramData::isYTWrappedApp() { return (fileFolderContainer.title.compare("Wrapped App") == 0); }
 
 QString ProgramData::getDataWithoutAppName(QString data) { return data.replace("app://" + getAppPluginName() + "/", ""); }
+
+QString ProgramData::getFriendlyPathName(QString data) {
+    QString path = data.split('~').at(0);
+
+    if (path.startsWith("app://")) {
+        QString prefix = "app://";
+        QString suffix = path.mid(prefix.length()).replace("//", "/");
+        return prefix + suffix;
+    }
+
+    return path.replace("//", "/");
+}
+
+bool ProgramData::getPreviouslyPlayed() { return isPreviouslyPlayed; }
+
+void ProgramData::setPreviouslyPlayed(bool played) { isPreviouslyPlayed = played; }

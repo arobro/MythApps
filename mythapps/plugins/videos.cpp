@@ -96,7 +96,6 @@ void Videos::loadDirectory(const QString &folderPath, bool recursive) {
         const QString filePath = it.filePath();
         QFileInfo fi(filePath);
 
-        bool isDir = false;
         generateMythTVThumbnailAsync(filePath, true);
     }
 
@@ -133,7 +132,7 @@ void Videos::generateMythTVThumbnailAsync(const QString &videoFilePath, bool isP
     QStringList args = {"--infile", videoFilePath, "--outfile", outputThumbnail, "--seconds", "5"};
     QProcess *process = new QProcess(this);
 
-    connect(process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, [=](int exitCode, QProcess::ExitStatus exitStatus) {
+    connect(process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, [=](int, QProcess::ExitStatus exitStatus) {
         if (exitStatus == QProcess::NormalExit && QFile::exists(outputThumbnail)) {
             handleThumbnailReady(videoFilePath, outputThumbnail, isPlay);
         } else {

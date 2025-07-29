@@ -39,16 +39,21 @@ class PluginManager {
     void setControls(Controls *c);
     void setDialog(Dialog *d);
 
-    bool isFavouritesPluginOpen(bool isHome);
-
     PluginAPI *getPluginByName(const QString &name);
+
+    QList<QString> getOptionsMenuLabels(ProgramData *currentselectionDetails, const QString &currentFilePath) const;
+    bool menuCallBack(const QString &menuText, ProgramData *currentSelectionDetails);
+
+    void handleAction(const QString action, ProgramData *currentSelectionDetails);
+
+    // non API
+    void appendWatchedLink(FileFolderContainer data);
 
   private:
     template <typename T> bool initializePlugin(QScopedPointer<T> &pluginInstance, const QString &pluginName);
 
     QMap<QString, PluginAPI *> m_plugins;
     QMap<QString, QString> m_pluginIcons;
-    QString openPluginName;
 
     QScopedPointer<Favourites> m_favourites;
     QScopedPointer<Videos> m_videos;

@@ -57,11 +57,16 @@ class ProgramData {
     QString getAppName(QString currentFirstDirectoryName);
 
     QString getDataWithoutAppName(QString data);
+    QString getFriendlyPathName(QString data);
+
+    bool getPreviouslyPlayed();
+    void setPreviouslyPlayed(bool played);
 
   private:
     bool plotandImageUrl = false;
     bool hasPlotText = false;
     bool firstDirectory = false;
+    bool isPreviouslyPlayed = false;
 
     FileFolderContainer fileFolderContainer;
 };

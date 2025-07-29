@@ -24,14 +24,23 @@ class WatchList : public PluginAPI {
     void load(const QString data) override;
     void displayHomeScreenItems() override;
 
+    QStringList getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath) override;
+    bool menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) override;
+
+    void handleAction(const QString action, ProgramData *currentSelectionDetails);
+    void appendWatchedLink(FileFolderContainer &data);
+
   private:
     void loadWatchList(bool unwatched);
+    void addToUnWatchedList(bool menu, ProgramData *currentSelectionDetails);
 
     QString pluginName;
     QString pluginIcon;
     ProgramLink watchedLink;
 
     QString recent_icon;
+
+    Dialog *dialog{nullptr};
 };
 
 #endif // WATCHLIST_H

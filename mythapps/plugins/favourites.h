@@ -25,6 +25,9 @@ class Favourites : public PluginAPI {
     void displayHomeScreenItems() override;
     void loadFavourites(bool displayOnHome);
 
+    QStringList getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath) override;
+    bool menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) override;
+
   private:
     QString pluginName;
     QString pluginIcon;

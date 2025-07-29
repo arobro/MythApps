@@ -87,27 +87,46 @@ void PluginManager::setGoBackCallback(PluginAPI::GoBackCallback cb) {
 }
 
 PluginAPI *PluginManager::getPluginByName(const QString &name) {
-    openPluginName = name;
-
     if (m_plugins.contains(name)) {
         return m_plugins.value(name);
     }
     return nullptr;
 }
 
-bool PluginManager::isFavouritesPluginOpen(bool isHome) {
-    if (!isHome) {
-        return openPluginName == "Favourites";
-    }
-    return false;
-}
-
 void PluginManager::setControls(Controls *c) {
-    if (m_videos)
-        m_videos->setControls(c);
+    for (auto plugin : m_plugins.values())
+        plugin->setControls(c);
 }
 
 void PluginManager::setDialog(Dialog *d) {
     for (auto plugin : m_plugins.values())
         plugin->setDialog(d);
+}
+
+QList<QString> PluginManager::getOptionsMenuLabels(ProgramData *currentSelectionDetails, const QString &currentFilePath) const {
+    QList<QString> labels;
+    for (PluginAPI *plugin : m_plugins.values()) {
+        labels.append(plugin->getOptionsMenuItems(currentSelectionDetails, currentFilePath));
+    }
+    return labels;
+}
+
+bool PluginManager::menuCallBack(const QString &menuText, ProgramData *currentSelectionDetails) {
+    bool reload = false;
+    for (PluginAPI *plugin : m_plugins.values()) {
+        if (plugin->menuCallback(menuText, currentSelectionDetails)) {
+            reload = true;
+        }
+    }
+    return reload;
+}
+
+void PluginManager::handleAction(const QString action, ProgramData *currentSelectionDetails) {
+    for (auto plugin : m_plugins.values())
+        plugin->handleAction(action, currentSelectionDetails);
+}
+
+void PluginManager::appendWatchedLink(FileFolderContainer data) {
+    if (m_watchlist)
+        m_watchlist->appendWatchedLink(data);
 }

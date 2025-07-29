@@ -23,7 +23,7 @@ bool WatchList::getPluginStartPos() const { return true; }
 
 QString WatchList::getPluginIcon() const { return pluginIcon; }
 
-void WatchList::setDialog(Dialog *d) {}
+void WatchList::setDialog(Dialog *d) { dialog = d; }
 
 void WatchList::load(const QString data) {
     m_toggleSearchVisibleCallback(false);
@@ -59,3 +59,58 @@ void WatchList::loadWatchList(bool unwatched) {
         m_loadProgramCallback(watched.title, createProgramData(watched.url, watched.plot, watched.image, watched.autoPlay, seek), watched.image);
     }
 }
+
+QStringList WatchList::getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath) {
+    Q_UNUSED(currentFilePath);
+
+    QStringList options;
+    bool inWatchList = watchedLink.contains(currentSelectionDetails->getUrl());
+
+    if (inWatchList) {
+        options << tr("Remove from Watch List");
+    } else if (currentSelectionDetails->isPlayRequest()) {
+        options << tr("Add to Watch List for Later Viewing");
+    }
+
+    if (currentSelectionDetails->getPreviouslyPlayed()) {
+        options << tr("Clear Previously Played");
+    }
+
+    return options;
+}
+
+bool WatchList::menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) {
+    if (menuText == tr("Remove from Watch List")) {
+        watchedLink.listRemove(currentSelectionDetails->get());
+        return true; // reload
+
+    } else if (menuText == tr("Add to Watch List for Later Viewing")) {
+        addToUnWatchedList(false, currentSelectionDetails);
+    }
+    return false;
+}
+
+/** \brief add to the watched list as unwatched for later viewing  */
+void WatchList::addToUnWatchedList(bool menu, ProgramData *currentSelectionDetails) {
+    LOG(VB_GENERAL, LOG_INFO, "addToUnWatchedList");
+    if (currentSelectionDetails->isPlayRequest()) {
+        if (!watchedLink.contains(currentSelectionDetails->getUrl())) {
+            currentSelectionDetails->setUnWatched();
+            watchedLink.append(currentSelectionDetails->get());
+            if (menu) {
+                dialog->createAutoClosingBusyDialog(tr("Added to Watch List for Later Viewing"), 3);
+            }
+        } else {
+            dialog->createAutoClosingBusyDialog(tr("Already in Watch List"), 3);
+        }
+    } else {
+        dialog->createAutoClosingBusyDialog(tr("Unable to add to Watch List as not a video"), 3);
+    }
+}
+
+void WatchList::handleAction(const QString action, ProgramData *currentSelectionDetails) {
+    if (action == "TOGGLERECORD")
+        addToUnWatchedList(true, currentSelectionDetails);
+}
+
+void WatchList::appendWatchedLink(FileFolderContainer &data) { watchedLink.append(data); }

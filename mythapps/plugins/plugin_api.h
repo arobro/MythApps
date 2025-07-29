@@ -9,6 +9,7 @@
 // MythApps headers
 #include "controls.h"
 #include "dialog.h"
+#include "programData.h"
 
 class PluginAPI : public QObject {
     Q_OBJECT
@@ -20,18 +21,25 @@ class PluginAPI : public QObject {
     using ToggleSearchVisibleCallback = std::function<void(bool)>;
     using GoBackCallback = std::function<void()>;
 
-    virtual QString getPluginName() const = 0;
-    virtual QString getPluginIcon() const = 0;
-    virtual QString getPluginDisplayName() = 0;
-    virtual bool getPluginStartPos() const = 0;
-    virtual void load(const QString data = "") = 0;
-    virtual void displayHomeScreenItems() = 0;
+    virtual QString getPluginName() const { return ""; }
+    virtual QString getPluginIcon() const { return ""; }
+    virtual QString getPluginDisplayName() { return ""; }
+    virtual bool getPluginStartPos() const { return true; }
+    virtual void load(const QString = "") { return; }
+    virtual void displayHomeScreenItems() { return; }
 
-    virtual void setDialog(Dialog *d) = 0;
+    virtual void setDialog(Dialog *) { return; }
+    virtual void setControls(Controls *) { return; }
 
     virtual void setLoadProgramCallback(LoadProgramCallback cb) { m_loadProgramCallback = cb; }
     virtual void setToggleSearchVisibleCallback(ToggleSearchVisibleCallback cb) { m_toggleSearchVisibleCallback = cb; }
     virtual void setGoBackCallback(GoBackCallback cb) { m_GoBackCallback = cb; }
+
+    virtual QStringList getOptionsMenuItems(ProgramData *, const QString &) { return {}; }
+
+    virtual bool menuCallback(const QString &, ProgramData *) { return false; }
+
+    virtual void handleAction(const QString, ProgramData *) { return; }
 
   protected:
     LoadProgramCallback m_loadProgramCallback;

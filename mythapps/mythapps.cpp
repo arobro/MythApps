@@ -284,8 +284,6 @@ bool MythApps::Create() {
     ma_search_icon = createImageCachePath("ma_search.png");
 
     previouslyPlayedLink = new ProgramLink("previouslyPlayed"); // load previously played videos
-    favLink = new ProgramLink("allFavourites");                 // load Favourites
-    watchedLink = new ProgramLink("allWatched");                // load Watched List
     searchListLink = new ProgramLink("searchList");             // load Search Sources
 
     currentselectionDetails = new ProgramData("", "");
@@ -417,11 +415,11 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
         } else if (action == "CLOSE") {
             niceClose(true);
         } else if (action == "REFRESH") {
-            refreshPage(true);
+            refreshPage();
         } else if (action == "TOGGLEHIDDEN") {
             toggleHiddenFolders();
         } else if (action == "TOGGLERECORD") {
-            addToUnWatchedList(true);
+            pluginManager.handleAction(action, currentselectionDetails);
         } else if (action == "HELP") {
             m_help->SetVisible(!m_help->IsVisible());
         } else if (browser->proccessRemote(action)) {
@@ -908,7 +906,7 @@ void MythApps::toggleHiddenFolders() {
         dialog->createAutoClosingBusyDialog(tr("Showing Hidden Folders"), 2);
     }
     enableHiddenFolders = !enableHiddenFolders;
-    refreshPage(false);
+    reload();
 }
 
 /** \brief toggle the allowing of the auto minimizeing of Kodi. Useful to edit settings*/
@@ -1171,41 +1169,16 @@ void MythApps::goBack() {
     searchNoDuplicateCheck = QStringList();
     currentLoadId.fetchAndAddOrdered(0);
     fileBrowserHistory->goBack();
-
-    if (fileBrowserHistory->isEmpty()) {
-        loadApps();
-        return;
-    } else {
-        appsCallback(fileBrowserHistory->getCurrentLabel(), fileBrowserHistory->getCurrentData(), false);
-    }
+    reload();
 }
 
 /** \brief refresh the currrent page wihtout cache*/
-void MythApps::refreshPage(bool enableDialog) {
+void MythApps::refreshPage() {
     LOG(VB_GENERAL, LOG_DEBUG, "refreshPage()");
 
     searchNoDuplicateCheck = QStringList();
-
-    if (!fileBrowserHistory->isEmpty() || isHome) {
-        if (enableDialog) {
-            dialog->createAutoClosingBusyDialog(tr("Refreshing Page"), 2);
-        }
-        if (isHome) {
-            controls->getAddons(true);
-            loadApps();
-            return;
-        }
-
-        searchNoDuplicateCheck = QStringList();
-
-        ProgramData programData(fileBrowserHistory->getCurrentLabel(), fileBrowserHistory->getCurrentData());
-        QString url = programData.getFilePathParam();
-        if (url.contains("plugin") and !url.contains("YTNative")) {
-            requestFileBrowser("plugin://" + friendlyUrl(programData.getFilePathParam()), QStringList(), true, "refresh");
-        } else {
-            LOG(VB_GENERAL, LOG_DEBUG, "This app does not support refreshing -" + url);
-        }
-    }
+    dialog->createAutoClosingBusyDialog(tr("Refreshing Page"), 2);
+    reload();
 }
 
 /** \return the playback time of the playing media as a string
@@ -1446,7 +1419,9 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
             m_fileListGrid->Reset();
             loadBackButton();
             isHome = false;
+            QString fileURL = programData->getDataWithoutAppName(data);
             plugin->load(programData->getDataWithoutAppName(data));
+            m_filepath->SetText(programData->getFriendlyPathName(data));
         }
         return;
     }
@@ -1540,9 +1515,9 @@ void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
 
     if (programData.getPlot().size() > 30) {
         if (previouslyPlayedLink->contains(programData.getUrl())) {
-            isPreviouslyPlayed = true;
+            currentselectionDetails->setPreviouslyPlayed(true);
         } else {
-            isPreviouslyPlayed = false;
+            currentselectionDetails->setPreviouslyPlayed(false);
         }
 
         m_plot->SetText(removeBBCode(programData.getPlot()));
@@ -1585,9 +1560,8 @@ void MythApps::delayWhileStopScroll(int maxDelay) {
     while (stopScroll) {
         delay(1);
         delayCount++;
-        if (delayCount == maxDelay) {
+        if (delayCount == maxDelay)
             return;
-        }
     }
 }
 
@@ -1802,28 +1776,9 @@ void MythApps::showOptionsMenu() {
         m_menuPopup->SetReturnEvent(this, tr("options"));
 
         if (!currentselectionDetails->isEmpty()) {
-
-            if (favLink->contains(currentselectionDetails->getUrl())) {
-                m_menuPopup->AddButton(tr("Remove Selection from Favourites"));
-            } else {
-                m_menuPopup->AddButton(tr("Add Selection to Favourites"));
-            }
-
-            if (favLink->isPinnedToHome(currentselectionDetails->get())) {
-                m_menuPopup->AddButton(tr("Remove Selection from Home Screen"));
-            } else if (favLink->contains(currentselectionDetails->getUrl()) and pluginManager.isFavouritesPluginOpen(isHome)) {
-                m_menuPopup->AddButton(tr("Pin Selection to Home Screen"));
-            }
-
-            if (watchedLink->contains(currentselectionDetails->getUrl())) {
-                m_menuPopup->AddButton(tr("Remove from Watch List"));
-            } else if (isPreviouslyPlayed) {
-                m_menuPopup->AddButton(tr("Clear Previously Played"));
-                if (currentselectionDetails->isPlayRequest()) {
-                    m_menuPopup->AddButton(tr("Add to Watch List for Later Viewing"));
-                }
-            } else if (currentselectionDetails->isPlayRequest()) {
-                m_menuPopup->AddButton(tr("Add to Watch List for Later Viewing"));
+            QStringList menuItems = pluginManager.getOptionsMenuLabels(currentselectionDetails, fileBrowserHistory->getCurrentData());
+            for (const QString &item : menuItems) {
+                m_menuPopup->AddButton(item);
             }
         }
 
@@ -1877,36 +1832,13 @@ void MythApps::customEvent(QEvent *event) {
 
             } else if (resulttext == tr("Exit to MythTV Menu")) {
                 niceClose(false);
-            } else if (resulttext == tr("Add Selection to Favourites")) {
-                if (currentselectionDetails->isPlayRequest()) { // remove seek time when saving to favourites
-                    currentselectionDetails->resetSeek();
-                }
-                favLink->append(currentselectionDetails->get()); // add to favourites
-            } else if (resulttext == tr("Remove Selection from Favourites")) {
-                if (favLink->contains(currentselectionDetails->getUrl())) {
-                    favLink->listRemove(currentselectionDetails->get()); // Remove from favourite
-                    reload();
-                }
-            } else if (resulttext == tr("Remove Selection from Home Screen")) {
-                favLink->removeFromHomeScreen(currentselectionDetails->get());
-                reload();
-            } else if (resulttext == tr("Pin Selection to Home Screen")) {
-                favLink->addToHomeScreen(currentselectionDetails->get());
-                reload();
-            } else if (resulttext == tr("Remove from Watch List")) {
-                watchedLink->listRemove(currentselectionDetails->get());
-
-                m_fileListGrid->Reset();
-                loadBackButton();
-                // loadWatched(false);
-            } else if (resulttext == tr("Add to Watch List for Later Viewing")) {
-                addToUnWatchedList(false);
             }
+
+            if (pluginManager.menuCallBack(resulttext, currentselectionDetails))
+                reload();
         }
 
         if (resultid == "watchList") {
-            QString playBackTimeString = "00:00:00";
-
             if (resulttext == tr("Flag as Watched and Exit to Menu")) {
                 resetScreenshot();
                 addToPreviouslyPlayed();
@@ -1914,7 +1846,7 @@ void MythApps::customEvent(QEvent *event) {
                 resetScreenshot();
             } else if (resulttext == tr("Save Position to Watch List and Exit to Menu")) {
                 lastPlayedDetails->setSeek(getPlayBackTimeString(true));
-                watchedLink->append(lastPlayedDetails->get());
+                pluginManager.appendWatchedLink(lastPlayedDetails->get());
                 resetScreenshot();
                 addToPreviouslyPlayed();
             } else if (resulttext == tr("Keep Watching")) {
@@ -1937,12 +1869,10 @@ void MythApps::customEvent(QEvent *event) {
 
 /** \brief reload either the home screen or favourites screen*/
 void MythApps::reload() {
-    if (pluginManager.isFavouritesPluginOpen(isHome)) {
-        m_fileListGrid->Reset();
-        loadBackButton();
-        pluginManager.getPluginByName("Favourites")->load();
-    } else {
+    if (fileBrowserHistory->isEmpty()) {
         loadApps();
+    } else {
+        appsCallback(fileBrowserHistory->getCurrentLabel(), fileBrowserHistory->getCurrentData(), false);
     }
 }
 
@@ -1953,23 +1883,6 @@ void MythApps::refreshFileListGridSelection() {
     m_fileListGrid->SetItemCurrent(pos);
 }
 
-/** \brief add to the watched list as unwatched for later viewing  */
-void MythApps::addToUnWatchedList(bool menu) {
-    LOG(VB_GENERAL, LOG_INFO, "addToUnWatchedList");
-    if (currentselectionDetails->isPlayRequest()) {
-        if (!watchedLink->contains(currentselectionDetails->getUrl())) {
-            currentselectionDetails->setUnWatched();
-            watchedLink->append(currentselectionDetails->get());
-            if (menu) {
-                dialog->createAutoClosingBusyDialog(tr("Added to Watch List for Later Viewing"), 3);
-            }
-        } else {
-            dialog->createAutoClosingBusyDialog(tr("Already in Watch List"), 3);
-        }
-    } else {
-        dialog->createAutoClosingBusyDialog(tr("Unable to add to Watch List as not a video"), 3);
-    }
-}
 /** \brief plays a video in kodi and seeks if required.
  * \param mediaLocation url of the video
  * \param seekAmount amount to seek in hours minutes seconds. Can be blank */

@@ -37,3 +37,43 @@ void Favourites::loadFavourites(bool displayOnHome) {
         m_loadProgramCallback(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image);
     }
 }
+
+QStringList Favourites::getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath) {
+    QStringList options;
+
+    if (favLink.contains(currentSelectionDetails->getUrl())) {
+        options << tr("Remove Selection from Favourites");
+    } else {
+        options << tr("Add Selection to Favourites");
+    }
+
+    if (favLink.isPinnedToHome(currentSelectionDetails->get())) {
+        options << tr("Remove Selection from Home Screen");
+    } else if (favLink.contains(currentSelectionDetails->getUrl()) && currentFilePath.contains("app://Favourites")) {
+        options << tr("Pin Selection to Home Screen");
+    }
+
+    return options;
+}
+
+bool Favourites::menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) {
+    if (menuText == tr("Add Selection to Favourites")) {
+        if (currentSelectionDetails->isPlayRequest()) { // remove seek time when saving to favourites
+            currentSelectionDetails->resetSeek();
+        }
+        favLink.append(currentSelectionDetails->get()); // add to favourites
+        return false;
+    } else if (menuText == tr("Remove Selection from Favourites")) {
+        if (favLink.contains(currentSelectionDetails->getUrl())) {
+            favLink.listRemove(currentSelectionDetails->get()); // Remove from favourite
+            return true;                                        // reload
+        }
+    } else if (menuText == tr("Remove Selection from Home Screen")) {
+        favLink.removeFromHomeScreen(currentSelectionDetails->get());
+        return true; // reload
+    } else if (menuText == tr("Pin Selection to Home Screen")) {
+        favLink.addToHomeScreen(currentSelectionDetails->get());
+        return true; // reload
+    }
+    return false;
+}
