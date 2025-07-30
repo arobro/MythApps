@@ -327,8 +327,6 @@ void MythApps::addToPlaylistClickedCallback(MythUIButtonListItem *item) {
         hintTimer->start(10 * 1000);
     }
 
-    QStringList threadInfo = item->GetData().toStringList();
-
     if (partyMode) {
         partyMode = false;
         m_filterOptionsList->GetItemAt(1)->SetText(tr("Party Mode Off"));
@@ -340,13 +338,9 @@ void MythApps::addToPlaylistClickedCallback(MythUIButtonListItem *item) {
     }
 
     if (inPlaylist == -1) {
-        if (threadInfo.size() < 4) {
-            LOG(VB_GENERAL, LOG_ERR, "error - addToPlaylistClickedCallback");
-
-        } else {
-            QStringList paramsList = threadInfo.at(4).split('~');
-            controls->playListAdd(friendlyUrl(paramsList.at(0)));
-        }
+        QVariantMap info = item->GetData().toMap();
+        ProgramData programData("", info["setData"].toString());
+        controls->playListAdd(friendlyUrl(programData.getFilePathParam()));
 
         if (!controls->isPlaying()) {
             controls->playListOpen(1);

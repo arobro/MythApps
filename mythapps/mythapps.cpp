@@ -90,7 +90,7 @@ MythApps::~MythApps() {
 /** \brief Listens to OnPause,OnStop,OnPlay,OnInputRequested messages recieved from Kodi via the websocket.
  * \param kodi websocket message  */
 void MythApps::onTextMessageReceived(const QString &method, const QString &message) {
-    LOG(VB_GENERAL, LOG_DEBUG, "onTextMessageReceived():" + message);
+    LOG(VB_GENERAL, LOG_DEBUG, "onTextMessageReceived():" + method);
 
     if (method == "Player.OnStop") {
         if (musicOpen || isHome) { // music
@@ -115,7 +115,7 @@ void MythApps::onTextMessageReceived(const QString &method, const QString &messa
                 }
             }
         }
-    } else if (method == "input.OnInputRequested" and !searching) {
+    } else if (method == "Input.OnInputRequested" and !searching) {
         displayInputBox(message);
     }
 }
