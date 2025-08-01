@@ -12,6 +12,8 @@
 // MythApps headers
 #include "shared.h"
 
+QStringList allowedMethods = {"Player.OnPlay", "Player.OnStop", "Input.OnInputRequested", "Player.OnAVStart", "Player.OnResume", "Player.OnSeek", "Player.OnPause"};
+
 NetSocketRequest::NetSocketRequest(const QString &url, QObject *parent) : QObject(parent) {
     LOG(VB_GENERAL, LOG_DEBUG, "NetSocketRequest() " + url);
 
@@ -50,7 +52,7 @@ void NetSocketRequest::onTextMessageReceived(const QString &message) {
         m_waitLoops[msgId]->quit();
     }
 
-    if (message.contains("Player.OnPlay") || message.contains("Player.OnStop") || message.contains("Input.OnInputRequested")) {
+    if (containsAny(message, allowedMethods)) {
         QString methodName = obj["method"].toString();
         emit receivedFromSocket(methodName, message);
     }
@@ -135,4 +137,13 @@ bool NetSocketRequest::androidAppSwitch(QString app) {
     }
     m_webSocketAndroid.sendTextMessage(app);
     return true;
+}
+
+bool NetSocketRequest::containsAny(const QString &message, const QStringList &keywords) {
+    for (const QString &keyword : keywords) {
+        if (message.contains(keyword)) {
+            return true;
+        }
+    }
+    return false;
 }

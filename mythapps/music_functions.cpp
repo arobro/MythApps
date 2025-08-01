@@ -118,8 +118,7 @@ void MythApps::nextTrack() { controls->inputActionHelper("skipnext"); }
 /** \brief update the music playing bar labels. song playing etc */
 void MythApps::updateMusicPlayingBarStatus() {
     LOG(VB_GENERAL, LOG_DEBUG, "updateMusicPlayingBarStatus()");
-    globalActivePlayer = controls->getActivePlayer();
-    QString answer = controls->playerGetItem(globalActivePlayer);
+    QString answer = controls->playerGetItem();
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit());
     QJsonObject jObject = jsonDocument.object();
@@ -358,7 +357,7 @@ void MythApps::refreshGuiPlaylist() {
 
     QJsonArray properties;
     QJsonObject params;
-    params["playlistid"] = globalActivePlayer;
+    params["playlistid"] = controls->getActivePlayer();
 
     QJsonValue answer = controls->callJsonRpc("Playlist.GetItems", params, properties);
     QJsonArray items = answer.toObject().value("items").toArray();
@@ -729,7 +728,6 @@ void MythApps::loadMusicSetup() {
     new MythUIButtonListItem(m_filterOptionsList, "Visualizer");
 
     showMusicUI(true);
-    globalActivePlayer = 1;
     playbackTimer->start(1 * 1000);
 }
 
@@ -777,6 +775,7 @@ void MythApps::loadSongsMain(QString value, QString type) {
 
 void MythApps::loadMusic() {
     musicOpen = true;
+    controls->setActivePlayer(1);
     controls->setAudioLibraryScan();
     loadSongsMain("", "artists");
     exitToMainMenuSleepTimer->stop();
@@ -784,9 +783,8 @@ void MythApps::loadMusic() {
 
 void MythApps::clearAndStopPlaylist() {
     dialog->createBusyDialog(tr("Stopping Music..."));
-    int playerID = controls->stopPlayBack();
-    controls->playListClear(playerID);
-    controls->playListClear(1);
+    controls->stopPlayBack();
+    controls->playListClear();
     delayMilli(100);
     dialog->closeBusyDialog();
 }
@@ -906,40 +904,27 @@ void MythApps::updateMusicPlaylistUI() {
 }
 
 void MythApps::playbackTimerSlot() {
-    static int count = 0;
-    static QTime prevPlaybackTime;
-
-    if (count % 2 == 0) {
-        playBackTimeMap = controls->getPlayBackTime(globalActivePlayer);
-        updateMusicPlayingBarStatus();
-        m_trackProgress->SetUsed(playBackTimeMap["percentage"].toInt());
-
-        const QVariantMap currentTime = playBackTimeMap["time"].toMap();
-        prevPlaybackTime = QTime(currentTime["hours"].toInt(), currentTime["minutes"].toInt(), currentTime["seconds"].toInt());
-    } else {
-        prevPlaybackTime = prevPlaybackTime.addSecs(1);
-
-        QVariantMap timeMap;
-        timeMap["hours"] = prevPlaybackTime.hour();
-        timeMap["minutes"] = prevPlaybackTime.minute();
-        timeMap["seconds"] = prevPlaybackTime.second();
-
-        playBackTimeMap["time"] = timeMap;
-    }
-
-    m_musicDuration->SetText(getPlayBackTimeString(false).replace("00:0", "") + " / " + playBackTimeMap["duration"].toString().replace("00:", ""));
-
-    count++;
-    if (count == 4) {
-        count = 0;
-        handleDialogs(false);
-    }
+    m_musicDuration->SetText(getPlayBackTimeString(false, true) + " / " + removeHoursIfZero(playbackDuration));
+    m_trackProgress->SetUsed(getPlaybackPercentage());
 
     if (videoStopReceived)
         playbackTimer->stop();
 
     if (musicOpen)
         updateMusicPlaylistUI();
+}
+
+int MythApps::getPlaybackPercentage() const {
+    QTime durationTime = QTime::fromString(playbackDuration, "hh:mm:ss");
+
+    if (!durationTime.isValid()) {
+        LOG(VB_GENERAL, LOG_DEBUG, "getPlaybackPercentage(): Invaild durationTime");
+        return 0;
+    }
+
+    qint64 totalMs = QTime(0, 0).msecsTo(durationTime);
+    int percent = static_cast<int>((static_cast<double>(getCurrentPlaybackTimeMs()) / totalMs) * 100.0);
+    return qBound(0, percent, 100);
 }
 
 bool MythApps::handleMusicAction(const QString &action) {

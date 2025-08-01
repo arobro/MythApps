@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QList>
+#include <QMutex>
 #include <QNetworkAccessManager>
 #include <QObject>
 #include <QString>
@@ -15,6 +16,7 @@
 #include <QTime>
 #include <QTimer>
 #include <QUrlQuery>
+#include <QWaitCondition>
 
 // MythApps headers
 #include "netSocketRequest.h"
@@ -54,10 +56,13 @@ class Controls : public QObject {
     void decreaseVol();
     int getVol();
     void inputBack();
-    bool isPaused(int playerid);
-    int stopPlayBack();
+    bool isPaused();
+    void stopPlayBack();
 
     int getActivePlayer();
+    void resetActivePlayer();
+    void setActivePlayer(int player);
+
     bool isUserNamePasswordCorrect();
     bool ping();
 
@@ -70,19 +75,19 @@ class Controls : public QObject {
 
     bool isVirtualKeyboardOpen();
     QJsonObject getDirectoryObject(QString url);
-    QVariantMap getPlayBackTime(int playerid);
+    QVariantMap getPlayBackTime();
 
     QString handleDialogs();
     void play(const QString &mediaLocation, const QString &seekAmount);
 
-    void pauseToggle(int activePlayerStatus);
+    void pauseToggle();
     bool isPlaying();
     QVariantMap getVideos();
 
     void inputSendText(const QString &text);
-    QString getStreamDetails(int playerId);
+    QString getStreamDetails();
 
-    QString getStreamDetailsAll(int playerId);
+    QString getStreamDetailsAll();
 
     void seekFoward();
     void seekBack();
@@ -95,7 +100,6 @@ class Controls : public QObject {
 
     void setConnected(int connectStatus);
     int getConnected();
-    bool isVideoNearEnd();
     void activateFullscreenVideo();
     void waitUntilKodiPingable();
     void initializeWebSocket();
@@ -106,17 +110,22 @@ class Controls : public QObject {
     QJsonValue callJsonRpc(const QString &method, const QJsonObject &params = QJsonObject(), const QJsonArray &props = QJsonArray());
     QString callJsonRpcString(const QString &method, const QJsonObject &params = QJsonObject(), const QJsonArray &props = QJsonArray());
 
+    qint64 getTimeFromSeekTimeMs(const QString &message);
+    int globalActivePlayer = -1; /*!< the id of the active player in kodi */
+    QMutex mutex;
+    QWaitCondition condition;
+    bool settingInProgress = false;
+
     // music
     void setCrossFade(int seconds);
     void setProjectM();
     bool getCrossFade();
     void setAudioLibraryScan();
     void playListClear();
-    void playListClear(int playerid);
     void playListOpen(int position);
     void playListAdd(QString file);
     void setPartyMode();
-    QString playerGetItem(int playerid);
+    QString playerGetItem();
     void removeFromPlaylist(int inPlaylistPos);
 
   private:
@@ -124,8 +133,8 @@ class Controls : public QObject {
     void sendEventAction(const QString &action);
     void queueSeek(int seconds);
     bool isInternalVolEnabled();
+    void setActivePlayer();
 
-    QString globalDuration;
     int FFspeed = 1;
     int connected = 0; /*!< is kodi connected? 0 = not connected, 1 = connected, 2 = connected and authenticated*/
     QString ip, port;
@@ -133,7 +142,6 @@ class Controls : public QObject {
     CAddress eventClientIpAddress;
     int sockfd;
     bool eventClientConnected = false;
-    bool videoNearEnd = false;
     QMap<QString, QString> urlToThumbnailMap;
 
     QTimer seekTimer;

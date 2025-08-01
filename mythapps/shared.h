@@ -58,7 +58,6 @@ QString createImageCachePath(const QString imageFileName);
 bool checkIfProgramInstalled(const QString &programName);
 
 QString GetThemeXmlFile(const QString &theme);
-QString formatTimeComponent(const QString &value);
 
 int getThreadCount();
 void waitForThreads(int maxThreadsRunning);
@@ -66,5 +65,10 @@ void clearThreads();
 
 QString getKodiLogPath();
 void smartDelay();
+
+QString formatTime(qint64 totalMs);
+QString removeHoursIfZero(const QString &time);
+
+void systemSafe(const char *command);
 
 #endif

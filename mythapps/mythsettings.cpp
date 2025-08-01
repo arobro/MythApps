@@ -159,20 +159,20 @@ bool MythSettings::Create() // _videoUrl,_seek
         appendProgramInstallStatus("gsettings", false);
 
         if (QFile(QDir::homePath() + "/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de/extension.js").exists()) {
-            system("gsettings set org.gnome.shell disable-user-extensions false");
+            systemSafe("gsettings set org.gnome.shell disable-user-extensions false");
 
             if (system("gnome-extensions show activate-window-by-title@lucaswerkmeister.de | grep -c ENABLED") == 0) {
                 mCommand = mCommand + tr(" activate-window Installed,");
             } else {
-                system("gnome-extensions enable activate-window-by-title@lucaswerkmeister.de");
+                systemSafe("gnome-extensions enable activate-window-by-title@lucaswerkmeister.de");
                 mCommand = mCommand + tr(" Logout to enable activate-window,");
             }
         } else {
             mCommand = mCommand + tr("gnome activate-window-by-title not installed,");
 
-            system("mkdir -p ~/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de");
-            system("cd ~/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de && "
-                   "git clone https://github.com/lucaswerkmeister/activate-window-by-title . ");
+            systemSafe("mkdir -p ~/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de");
+            systemSafe("cd ~/.local/share/gnome-shell/extensions/activate-window-by-title@lucaswerkmeister.de && "
+                       "git clone https://github.com/lucaswerkmeister/activate-window-by-title . ");
         }
     } else {
         mCommand = mCommand + tr(" Please use Gnome or X11");

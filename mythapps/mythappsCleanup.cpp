@@ -57,7 +57,7 @@ void MythApps::CleanupResources() {
     SafeDelete(m_filterOptionsList);
     SafeDelete(m_playlistVertical);
     SafeDelete(m_androidMenuBtn);
-    SafeDelete(currentselectionDetails);
+    SafeDelete(currentSelectionDetails);
     SafeDelete(lastPlayedDetails);
     SafeDelete(browser);
     SafeDelete(fileBrowserHistory);

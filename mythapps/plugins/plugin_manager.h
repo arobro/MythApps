@@ -41,7 +41,7 @@ class PluginManager {
 
     PluginAPI *getPluginByName(const QString &name);
 
-    QList<QString> getOptionsMenuLabels(ProgramData *currentselectionDetails, const QString &currentFilePath) const;
+    QList<QString> getOptionsMenuLabels(ProgramData *currentSelectionDetails, const QString &currentFilePath) const;
     bool menuCallBack(const QString &menuText, ProgramData *currentSelectionDetails);
 
     void handleAction(const QString action, ProgramData *currentSelectionDetails);

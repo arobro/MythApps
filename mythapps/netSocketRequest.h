@@ -25,6 +25,7 @@ class NetSocketRequest : public QObject {
 
   private:
     void ensureConnected();
+    bool containsAny(const QString &message, const QStringList &keywords);
 
     QWebSocket m_ws;
     QNetworkRequest m_request;

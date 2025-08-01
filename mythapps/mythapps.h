@@ -52,14 +52,14 @@ class MythApps : public MythScreenType {
     MythUITextEdit *m_SearchTextEdit{nullptr};
     MythUIText *m_SearchTextEditBackgroundText{nullptr};
     MythUIImage *m_screenshotMainMythImage{nullptr}; /*!< used to create thumbnail for pause menu */
-    QImage m_screenshotMainQimage;                   /*!< used to create thumbnail for pause menu */
+    QImage m_screenshot;                             /*!< used to create thumbnail for pause menu */
     MythUIImage *m_loaderImage{nullptr};
     MythUIType *m_searchButtonListGroup{nullptr};
     MythUIType *m_searchSettingsGroup{nullptr};
     MythUIType *m_help{nullptr};
     MythUIButton *m_androidMenuBtn{nullptr};
 
-    ProgramData *currentselectionDetails{nullptr}; /*!<  current selection in the file browser */
+    ProgramData *currentSelectionDetails{nullptr}; /*!<  current selection in the file browser */
     ProgramData *lastPlayedDetails{nullptr};       /*!< last media played. used by the watch list feature */
 
     QTimer *exitToMainMenuSleepTimer; /*!< return to main menu after inactivty for power save. */
@@ -83,7 +83,7 @@ class MythApps : public MythScreenType {
     QString port;                  /*!< port for Kodi */
     QString currentSearchUrl = ""; /*!< the current search source url to append the search text. Used by the search box. */
 
-    QString getPlayBackTimeString(bool adjustEnd);
+    QString getPlayBackTimeString(bool adjustEnd, bool removeHoursIfNone);
 
     QString searchText = ""; /*!< text entered into the search box */
     QStringList searchSubFoldersList;
@@ -106,7 +106,6 @@ class MythApps : public MythScreenType {
 
     int nextPagePosm_apps = 0;
     int nextPagePosm_fileListGrid = 0;
-    int globalActivePlayer = 0; /*!< the id of the active player in kodi */
     static QAtomicInteger<quint64> currentLoadId;
 
     void toggleSearchVisible(bool visible);
@@ -133,12 +132,12 @@ class MythApps : public MythScreenType {
     void loadSongs(QString album);
     void loadSongsMain(QString value, QString type);
 
-    int stopPlayBack();
+    void stopPlayBack();
     void pauseToggle();
     void toggleStreamDetails();
 
     void openOSD(QString screenType);
-    bool takeScreenshot();
+    void takeScreenshot();
     void resetScreenshot();
     void inputSendText(QString text);
     void toggleHiddenFolders();
@@ -211,6 +210,15 @@ class MythApps : public MythScreenType {
     Browser *browser;
     FileBrowserHistory *fileBrowserHistory;
     Dialog *dialog;
+
+    void handlePlaybackEvent(const QString &method, const QString &message);
+    qint64 getKodiPlaybackTimeMs();
+    qint64 getCurrentPlaybackTimeMs() const;
+    int getPlaybackPercentage() const;
+
+    QString playbackDuration = "00:00:00";
+    qint64 playbackStartMs_ = -1;
+    qint64 manualAccumulatedMs_ = 0;
 
     // music app
     int m_currentMusicButton = 0;

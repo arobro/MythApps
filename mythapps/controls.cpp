@@ -334,9 +334,9 @@ bool Controls::isInternalVolEnabled() { return gCoreContext->GetSetting("MythApp
 
 /** \brief is the video paused?
  *  \param playerid Kodi player id*/
-bool Controls::isPaused(int playerid) {
+bool Controls::isPaused() {
     QJsonObject params;
-    params["playerid"] = playerid;
+    params["playerid"] = getActivePlayer();
 
     QJsonArray props;
     props.append("speed");
@@ -345,31 +345,65 @@ bool Controls::isPaused(int playerid) {
     return result.value("speed").toInt() == 0;
 }
 
+void Controls::setActivePlayer(int player) { globalActivePlayer = player; }
+
 /** \brief kodi can have multible active video players.
  * \return the first active player id. zero indicates an error */
-int Controls::getActivePlayer() {
+void Controls::setActivePlayer() {
     LOG(VB_GENERAL, LOG_DEBUG, "getActivePlayer()");
 
-    QJsonArray players = callJsonRpc("Player.GetActivePlayers").toArray();
+    const int maxAttempts = 3;
+    int attempt = 0;
 
-    if (players.isEmpty()) {
-        LOG(VB_GENERAL, LOG_ERR, "No active player found");
-        return 0;
+    while (attempt < maxAttempts) {
+        QJsonArray players = callJsonRpc("Player.GetActivePlayers").toArray();
+
+        if (!players.isEmpty()) {
+            QJsonObject player = players.first().toObject();
+            globalActivePlayer = player.value("playerid").toInt();
+            LOG(VB_GENERAL, LOG_DEBUG, QString("Active player found: %1").arg(globalActivePlayer));
+            return;
+        }
+
+        LOG(VB_GENERAL, LOG_WARNING, "No active player found, retrying...Attempt #" + (attempt + 1));
+        delayMilli(500);
+        attempt++;
     }
 
-    QJsonObject player = players.first().toObject();
-    return player.value("playerid").toInt();
+    LOG(VB_GENERAL, LOG_ERR, "Failed to get active player after multiple attempts");
 }
 
-/** \brief stop playing the video */
-int Controls::stopPlayBack() {
-    int activePlayer = getActivePlayer();
+int Controls::getActivePlayer() {
+    QMutexLocker locker(&mutex);
 
+    if (globalActivePlayer != -1)
+        return globalActivePlayer;
+
+    if (!settingInProgress) {
+        settingInProgress = true;
+        locker.unlock();
+        setActivePlayer();
+        locker.relock();
+
+        settingInProgress = false;
+        condition.wakeAll();
+    } else {
+        while (settingInProgress) {
+            condition.wait(&mutex);
+        }
+    }
+
+    return globalActivePlayer;
+}
+
+void Controls::resetActivePlayer() { globalActivePlayer = -1; }
+
+/** \brief stop playing the video */
+void Controls::stopPlayBack() {
     QJsonObject params;
-    params["playerid"] = activePlayer;
+    params["playerid"] = getActivePlayer();
 
     callJsonRpc("Player.Stop", params);
-    return activePlayer;
 }
 
 /** \brief is kodi fullscreen */
@@ -394,10 +428,10 @@ bool Controls::ping() {
 /** \brief get the media currently playing time?
  *  \param playerid Kodi player id
  *  \return playback/total time*/
-QVariantMap Controls::getPlayBackTime(int playerId) {
+QVariantMap Controls::getPlayBackTime() {
     QJsonArray properties = {"time", "totaltime", "percentage"};
     QJsonObject params;
-    params["playerid"] = playerId;
+    params["playerid"] = getActivePlayer();
 
     QJsonObject playbackData = callJsonRpc("Player.GetProperties", params, properties).toObject();
     QVariantMap playbackMap = playbackData.toVariantMap();
@@ -405,19 +439,14 @@ QVariantMap Controls::getPlayBackTime(int playerId) {
     QVariantMap totalTimeMap = playbackMap["totaltime"].toMap();
     QTime totalTime;
     totalTime.setHMS(totalTimeMap["hours"].toInt(), totalTimeMap["minutes"].toInt(), totalTimeMap["seconds"].toInt());
-    globalDuration = totalTime.toString("hh:mm:ss");
-    playbackMap["duration"] = globalDuration;
+    playbackMap["duration"] = totalTime.toString("hh:mm:ss");
 
     QVariantMap currentTimeMap = playbackMap["time"].toMap();
     QTime currentTime;
     currentTime.setHMS(currentTimeMap["hours"].toInt(), currentTimeMap["minutes"].toInt(), currentTimeMap["seconds"].toInt());
 
-    videoNearEnd = currentTime.addSecs(70) > totalTime; // Determine if video is near the end
-
     return playbackMap;
 }
-
-bool Controls::isVideoNearEnd() { return videoNearEnd; }
 
 /** \brief close open dialogs in kodi */
 QString Controls::handleDialogs() {
@@ -467,9 +496,9 @@ void Controls::play(const QString &mediaLocation, const QString &seekAmount) {
 }
 
 /** \brief toggle pause the playing media */
-void Controls::pauseToggle(int playerId) {
+void Controls::pauseToggle() {
     QJsonObject params;
-    params["playerid"] = playerId;
+    params["playerid"] = getActivePlayer();
 
     callJsonRpc("Player.PlayPause", params);
 }
@@ -506,18 +535,18 @@ void Controls::inputSendText(const QString &text) {
 }
 
 /** \brief get stream details helper function */
-QString Controls::getStreamDetails(int playerId) {
+QString Controls::getStreamDetails() {
     QJsonArray properties = {"dynpath", "streamdetails"};
     QJsonObject params;
-    params["playerid"] = playerId;
+    params["playerid"] = getActivePlayer();
 
     return callJsonRpcString("Player.GetItem", params, properties);
 }
 
 /** \brief Format stream details to a string: codec, resolution, etc. */
-QString Controls::getStreamDetailsAll(int playerId) {
+QString Controls::getStreamDetailsAll() {
     LOG(VB_GENERAL, LOG_DEBUG, "getStreamDetailsAll()");
-    QString response = getStreamDetails(playerId);
+    QString response = getStreamDetails();
     if (response.contains("error") || response.contains("invalid"))
         return "";
 
@@ -731,16 +760,14 @@ void Controls::setAudioLibraryScan() { callJsonRpc("AudioLibrary.Scan"); }
 /** \brief set ProjectM visualization */
 void Controls::setProjectM() { setKodiSetting("musicplayer.visualisation", "visualization.projectm"); }
 
-void Controls::playListClear() { playListClear(1); }
-
-void Controls::playListClear(int playerid) {
+void Controls::playListClear() {
     LOG(VB_GENERAL, LOG_DEBUG, "playListClear()");
-    if (playerid == 0) {
+    if (globalActivePlayer == 0) {
         return;
     }
 
     QJsonObject params;
-    params["playlistid"] = playerid;
+    params["playlistid"] = getActivePlayer();
 
     callJsonRpc("Playlist.Clear", params);
 }
@@ -782,14 +809,14 @@ void Controls::setPartyMode() {
     callJsonRpc("Player.Open", params);
 }
 
-QString Controls::playerGetItem(int playerid) {
+QString Controls::playerGetItem() {
     QJsonArray array;
     array.push_back("album");
     array.push_back("artist");
     array.push_back("thumbnail");
 
     QJsonObject params;
-    params["playerid"] = playerid;
+    params["playerid"] = getActivePlayer();
     params["properties"] = array;
 
     return callJsonRpcString("Player.GetItem", params, array); // new
@@ -801,4 +828,21 @@ void Controls::removeFromPlaylist(int inPlaylistPos) {
     params["position"] = inPlaylistPos;
 
     callJsonRpc("Playlist.Remove", params);
+}
+
+qint64 Controls::getTimeFromSeekTimeMs(const QString &message) {
+    QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
+    QJsonObject rootObj = doc.object();
+    QJsonObject paramsObj = rootObj["params"].toObject();
+    QJsonObject dataObj = paramsObj["data"].toObject();
+    QJsonObject playerObj = dataObj["player"].toObject();
+    QJsonObject timeObj = playerObj["time"].toObject();
+
+    int hours = timeObj["hours"].toInt();
+    int minutes = timeObj["minutes"].toInt();
+    int seconds = timeObj["seconds"].toInt();
+    int millis = timeObj["milliseconds"].toInt();
+
+    QTime time(hours, minutes, seconds, millis);
+    return QTime(0, 0).msecsTo(time);
 }

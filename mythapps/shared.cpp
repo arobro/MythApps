@@ -289,9 +289,9 @@ bool isGnomeWayland() {
 /** \brief Activate the window. Wayland on Linux only.
  * \param windowName the name of the window to activate */
 void activateWindowWayland(QString windowName) {
-    system("gdbus call --session --dest org.gnome.Shell --object-path /de/lucaswerkmeister/ActivateWindowByTitle"
-           " --method de.lucaswerkmeister.ActivateWindowByTitle.activateBySubstring '" +
-           windowName.toLocal8Bit() + "'");
+    systemSafe("gdbus call --session --dest org.gnome.Shell --object-path /de/lucaswerkmeister/ActivateWindowByTitle"
+               " --method de.lucaswerkmeister.ActivateWindowByTitle.activateBySubstring '" +
+               windowName.toLocal8Bit() + "'");
 }
 
 /** \brief Returns the full cached image path based of the original image location. Will copy the image to the cache if required. Used to copy mythapp
@@ -340,11 +340,25 @@ QString GetThemeXmlFile(const QString &theme) {
     return "mythapps-ui.720.xml";
 }
 
-QString formatTimeComponent(const QString &value) { return value.isNull() || value.isEmpty() ? "00" : value.rightJustified(2, '0'); }
+/** \brief Format ms to hh:mm:ss */
+QString formatTime(qint64 totalMs) {
+    QTime t(0, 0);
+    t = t.addMSecs(static_cast<int>(totalMs));
+    return t.toString("hh:mm:ss");
+}
+
+QString removeHoursIfZero(const QString &time) {
+    QStringList parts = time.split(':');
+    if (parts.size() >= 2 && parts[0] == "00") {
+        // Rejoin everything except the first element (hours)
+        return parts.mid(1).join(':');
+    }
+    return time;
+}
 
 /** \brief get the number of threads running. Also remove finished threads from the thread pool
  \return returns the number of threads running */
-int MgetThreadCount() { return QThreadPool::globalInstance()->activeThreadCount(); }
+int getThreadCount() { return QThreadPool::globalInstance()->activeThreadCount(); }
 
 /** \brief wait for threads to complete
  *  \param  maxThreadsRunning what is the max threads that should be running?*/
@@ -383,4 +397,12 @@ QString getKodiLogPath() {
     }
 
     return newestLogPath;
+}
+
+/** \brief system - makes void */
+void systemSafe(const char *command) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+    system(command);
+#pragma GCC diagnostic pop
 }

@@ -92,32 +92,35 @@ MythApps::~MythApps() {
 void MythApps::onTextMessageReceived(const QString &method, const QString &message) {
     LOG(VB_GENERAL, LOG_DEBUG, "onTextMessageReceived():" + method);
 
-    if (method == "Player.OnStop") {
-        if (musicOpen || isHome) { // music
-            musicBarOnStopTimer->start(500);
-            if (controls->isFullscreen()) {
-                goMinimize(true);
-            }
-        } else { // video
-            openOSD("Player.OnStop");
-            returnFocus();
-            exitToMainMenuSleepTimer->start();
+    if (method == "Player.OnStop" && (musicOpen || isHome)) {
+        musicBarOnStopTimer->start(500);
+        if (controls->isFullscreen()) {
+            goMinimize(true);
         }
-    } else if (method == "Player.OnPlay") {
+    } else if (method == "Player.OnStop" && !musicOpen) {
+        openOSD("Player.OnStop");
+        returnFocus();
+        exitToMainMenuSleepTimer->start();
+
+    } else if (method == "Player.OnPlay" && musicOpen) {
         musicBarOnStopTimer->stop();
 
-        // if music video, ask if you want to open in fullscreen.
-        if (musicOpen) {
-            updateMusicPlayingBarStatus(); // update the music status bar
-            if (message.contains("video")) {
-                if (!controls->isFullscreen()) {
-                    confirmDialog(tr("Do you want to open this video in fullscreen?"), "fullscreen");
-                }
+        updateMusicPlayingBarStatus(); // update the music status bar
+        if (message.contains("video")) {
+            if (!controls->isFullscreen()) {
+                confirmDialog(tr("Do you want to open this video in fullscreen?"), "fullscreen");
             }
         }
     } else if (method == "Input.OnInputRequested" and !searching) {
         displayInputBox(message);
+    } else if (method == "Player.OnAVStart" && !musicOpen) {
+        handleDialogs(true);
+        streamDetails = controls->getStreamDetailsAll();
+
+        QTimer::singleShot(2000, this, [this]() { takeScreenshot(); });
     }
+
+    handlePlaybackEvent(method, message);
 }
 
 /** \brief Create a inputbox with a title, type and value with pre populated feilds.
@@ -286,7 +289,7 @@ bool MythApps::Create() {
     previouslyPlayedLink = new ProgramLink("previouslyPlayed"); // load previously played videos
     searchListLink = new ProgramLink("searchList");             // load Search Sources
 
-    currentselectionDetails = new ProgramData("", "");
+    currentSelectionDetails = new ProgramData("", "");
     lastPlayedDetails = new ProgramData("", "");
 
     m_streamDetailsbackground->Hide();
@@ -327,6 +330,7 @@ void MythApps::loadApps() {
     musicMode = 1;
     resetScreenshot();
     firstDirectoryName = tr("All");
+    controls->resetActivePlayer();
 
 #ifdef __ANDROID__ // display a button to bring up the menu on a touch screen
     m_androidMenuBtn->SetVisible(true);
@@ -419,7 +423,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
         } else if (action == "TOGGLEHIDDEN") {
             toggleHiddenFolders();
         } else if (action == "TOGGLERECORD") {
-            pluginManager.handleAction(action, currentselectionDetails);
+            pluginManager.handleAction(action, currentSelectionDetails);
         } else if (action == "HELP") {
             m_help->SetVisible(!m_help->IsVisible());
         } else if (browser->proccessRemote(action)) {
@@ -515,9 +519,9 @@ void MythApps::niceClose(bool forceClose) {
         }
         delayMilli(150);
 #ifdef _WIN32
-        system("taskkill /f /im kodi.exe");
+        systemSafe("taskkill /f /im kodi.exe");
 #else
-        system("pkill -9 kodi.bin");
+        systemSafe("pkill -9 kodi.bin");
 #endif
     } else {
         delayMilli(50);
@@ -1181,21 +1185,6 @@ void MythApps::refreshPage() {
     reload();
 }
 
-/** \return the playback time of the playing media as a string
- * \param adjustEnd - return 0 if close to end of the video */
-QString MythApps::getPlayBackTimeString(bool adjustEnd) {
-    if (adjustEnd && controls->isVideoNearEnd())
-        return "00:00:00";
-
-    QVariantMap map = playBackTimeMap["time"].toMap();
-
-    QString hours = formatTimeComponent(map["hours"].toString());
-    QString minutes = formatTimeComponent(map["minutes"].toString());
-    QString seconds = formatTimeComponent(map["seconds"].toString());
-
-    return hours + ":" + minutes + ":" + seconds;
-}
-
 /** \brief play the video
  * \param filePathParam url of the video
  * \param seekAmount amount to seek in hours minutes seconds. Can be blank */
@@ -1318,42 +1307,41 @@ void MythApps::handleSettingsDialogs(QNetworkReply *reply) {
 
 /** \brief reset the screenshot to nothing */
 void MythApps::resetScreenshot() {
-    m_screenshotMainQimage = QImage();
+    m_screenshot = QImage();
     m_screenshotMainMythImage->SetEnabled(false);
     m_screenshotMainMythImage->Reset();
 }
 
 /** \brief take a screenshot. Useful for getting a thumbnail for the currently playing video \return is the screenshot a black screen? */
-bool MythApps::takeScreenshot() {
+void MythApps::takeScreenshot() {
 #ifdef __ANDROID__
-    return false;
+    return;
 #endif
-    if (!musicOpen) {
-        m_screenshotMainQimage = screen->grabWindow(0).toImage().convertToFormat(QImage::Format_ARGB32);
-        m_screenshotMainQimage = m_screenshotMainQimage.scaled(1920, 1080, Qt::KeepAspectRatio);
+    if (musicOpen)
+        return;
 
-        QColor imageColor(m_screenshotMainQimage.pixel(600, 600));
-        if (imageColor.red() == 0 and imageColor.green() == 0 and imageColor.blue() == 0) {
-            LOG(VB_GENERAL, LOG_DEBUG, "Screenshot is blank ");
-            return false;
-        }
-        return true;
+    QImage screenshot = screen->grabWindow(0).toImage().convertToFormat(QImage::Format_ARGB32).scaled(1920, 1080, Qt::KeepAspectRatio);
+
+    QColor imageColor(screenshot.pixel(600, 600));
+    if (imageColor.red() == 0 and imageColor.green() == 0 and imageColor.blue() == 0) {
+        LOG(VB_GENERAL, LOG_DEBUG, "takeScreenshot() is blank ");
+    } else {
+        m_screenshot = screenshot;
+        LOG(VB_GENERAL, LOG_DEBUG, "takeScreenshot()");
     }
-    return false;
 }
 
 /** \brief toggle the pause status */
 void MythApps::pauseToggle() {
-    int activePlayerStatus = controls->getActivePlayer();
-    controls->pauseToggle(activePlayerStatus);
+    controls->pauseToggle();
     delayMilli(200); // button debounce
 }
 
 /** \brief stop playing the video from the remote */
-int MythApps::stopPlayBack() {
+void MythApps::stopPlayBack() {
     LOG(VB_GENERAL, LOG_DEBUG, "stopPlayBack()");
     takeScreenshot();
-    return controls->stopPlayBack();
+    controls->stopPlayBack();
 }
 
 /** \brief runs when clicking the button/image. Used to load the next directory, file, link or app
@@ -1506,18 +1494,18 @@ void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
     ProgramData programData(item->GetText("buttontext2"), item->GetData().toString());
 
     if (programData.hasPlotandImageUrl()) { // figure out if 'video' home screen item
-        currentselectionDetails->set(getLabel(item), item->GetData().toString());
+        currentSelectionDetails->set(getLabel(item), item->GetData().toString());
     } else {
-        currentselectionDetails->set("", "");
+        currentSelectionDetails->set("", "");
     }
 
     m_plot->SetText("");
 
     if (programData.getPlot().size() > 30) {
         if (previouslyPlayedLink->contains(programData.getUrl())) {
-            currentselectionDetails->setPreviouslyPlayed(true);
+            currentSelectionDetails->setPreviouslyPlayed(true);
         } else {
-            currentselectionDetails->setPreviouslyPlayed(false);
+            currentSelectionDetails->setPreviouslyPlayed(false);
         }
 
         m_plot->SetText(removeBBCode(programData.getPlot()));
@@ -1775,8 +1763,8 @@ void MythApps::showOptionsMenu() {
         popupStack->AddScreen(m_menuPopup);
         m_menuPopup->SetReturnEvent(this, tr("options"));
 
-        if (!currentselectionDetails->isEmpty()) {
-            QStringList menuItems = pluginManager.getOptionsMenuLabels(currentselectionDetails, fileBrowserHistory->getCurrentData());
+        if (!currentSelectionDetails->isEmpty()) {
+            QStringList menuItems = pluginManager.getOptionsMenuLabels(currentSelectionDetails, fileBrowserHistory->getCurrentData());
             for (const QString &item : menuItems) {
                 m_menuPopup->AddButton(item);
             }
@@ -1820,7 +1808,7 @@ void MythApps::customEvent(QEvent *event) {
                 dir.removeRecursively();
                 createDirectoryIfDoesNotExist(getGlobalPathPrefix() + "00cache/");
             } else if (resulttext == tr("Clear Previously Played")) {
-                previouslyPlayedLink->listRemove(currentselectionDetails->get());
+                previouslyPlayedLink->listRemove(currentSelectionDetails->get());
                 setButtonWatched(false);
                 refreshFileListGridSelection();
             } else if (resulttext == tr("Remove all tracks from playlist")) {
@@ -1834,7 +1822,7 @@ void MythApps::customEvent(QEvent *event) {
                 niceClose(false);
             }
 
-            if (pluginManager.menuCallBack(resulttext, currentselectionDetails))
+            if (pluginManager.menuCallBack(resulttext, currentSelectionDetails))
                 reload();
         }
 
@@ -1845,12 +1833,12 @@ void MythApps::customEvent(QEvent *event) {
             } else if (resulttext == tr("Exit to Menu")) {
                 resetScreenshot();
             } else if (resulttext == tr("Save Position to Watch List and Exit to Menu")) {
-                lastPlayedDetails->setSeek(getPlayBackTimeString(true));
+                lastPlayedDetails->setSeek(getPlayBackTimeString(true, false));
                 pluginManager.appendWatchedLink(lastPlayedDetails->get());
                 resetScreenshot();
                 addToPreviouslyPlayed();
-            } else if (resulttext == tr("Keep Watching")) {
-                play_Kodi(lastPlayedDetails->getUrl(), getPlayBackTimeString(true));
+            } else if (resulttext.startsWith(tr("Keep Watching:"))) {
+                play_Kodi(lastPlayedDetails->getUrl(), getPlayBackTimeString(true, false));
             } else if (resulttext == tr("Exit to MythTV Menu")) {
                 niceClose(false);
             } else {
@@ -1901,29 +1889,9 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
     play(mediaLocation, seekAmount); // play the media
     videoStopReceived = false;
 
-    QTime dieTime = QTime::currentTime().addSecs(9); // check the media is playing
-    while (controls->isPlaying()) {                  // not playing
-        if (QTime::currentTime() > dieTime) {        // sanity check incase loop gets stuck for more than 9 seconds
-            break;
-        }
-        delay(1);
-    }
+    m_screenshot.load(getStandardizedImagePath(lastPlayedDetails->getImageUrl()) + ".processed");
+    m_screenshot = m_screenshot.copy(0, m_screenshot.height() * 0.20, m_screenshot.width(), m_screenshot.height() * 0.80);
 
-    if (controls->getConnected() == 2) {
-        handleDialogs(true);
-
-        globalActivePlayer = controls->getActivePlayer();
-        playbackTimer->start(1 * 1000);
-
-        delayMilli(50);
-        if (!takeScreenshot()) { // take a screenshot and retry if black screen
-            delay(3);
-            if (!takeScreenshot()) { // use thumbnail instead
-                m_screenshotMainQimage.load(getStandardizedImagePath(lastPlayedDetails->getImageUrl()) + ".processed");
-            }
-        }
-        streamDetails = controls->getStreamDetailsAll(globalActivePlayer);
-    }
     LOG(VB_GENERAL, LOG_DEBUG, "play_Kodi() Finsihed");
 }
 
@@ -1942,7 +1910,7 @@ void MythApps::createPlayBackMenu() {
         }
         m_menuPopup->AddButton(tr("Exit to Menu"));
         m_menuPopup->AddButton(tr("Save Position to Watch List and Exit to Menu"));
-        m_menuPopup->AddButton(tr("Keep Watching"));
+        m_menuPopup->AddButton(tr("Keep Watching: ") + getPlayBackTimeString(true, true).replace("00:00", ""));
         m_menuPopup->AddButton(tr("Exit to MythTV Menu"));
     } else {
         delete m_menuPopup;
@@ -1977,9 +1945,9 @@ void MythApps::openOSD(QString screenType) {
     goMinimize(true);
     kodiPlayerOpen = false;
 
-    if (!m_screenshotMainQimage.isNull()) {
+    if (!m_screenshot.isNull()) {
         MythImage *m_image = GetPainter()->GetFormatImage();
-        m_image->Assign(m_screenshotMainQimage);
+        m_image->Assign(m_screenshot);
         m_screenshotMainMythImage->SetEnabled(true);
         m_screenshotMainMythImage->SetImage(m_image);
     }
@@ -2073,4 +2041,68 @@ void MythApps::toggleStreamDetails() {
     } else {
         m_streamDetailsbackground->Hide();
     }
+}
+
+/** \brief Central handler: call on Play, Pause, Resume, Seek, Stop*/
+void MythApps::handlePlaybackEvent(const QString &method, const QString &message) {
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+    if (method == "Player.OnAVStart" || method == "Player.OnResume" || method == "Player.OnSpeedChanged") {
+        manualAccumulatedMs_ = getKodiPlaybackTimeMs();
+        playbackStartMs_ = now;
+    } else if (method == "Player.OnSeek") {
+        manualAccumulatedMs_ = controls->getTimeFromSeekTimeMs(message);
+        playbackStartMs_ = now;
+    } else if (method == "Player.OnPause") {
+        if (playbackStartMs_ != -1) {
+            manualAccumulatedMs_ += now - playbackStartMs_;
+            playbackStartMs_ = -1;
+        }
+    } else if (method == "Player.OnStop") {
+        if (playbackStartMs_ != -1) {
+            manualAccumulatedMs_ += now - playbackStartMs_;
+            playbackStartMs_ = -1;
+        }
+    }
+}
+
+/** \brief Query Kodi for the true position (in milliseconds) */
+qint64 MythApps::getKodiPlaybackTimeMs() {
+    QVariantMap map = controls->getPlayBackTime(); //
+    if (!map.contains("time"))
+        return 0;
+
+    playbackDuration = map["duration"].toString();
+
+    QVariantMap t = map["time"].toMap();
+    QTime qt(t["hours"].toInt(), t["minutes"].toInt(), t["seconds"].toInt());
+    return QTime(0, 0).msecsTo(qt);
+}
+
+/** \brief Compute the current total playback time (ms) */
+qint64 MythApps::getCurrentPlaybackTimeMs() const {
+    if (playbackStartMs_ != -1) {
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        return manualAccumulatedMs_ + (now - playbackStartMs_);
+    }
+    return manualAccumulatedMs_;
+}
+
+/** \return the playback time of the playing media as a string
+ * \param adjustEnd - Check if current time is within 60 seconds of the end */
+QString MythApps::getPlayBackTimeString(bool adjustEnd, bool removeHoursIfNone) {
+    qint64 currentTimeMs = getCurrentPlaybackTimeMs();
+    QString time = formatTime(currentTimeMs);
+
+    qint64 playbackDurationMs = QTime(0, 0).msecsTo(QTime::fromString(playbackDuration, "hh:mm:ss"));
+
+    if (adjustEnd) {
+        if (playbackDurationMs - currentTimeMs <= 30000)
+            time = "00:00:00";
+    }
+
+    if (removeHoursIfNone)
+        time = removeHoursIfZero(time);
+
+    return time;
 }
