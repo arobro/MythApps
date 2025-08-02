@@ -1,5 +1,6 @@
 #include "mythapps.h"
-#include <type_traits>
+
+#include "SafeDelete.h"
 
 // Not just a forward declaration!
 #include "libmythui/mythuistatetracker.h"
@@ -10,18 +11,6 @@
 #include <libmythui/mythuibutton.h>
 #include <libmythui/mythuiimage.h>
 #include <libmythui/mythuitext.h>
-
-template <typename T> void SafeDelete(T *&ptr) {
-    if constexpr (std::is_base_of_v<QObject, T>) {
-        if (ptr && !ptr->parent()) {
-            delete ptr;
-            ptr = nullptr;
-        }
-    } else {
-        delete ptr;
-        ptr = nullptr;
-    }
-}
 
 void MythApps::CleanupResources() {
     exitToMainMenuSleepTimer->disconnect();

@@ -16,6 +16,7 @@
 #include "libmythui/mythmainwindow.h"
 
 // MythApps headers
+#include "SafeDelete.h"
 #include "plugin_api.h"
 #include "programData.h"
 #include "shared.h"
@@ -40,14 +41,14 @@ bool Videos::getPluginStartPos() const { return false; }
 
 void Videos::setDialog(Dialog *d) { dialog = d; }
 
-void Videos::load(const QString data) {
+void Videos::load(const QString label, const QString data) {
     m_toggleSearchVisibleCallback(false);
 
     if (data.length() < 2) {
         loadDirectory(QDir::homePath() + "/Videos", /* recursive = */ false);
         loadVideos();
     } else {
-        updateMediaListCallback(data);
+        updateMediaListCallback(label, data);
     }
 }
 
@@ -158,10 +159,10 @@ void Videos::handleThumbnailReady(const QString &videoFilePath, const QString &t
     }
 }
 
-void Videos::updateMediaListCallback(const QString &data) {
+void Videos::updateMediaListCallback(const QString &label, const QString &data) {
     LOG(VB_GENERAL, LOG_DEBUG, "updateMediaListCallback(): " + data);
 
-    ProgramData programData("", data);
+    ProgramData programData(label, data);
     QString path = programData.getFilePathParam();
 
     if (programData.isPlayRequest()) {
@@ -172,9 +173,19 @@ void Videos::updateMediaListCallback(const QString &data) {
     }
 }
 
-void Videos::internalPlay(const QString url) {
+void Videos::internalPlay(const QString &url) {
     LOG(VB_GENERAL, LOG_DEBUG, "internalPlay()");
-    QCoreApplication::processEvents();
-    GetMythMainWindow()->HandleMedia("Internal", url, "", "", "", "", 0, 0, "", 0min, "", "", false);
-    QCoreApplication::processEvents();
+
+    MythMainWindow *mainWindow = GetMythMainWindow();
+    if (!mainWindow) {
+        LOG(VB_GENERAL, LOG_ERR, "Main window is null. Aborting playback.");
+        return;
+    }
+
+    QString handler = "Internal";
+    bool useBookmarks = false;
+
+    GetMythMainWindow()->HandleMedia(handler, url, "", "", "", "", 0, 0, "", 0min, "", "", useBookmarks);
+    // handler, url, plot, title, subtitle, director, season, episode, inetref, lenMins, year, id, useBookmarks);
+    SafeDelete(mainWindow);
 }

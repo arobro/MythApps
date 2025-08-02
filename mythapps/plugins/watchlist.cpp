@@ -25,7 +25,7 @@ QString WatchList::getPluginIcon() const { return pluginIcon; }
 
 void WatchList::setDialog(Dialog *d) { dialog = d; }
 
-void WatchList::load(const QString data) {
+void WatchList::load(const QString label, const QString data) {
     m_toggleSearchVisibleCallback(false);
 
     if (data.length() < 2) {

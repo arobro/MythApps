@@ -22,7 +22,7 @@ class Videos : public PluginAPI {
     QString getPluginIcon() const override;
     void setDialog(Dialog *d) override;
 
-    void load(const QString data) override;
+    void load(const QString label, const QString data) override;
     void displayHomeScreenItems() override;
 
     void setControls(Controls *c);
@@ -33,8 +33,8 @@ class Videos : public PluginAPI {
 
     void generateMythTVThumbnailAsync(const QString &videoFilePath, bool isPlay);
     void handleThumbnailReady(const QString &videoFilePath, const QString &thumbnailPath, bool isPlay);
-    void updateMediaListCallback(const QString &data);
-    void internalPlay(const QString url);
+    void updateMediaListCallback(const QString &label, const QString &data);
+    void internalPlay(const QString &url);
 
     QString pluginName;
     QString pluginIcon;

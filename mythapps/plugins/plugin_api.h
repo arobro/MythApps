@@ -25,7 +25,7 @@ class PluginAPI : public QObject {
     virtual QString getPluginIcon() const { return ""; }
     virtual QString getPluginDisplayName() { return ""; }
     virtual bool getPluginStartPos() const { return true; }
-    virtual void load(const QString = "") { return; }
+    virtual void load(const QString = "", const QString = "") { return; }
     virtual void displayHomeScreenItems() { return; }
 
     virtual void setDialog(Dialog *) { return; }

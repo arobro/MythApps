@@ -22,7 +22,7 @@ QString Favourites::getPluginIcon() const { return pluginIcon; }
 
 void Favourites::setDialog(Dialog *d) {}
 
-void Favourites::load(const QString data) {
+void Favourites::load(const QString label, const QString data) {
     m_toggleSearchVisibleCallback(false);
     loadFavourites(false);
 }

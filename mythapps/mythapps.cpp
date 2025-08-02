@@ -1407,8 +1407,7 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
             m_fileListGrid->Reset();
             loadBackButton();
             isHome = false;
-            QString fileURL = programData->getDataWithoutAppName(data);
-            plugin->load(programData->getDataWithoutAppName(data));
+            plugin->load(label, programData->getDataWithoutAppName(data));
             m_filepath->SetText(programData->getFriendlyPathName(data));
         }
         return;
