@@ -71,4 +71,9 @@ QString removeHoursIfZero(const QString &time);
 
 void systemSafe(const char *command);
 
+template <typename T> void setWidgetVisibility(T *widget, bool visible) {
+    widget->SetVisible(visible);
+    widget->SetEnabled(visible);
+}
+
 #endif

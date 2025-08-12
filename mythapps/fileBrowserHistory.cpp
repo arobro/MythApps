@@ -26,8 +26,12 @@ void FileBrowserHistory::debug() {
 
 /** \brief append the current url in the file browser */
 void FileBrowserHistory::append(QString label, QString data) {
-    ProgramData *programData = new ProgramData(label, data);
-    if (!programData->isPlayRequest() || data.contains("app://")) {
+    ProgramData programData(label, data);
+
+    if (!programData.refreshGrid())
+        return;
+
+    if (!programData.isPlayRequest() || data.contains("app://")) {
         LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory:: Append(): " + data);
         QStringList previousList;
         previousList.append(label);
@@ -37,7 +41,6 @@ void FileBrowserHistory::append(QString label, QString data) {
     } else {
         LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory:: Append(): no play file: " + data);
     }
-    delete programData;
 }
 
 /** \brief is the file browser hisotry empty? */
@@ -58,4 +61,22 @@ QString FileBrowserHistory::getCurrentLabel() {
 QString FileBrowserHistory::getCurrentData() {
     QStringList previousList = previousListItem.at(previousListItem.size() - 1);
     return previousList.at(1);
+}
+
+/** \brief Check if the current FileBrowser indicates an app is open */
+bool FileBrowserHistory::isAppOpen() { return getCurrentData().startsWith("app://"); }
+
+QString FileBrowserHistory::getCurrentApp() {
+    if (isEmpty())
+        return QString();
+
+    QString currentData = getCurrentData();
+    if (!currentData.startsWith("app://"))
+        return QString();
+
+    QStringList parts = currentData.split('/');
+    if (parts.size() < 3)
+        return QString();
+
+    return parts[2];
 }

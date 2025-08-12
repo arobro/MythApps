@@ -59,7 +59,15 @@ void NetSocketRequest::onTextMessageReceived(const QString &message) {
 }
 
 void NetSocketRequest::ensureConnected() {
-    const int maxRetries = 2;
+    static int totalFailures = 0;   // Tracks cumulative failures
+    const int maxRetries = 2;       // Per-call retry limit
+    const int maxTotalFailures = 3; // Global failure threshold
+
+    if (totalFailures >= maxTotalFailures) {
+        LOG(VB_GENERAL, LOG_ERR, "ensureConnected(): aborting");
+        return;
+    }
+
     int attemptCount = 0;
 
     while (!m_ready && attemptCount < maxRetries) {
@@ -73,11 +81,15 @@ void NetSocketRequest::ensureConnected() {
 
         if (m_ws.state() == QAbstractSocket::ConnectedState) {
             m_ready = true;
+            totalFailures = 0;
             break;
+        } else {
+            totalFailures++;
         }
     }
-    if (attemptCount > 1)
-        LOG(VB_GENERAL, LOG_DEBUG, QString("ensureConnected(): trying again"));
+
+    if (!m_ready)
+        LOG(VB_GENERAL, LOG_DEBUG, QString("ensureConnected(): failed after %1 attempts (total failures: %2)").arg(attemptCount).arg(totalFailures));
 }
 
 QJsonValue NetSocketRequest::call(const QString &method, const QJsonObject &params, const QJsonArray &properties) {

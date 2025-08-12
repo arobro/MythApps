@@ -168,7 +168,7 @@ QString Controls::getAddons(bool forceRefresh) {
 }
 
 /** \brief Load all addons */
-void Controls::loadAddons() {
+void Controls::loadAddons(QStringList hiddenPluginList) {
     QString json = getAddons(true);
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
 
@@ -188,8 +188,10 @@ void Controls::loadAddons() {
         // creates a map to lookup the thumbnail based on the addonid.
         urlToThumbnailMap.insert(getWebSiteDomain(addonId), thumbnail);
 
-        // load program
-        emit loadProgramSignal(name, createProgramData(addonId, description, thumbnail, false, ""), thumbnail);
+        // load program if not in hidden list
+        if (!hiddenPluginList.contains(addonId)) {
+            emit loadProgramSignal(name, createProgramData(addonId, description, thumbnail, false, ""), thumbnail);
+        }
     }
 }
 

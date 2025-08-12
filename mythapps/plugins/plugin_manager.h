@@ -12,11 +12,13 @@
 // MythApps headers
 #include "controls.h"
 #include "dialog.h"
+#include "uiContext.h"
 
 // Plugins
 #include "favourites.h"
 #include "videos.h"
 #include "watchlist.h"
+#include "ytCustom.h"
 
 struct PluginDisplayInfo {
     QString name;
@@ -35,9 +37,12 @@ class PluginManager {
     void setLoadProgramCallback(PluginAPI::LoadProgramCallback cb);
     void setToggleSearchVisibleCallback(PluginAPI::ToggleSearchVisibleCallback cb);
     void setGoBackCallback(PluginAPI::GoBackCallback cb);
+    void setFocusWidgetCallback(PluginAPI::SetFocusWidgetCallback cb);
+    void setPlay_KodiCallback(PluginAPI::SetPlay_KodiCallback cb);
 
     void setControls(Controls *c);
     void setDialog(Dialog *d);
+    void setUIContext(UIContext *uiC);
 
     PluginAPI *getPluginByName(const QString &name);
 
@@ -46,8 +51,15 @@ class PluginManager {
 
     void handleAction(const QString action, ProgramData *currentSelectionDetails);
 
+    QStringList hidePlugins();
+    void search(QString searchText, QString appName);
+    bool handleSuggestion(const QString &);
+
+    bool useBasicMenu(QString appName);
+
     // non API
     void appendWatchedLink(FileFolderContainer data);
+    void searchSettingsClicked(MythUIButtonListItem *item);
 
   private:
     template <typename T> bool initializePlugin(QScopedPointer<T> &pluginInstance, const QString &pluginName);
@@ -58,6 +70,7 @@ class PluginManager {
     QScopedPointer<Favourites> m_favourites;
     QScopedPointer<Videos> m_videos;
     QScopedPointer<WatchList> m_watchlist;
+    QScopedPointer<ytCustom> m_ytCustom;
 };
 
 #endif /* PLUGIN_MANAGER_H */

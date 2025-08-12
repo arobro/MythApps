@@ -20,6 +20,9 @@ class FileBrowserHistory {
     QString getCurrentLabel();
     QString getCurrentData();
 
+    bool isAppOpen();
+    QString getCurrentApp();
+
   private:
     void removeCurrentUrlFromList();
 

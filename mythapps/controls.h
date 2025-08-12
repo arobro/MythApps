@@ -71,7 +71,7 @@ class Controls : public QObject {
     bool isInputAdaptive();
     bool areAddonsInstalled();
     QString getAddons(bool forceRefresh = false);
-    void loadAddons();
+    void loadAddons(QStringList hiddenPluginList);
 
     bool isVirtualKeyboardOpen();
     QJsonObject getDirectoryObject(QString url);

@@ -210,6 +210,8 @@ bool MythApps::Create() {
     }
 
     bool err = false;
+    uiCtx = new UIContext();
+
     UIUtilE::Assign(this, m_plot, "plot", &err);
     UIUtilE::Assign(this, m_streamDetails, "streamDetails", &err);
     UIUtilE::Assign(this, m_streamDetailsbackground, "streamDetailsbackground", &err);
@@ -220,18 +222,17 @@ bool MythApps::Create() {
     UIUtilE::Assign(this, m_SearchTextEdit, "SearchTextEdit", &err);
     UIUtilE::Assign(this, m_SearchTextEditBackgroundText, "SearchTextEditBackgroundText", &err);
     UIUtilE::Assign(this, m_searchButtonList, "searchButtonList", &err);
-    UIUtilE::Assign(this, m_searchSettingsButtonList, "searchSettingsButtonList", &err);
+    UIUtilE::Assign(this, uiCtx->searchSettingsButtonList, "searchSettingsButtonList", &err);
 
     UIUtilE::Assign(this, m_loaderImage, "loaderImage", &err);
     UIUtilE::Assign(this, m_searchButtonListGroup, "searchButtonListGroup", &err);
-    UIUtilE::Assign(this, m_searchSettingsGroup, "searchSettingsGroup", &err);
+
+    UIUtilE::Assign(this, uiCtx->searchSettingsGroup, "searchSettingsGroup", &err);
 
     UIUtilE::Assign(this, m_androidMenuBtn, "androidMenuBtn", &err);
-    m_androidMenuBtn->SetVisible(false);
-    m_androidMenuBtn->SetEnabled(false);
+    setWidgetVisibility(m_androidMenuBtn, false);
     UIUtilE::Assign(this, m_help, "help", &err);
-    m_help->SetVisible(false);
-    m_help->SetEnabled(false);
+    setWidgetVisibility(m_help, false);
 
     m_SearchTextEdit->SetKeyboardPosition(VK_POSTOPDIALOG);
     dialog = new Dialog(this, m_loaderImage);
@@ -245,12 +246,6 @@ bool MythApps::Create() {
         return false;
     }
 
-    ytNative = new ytCustomApp(username, password, ip, port, m_searchSettingsButtonList, m_searchSettingsGroup, browser);
-    connect(ytNative, SIGNAL(loadProgramSignal(QString, QString, QString)), this, SLOT(loadProgramSlot(QString, QString, QString)));
-    if (gCoreContext->GetSetting("MythAppsYTnative").compare("1") == 0) {
-        ytNativeEnabled = true;
-    }
-
     connect(m_fileListGrid, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(appsCallback(MythUIButtonListItem *)));
     connect(m_fileListGrid, SIGNAL(itemSelected(MythUIButtonListItem *)), this, SLOT(selectAppsCallback(MythUIButtonListItem *)));
     connect(m_fileListGrid, SIGNAL(itemVisible(MythUIButtonListItem *)), this, SLOT(visibleAppsCallback(MythUIButtonListItem *)));
@@ -259,7 +254,7 @@ bool MythApps::Create() {
 
     connect(m_searchButtonList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(clickedSearchList(MythUIButtonListItem *)));
     connect(m_searchButtonList, SIGNAL(itemSelected(MythUIButtonListItem *)), this, SLOT(selectSearchList(MythUIButtonListItem *)));
-    connect(m_searchSettingsButtonList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(searchSettingsClicked(MythUIButtonListItem *)));
+    connect(uiCtx->searchSettingsButtonList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(searchSettingsClicked(MythUIButtonListItem *)));
 
     connect(m_SearchTextEdit, SIGNAL(valueChanged()), this, SLOT(searchTextEditValueChanged()));
     connect(m_SearchTextEdit, SIGNAL(LosingFocus()), this, SLOT(searchTextEditLosingFocus()));
@@ -297,9 +292,12 @@ bool MythApps::Create() {
     pluginManager.setLoadProgramCallback([this](const QString &name, const QString &setdata, const QString &thumbnailUrl) { this->loadProgram(name, setdata, thumbnailUrl); });
     pluginManager.setToggleSearchVisibleCallback([this](bool visible) { this->toggleSearchVisible(visible); });
     pluginManager.setGoBackCallback([this]() { this->goBack(); });
+    pluginManager.setFocusWidgetCallback([this](MythUIType *widget) { this->SetFocusWidget(widget); });
+    pluginManager.setPlay_KodiCallback([this](QString mediaLocation) { play_Kodi(mediaLocation, "00:00:00"); });
 
     pluginManager.setControls(controls);
     pluginManager.setDialog(dialog);
+    pluginManager.setUIContext(uiCtx);
 
     loadApps();
 
@@ -324,9 +322,9 @@ void MythApps::loadApps() {
     azShowOnUrl.clear();
     delayMilli(5);
     toggleSearchVisible(true);
-    ytNative->setSearchSettingsGroupVisibilty(false);
     m_hint->SetVisible(false);
     dialog->getLoader()->SetVisible(false);
+    setWidgetVisibility(uiCtx->searchSettingsGroup, false);
     musicMode = 1;
     resetScreenshot();
     firstDirectoryName = tr("All");
@@ -346,7 +344,6 @@ void MythApps::loadApps() {
         clearAndStopPlaylist();
     }
     musicOpen = false;
-    ytNativeOpen = false;
     m_filepath->SetText("");
 
     if (controls->getConnected() == 1) {
@@ -374,7 +371,7 @@ void MythApps::loadApps() {
 
     loadPlugins(true);
 
-    controls->loadAddons();
+    controls->loadAddons(pluginManager.hidePlugins());
     SetFocusWidget(m_fileListGrid); // set the focus to the file list grid
 
     loadPlugins(false); // load plugins after sorting
@@ -462,8 +459,8 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             controls->setFFWD();
         } else if (action == "RWND" and kodiPlayerOpen) {
             controls->setRWND();
-            // ytCustomApp
-        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_searchSettingsButtonList) {
+            // searchSettings
+        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == uiCtx->searchSettingsButtonList) {
             SetFocusWidget(m_fileListGrid);
         } else if (handleMusicAction(action)) {
 
@@ -540,12 +537,6 @@ void MythApps::loadProgram(QString name, QString setdata, QString thumbnailUrl) 
  * \param thumbnailUrl
  * \param mythUIButtonList The button to load the image*/
 void MythApps::loadProgram(QString name, QString setdata, QString thumbnailUrl, MythUIButtonList *mythUIButtonList) {
-    // should ytNative be enabled?
-    if (ytNativeEnabled && name.compare(ytNative->getKodiYTPluginAppName()) == 0) {
-        ytNative->setKodiYTProgramData(setdata);
-        setdata = ytNative->getYTnativeProgramData();
-    }
-
     static int count = 0;
     int max = 6;
 
@@ -771,29 +762,13 @@ void MythApps::searchSuggestTimerSlot() {
     QString localSearchText = m_SearchTextEdit->GetText();
     searchText = localSearchText;
 
-    // check if a video url is entered in the search box and open the video.
-    if (searchText.contains(ytNative->getKodiYTPluginAppName(), Qt::CaseInsensitive) and searchText.contains("v=")) {
-
-        QUrl qu(m_SearchTextEdit->GetText().trimmed());
-
-        QUrlQuery q;
-        q.setQuery(qu.query());
-        QString vUrl = q.queryItemValue("v", QUrl::FullyDecoded);
-
-        m_SearchTextEdit->SetText(vUrl);
-        foreach (QString search, searchListLink->getListEnabled()) {
-            if (search.contains(ytNative->getKodiYTPlayUrl())) {
-                isHome = false;
-                goSearch(search);
-            }
-        }
-
-        play_Kodi(ytNative->getKodiYTPlayUrl() + vUrl, QString("00:00:00"));
+    if (pluginManager.handleSuggestion(localSearchText)) {
+        m_SearchTextEdit->SetText("");
         return;
     }
 
-    SearchSuggestions *suggestions = new SearchSuggestions();
-    QStringList word = suggestions->getSuggestions(localSearchText);
+    SearchSuggestions suggestions;
+    QStringList word = suggestions.getSuggestions(localSearchText);
 
     m_searchButtonList->Reset();
     MythUIButtonListItem *searchButton = new MythUIButtonListItem(m_searchButtonList,
@@ -834,18 +809,22 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
         return;
     }
 
-    if (ytNativeOpen) { // search ytNative
-        loadYTNative(searchText, "");
+    m_fileListGrid->Reset();
+    loadBackButton();
+
+    if (fileBrowserHistory->isAppOpen()) {
+        QString appPath = "app://" + fileBrowserHistory->getCurrentApp() + "/search?=" + searchText;
+
+        fileBrowserHistory->append(appPath, appPath);
+        m_filepath->SetText(appPath);
+
+        pluginManager.search(searchText, fileBrowserHistory->getCurrentApp());
         return;
     }
 
-    dialog->createBusyDialog(tr("Retrieving Search Results..."));
-
     searching = true;
     QCoreApplication::processEvents();
-
-    m_fileListGrid->Reset();
-    loadBackButton();
+    dialog->createBusyDialog(tr("Retrieving Search Results..."));
 
     if (overrideCurrentSearchUrl.compare("") != 0) {
         fetchSearch(overrideCurrentSearchUrl);
@@ -1370,15 +1349,6 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
         fileBrowserHistory->append(label, data);
     }
 
-    if (programData->isYTWrappedApp()) { // close YT native
-        ytNativeOpen = false;
-        ytNative->setSearchSettingsGroupVisibilty(false);
-    }
-
-    if (ytNative->openInBrowserIfRequired(programData->getFilePathParam())) {
-        return;
-    }
-
     // open internal plugins for Favourites, Music, Watched List or Videos if clicked
     if (programData->hasArtists()) { // if music buttons clicked
         loadSongsMain(label, "artists");
@@ -1404,8 +1374,10 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
         QString appName = programData->getAppPluginName();
         PluginAPI *plugin = pluginManager.getPluginByName(appName);
         if (plugin) {
-            m_fileListGrid->Reset();
-            loadBackButton();
+            if (programData->refreshGrid()) {
+                m_fileListGrid->Reset();
+                loadBackButton();
+            }
             isHome = false;
             plugin->load(label, programData->getDataWithoutAppName(data));
             m_filepath->SetText(programData->getFriendlyPathName(data));
@@ -1427,11 +1399,6 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
 
     if (programData->hasMusic()) { // Music
         loadMusic();
-        return;
-    }
-
-    if (programData->hasYTnative()) { // YT Native
-        loadYTNative("", programData->getFilePathParam());
         return;
     }
 
@@ -1700,42 +1667,7 @@ void MythApps::requestFileBrowser(QString url, QStringList previousSearches, boo
     cacheFile.close();
 }
 
-void MythApps::loadYTNative(QString searchString, QString directory) {
-    if (gCoreContext->GetSetting("MythAppsYTnative").compare("1") == 0) {
-        LOG(VB_GENERAL, LOG_DEBUG, "loadYTNative()" + searchString + " dir:" + directory);
-
-        if (gCoreContext->GetSetting("MythAppsYTapi").length() < 10) {
-            LOG(VB_GENERAL, LOG_DEBUG, "No API key");
-            dialog->createAutoClosingBusyDialog(tr("Please enter in your API key under MythApps->Settings"), 3);
-            return;
-        }
-        toggleSearchVisible(true);
-
-        if (directory.compare("YTNative://settings") == 0) {
-            LOG(VB_GENERAL, LOG_DEBUG, "loadYTNative() -settings");
-            SetFocusWidget(m_searchSettingsButtonList);
-            return;
-        }
-
-        ytNative->setSearchSettingsGroupVisibilty(false);
-        m_fileListGrid->Reset();
-        loadBackButton();
-        isHome = false;
-        ytNativeOpen = true;
-
-        if (searchString.isEmpty() && directory.compare("YTNative") == 0) { // apps first page
-            loadImage(m_fileListGrid, tr("Search Settings"), QString("YTNative://settings"), ma_search_icon);
-            loadImage(m_fileListGrid, tr("Popular Right Now"), createProgramData("YTNative://popular", tr("Browse the most popular content"), ma_popular_icon, false, ""), ma_popular_icon);
-            loadImage(m_fileListGrid, tr("Wrapped App"), ytNative->getKodiYTProgramData(), ytNative->getAppIcon());
-            ytNative->setSearchSettingsGroupVisibilty(true);
-            return;
-        }
-
-        ytNative->loadProgramList(searchString, directory);
-    }
-}
-
-void MythApps::searchSettingsClicked(MythUIButtonListItem *item) { ytNative->searchSettingsClicked(item); }
+void MythApps::searchSettingsClicked(MythUIButtonListItem *item) { pluginManager.searchSettingsClicked(item); }
 
 /** \brief load shows AZ( */
 void MythApps::loadShowsAZ() {
@@ -1903,12 +1835,18 @@ void MythApps::createPlayBackMenu() {
     if (m_menuPopup->Create()) {
         popupStack->AddScreen(m_menuPopup);
         m_menuPopup->SetReturnEvent(this, "watchList");
+        bool isApp = false;
 
-        if (!previouslyPlayedLink->contains(lastPlayedDetails->getUrl()) and !excludePreviouslyPlayed(lastPlayedDetails->getUrl())) {
+        if (fileBrowserHistory->isAppOpen()) {
+            isApp = pluginManager.useBasicMenu(fileBrowserHistory->getCurrentApp());
+        }
+
+        if (!previouslyPlayedLink->contains(lastPlayedDetails->getUrl()) && !excludePreviouslyPlayed(lastPlayedDetails->getUrl()) && !isApp) {
             m_menuPopup->AddButton(tr("Flag as Watched and Exit to Menu"));
         }
         m_menuPopup->AddButton(tr("Exit to Menu"));
-        m_menuPopup->AddButton(tr("Save Position to Watch List and Exit to Menu"));
+        if (!isApp)
+            m_menuPopup->AddButton(tr("Save Position to Watch List and Exit to Menu"));
         m_menuPopup->AddButton(tr("Keep Watching: ") + getPlayBackTimeString(true, true).replace("00:00", ""));
         m_menuPopup->AddButton(tr("Exit to MythTV Menu"));
     } else {

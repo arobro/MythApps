@@ -12,6 +12,7 @@ PluginManager::PluginManager() {
     initializePlugin(m_favourites, "Favourites");
     initializePlugin(m_videos, "Videos");
     initializePlugin(m_watchlist, "WatchList");
+    initializePlugin(m_ytCustom, "ytCustom");
 }
 
 PluginManager::~PluginManager(){};
@@ -34,6 +35,7 @@ bool PluginManager::loadPlugin(const QString &pluginPath) {
         if (pluginAPI) {
             m_plugins[pluginAPI->getPluginName()] = pluginAPI;
             m_pluginIcons[pluginAPI->getPluginIcon()] = pluginAPI->getPluginIcon();
+
             return true;
         }
     }
@@ -47,13 +49,16 @@ QList<PluginDisplayInfo> PluginManager::getPluginsForDisplay(bool start) const {
         if (!plugin)
             return;
 
-        // Respect plugin start position
-        if (plugin->getPluginStartPos() != start)
+        if (plugin->getPluginStartPos() != start) // Respect plugin start position
             return;
 
-        // Special condition for Videos plugin
         if (plugin == m_videos.data() && start == plugin->getPluginStartPos()) {
             if (gCoreContext->GetSetting("MythAppsmyVideo") != "1")
+                return;
+        }
+
+        if (plugin == m_ytCustom.data()) {
+            if (gCoreContext->GetSetting("MythAppsYTnative") != "1")
                 return;
         }
 
@@ -86,6 +91,16 @@ void PluginManager::setGoBackCallback(PluginAPI::GoBackCallback cb) {
         plugin->setGoBackCallback(cb);
 }
 
+void PluginManager::setFocusWidgetCallback(PluginAPI::SetFocusWidgetCallback cb) {
+    for (auto plugin : m_plugins.values())
+        plugin->setFocusWidgetCallback(cb);
+}
+
+void PluginManager::setPlay_KodiCallback(PluginAPI::SetPlay_KodiCallback cb) {
+    for (auto plugin : m_plugins.values())
+        plugin->setPlay_KodiCallback(cb);
+}
+
 PluginAPI *PluginManager::getPluginByName(const QString &name) {
     if (m_plugins.contains(name)) {
         return m_plugins.value(name);
@@ -101,6 +116,11 @@ void PluginManager::setControls(Controls *c) {
 void PluginManager::setDialog(Dialog *d) {
     for (auto plugin : m_plugins.values())
         plugin->setDialog(d);
+}
+
+void PluginManager::setUIContext(UIContext *uiC) {
+    for (auto plugin : m_plugins.values())
+        plugin->setUIContext(uiC);
 }
 
 QList<QString> PluginManager::getOptionsMenuLabels(ProgramData *currentSelectionDetails, const QString &currentFilePath) const {
@@ -129,4 +149,42 @@ void PluginManager::handleAction(const QString action, ProgramData *currentSelec
 void PluginManager::appendWatchedLink(FileFolderContainer data) {
     if (m_watchlist)
         m_watchlist->appendWatchedLink(data);
+}
+
+void PluginManager::searchSettingsClicked(MythUIButtonListItem *item) {
+    if (m_ytCustom)
+        m_ytCustom->searchSettingsClicked(item);
+}
+
+QStringList PluginManager::hidePlugins() {
+    QStringList hiddenPlugins;
+
+    for (auto plugin : m_plugins.values()) {
+        hiddenPlugins << plugin->hidePlugin();
+    }
+
+    return hiddenPlugins;
+}
+
+void PluginManager::search(QString searchText, QString appName) {
+    for (auto plugin : m_plugins.values()) {
+        if (plugin->getPluginName() == appName)
+            plugin->search(searchText);
+    }
+}
+
+bool PluginManager::handleSuggestion(const QString &searchText) {
+    bool handled = false;
+    for (auto plugin : m_plugins.values())
+        handled = plugin->handleSuggestion(searchText);
+
+    return handled;
+}
+
+bool PluginManager::useBasicMenu(QString appName) {
+    for (auto plugin : m_plugins.values())
+        if (plugin->getPluginName() == appName) {
+            return plugin->useBasicMenu();
+        }
+    return true;
 }

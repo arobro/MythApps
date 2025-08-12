@@ -28,9 +28,6 @@ void MythApps::CleanupResources() {
 
     SafeDelete(controls);
     SafeDelete(m_filepath);
-    SafeDelete(m_plot);
-    SafeDelete(m_streamDetails);
-    SafeDelete(m_streamDetailsbackground);
     SafeDelete(m_title);
     SafeDelete(m_SearchTextEdit);
     SafeDelete(m_screenshotMainMythImage);
@@ -39,7 +36,6 @@ void MythApps::CleanupResources() {
     SafeDelete(m_thumbnailImage);
     SafeDelete(m_fileListGrid);
     SafeDelete(m_searchButtonList);
-    SafeDelete(m_searchSettingsButtonList);
     SafeDelete(m_fileListMusicGrid);
     SafeDelete(m_fileListSongs);
     SafeDelete(m_filterGrid);
@@ -51,6 +47,9 @@ void MythApps::CleanupResources() {
     SafeDelete(browser);
     SafeDelete(fileBrowserHistory);
     SafeDelete(dialog);
+
+    // uiCtx
+    SafeDelete(uiCtx);
 
     // Music app
     SafeDelete(m_textSong);
@@ -69,7 +68,6 @@ void MythApps::CleanupResources() {
     SafeDelete(m_playingOff);
     SafeDelete(m_next_buttonOff);
     SafeDelete(m_ff_buttonOff);
-    SafeDelete(ytNative);
 
     currentLoadId.fetchAndAddOrdered(0);
 

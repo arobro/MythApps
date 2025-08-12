@@ -131,13 +131,6 @@ bool ProgramData::hasMusic() {
     return false;
 }
 
-bool ProgramData::hasYTnative() {
-    if (getFilePathParam().startsWith("YTNative")) {
-        return true;
-    }
-    return false;
-}
-
 bool ProgramData::hasApp() {
     if (getFilePathParam().startsWith("app://")) {
         return true;
@@ -230,3 +223,5 @@ QString ProgramData::getFriendlyPathName(QString data) {
 bool ProgramData::getPreviouslyPlayed() { return isPreviouslyPlayed; }
 
 void ProgramData::setPreviouslyPlayed(bool played) { isPreviouslyPlayed = played; }
+
+bool ProgramData::refreshGrid() { return !fileFolderContainer.url.contains("&refreshGrid=false"); }

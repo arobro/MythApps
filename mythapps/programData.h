@@ -39,7 +39,6 @@ class ProgramData {
     bool hasSearchShowsAZ();
     bool hasMusic();
 
-    bool hasYTnative();
     bool hasApp();
     QString getAppPluginName();
     QString getWebPage();
@@ -61,6 +60,7 @@ class ProgramData {
 
     bool getPreviouslyPlayed();
     void setPreviouslyPlayed(bool played);
+    bool refreshGrid();
 
   private:
     bool plotandImageUrl = false;

@@ -26,7 +26,7 @@
 #include "plugins/plugin_manager.h"
 #include "programData.h"
 #include "programLink.h"
-#include "ytCustomApp.h"
+#include "uiContext.h"
 
 class MythDialogBox;
 
@@ -55,7 +55,6 @@ class MythApps : public MythScreenType {
     QImage m_screenshot;                             /*!< used to create thumbnail for pause menu */
     MythUIImage *m_loaderImage{nullptr};
     MythUIType *m_searchButtonListGroup{nullptr};
-    MythUIType *m_searchSettingsGroup{nullptr};
     MythUIType *m_help{nullptr};
     MythUIButton *m_androidMenuBtn{nullptr};
 
@@ -97,7 +96,6 @@ class MythApps : public MythScreenType {
     bool isHome = true;      /*!< is the file browser on the home screen? */
     bool kodiPlayerOpen = false;
     bool musicOpen = false;        /*!< is the music player open? */
-    bool ytNativeOpen = false;     /*!< is ytNative open? */
     bool allowAutoMinimize = true; /*!< is auto minimizing kodi enabled? */
     bool videoStopReceived = false;
     bool allShowsFolderFound = false;
@@ -119,7 +117,6 @@ class MythApps : public MythScreenType {
     void goBack();
     void refreshPage();
 
-    void loadYTNative(QString searchString, QString directory);
     void loadShowsAZ();
     void loadBackButtonIfRequired(bool m_loadBackButton);
     bool loadAZSearch(QString hash);
@@ -219,6 +216,8 @@ class MythApps : public MythScreenType {
     QString playbackDuration = "00:00:00";
     qint64 playbackStartMs_ = -1;
     qint64 manualAccumulatedMs_ = 0;
+
+    UIContext *uiCtx;
 
     // music app
     int m_currentMusicButton = 0;
@@ -339,8 +338,6 @@ class MythApps : public MythScreenType {
     MythUIButtonList *m_filterOptionsList{nullptr};
     MythUIButtonList *m_playlistVertical{nullptr};
 
-    ytCustomApp *ytNative{nullptr};
-    bool ytNativeEnabled = false;
     QString firstDirectoryName;
 
     static PluginManager pluginManager;
