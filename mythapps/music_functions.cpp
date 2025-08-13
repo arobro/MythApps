@@ -98,17 +98,17 @@ void MythApps::showMusicUI(bool show) {
     m_fileListMusicGrid->SetVisible(show);
     m_fileListSongs->SetVisible(show);
     m_filterGrid->SetVisible(show);
-    m_fileListGrid->SetVisible(!show);
-    m_fileListGrid->SetEnabled(!show);
+    uiCtx->fileListGrid->SetVisible(!show);
+    uiCtx->fileListGrid->SetEnabled(!show);
     m_musicTitle->SetVisible(show);
-    m_title->SetVisible(!show);
-    m_plot->SetVisible(!show);
+    uiCtx->title->SetVisible(!show);
+    uiCtx->plot->SetVisible(!show);
     m_filterOptionsList->SetVisible(show);
     m_playlistVertical->SetVisible(show);
     m_playlistVertical->SetEnabled(true);
 
-    m_androidMenuBtn->SetVisible(false);
-    m_androidMenuBtn->SetEnabled(false);
+    uiCtx->androidMenuBtn->SetVisible(false);
+    uiCtx->androidMenuBtn->SetEnabled(false);
 }
 
 void MythApps::previousTrack() { controls->inputActionHelper("skipprevious"); }
@@ -236,7 +236,7 @@ void MythApps::filterGridClickedCallback(MythUIButtonListItem *item) {
         loadPlaylists();
     }
     showMusicUI(false);
-    SetFocusWidget(m_fileListGrid);
+    SetFocusWidget(uiCtx->fileListGrid);
 }
 
 /** \brief the filterOptions (Crossfade, Party Mode Video & Music Only etc) had been clicked. load the corresponding option */
@@ -523,7 +523,7 @@ QMap<QString, QStringList> MythApps::getByGenres() {
 void MythApps::loadArtists(bool listview) {
     LOG(VB_GENERAL, LOG_DEBUG, "loadArtists()");
     showMusicUI(false);
-    m_fileListGrid->Reset();
+    uiCtx->fileListGrid->Reset();
     loadBackButton();
     toggleSearchVisible(false);
 
@@ -540,7 +540,7 @@ void MythApps::loadArtists(bool listview) {
 void MythApps::loadAlbums(bool listview) {
     LOG(VB_GENERAL, LOG_DEBUG, "loadAlbums()");
     showMusicUI(false);
-    m_fileListGrid->Reset();
+    uiCtx->fileListGrid->Reset();
     loadBackButton();
     toggleSearchVisible(false);
 
@@ -556,18 +556,18 @@ void MythApps::loadAlbums(bool listview) {
 void MythApps::loadGenres() {
     LOG(VB_GENERAL, LOG_DEBUG, "loadGenres()");
     showMusicUI(false);
-    m_fileListGrid->Reset();
+    uiCtx->fileListGrid->Reset();
     loadBackButton();
     toggleSearchVisible(false);
 
     if (musicMode == 2 || musicMode == 3) {
-        loadMusicHelper("[Video,Genre] ", filterQMap(getMusicHelper("VideoLibrary.GetMusicVideos", "musicvideos", "", "", "contains"), "genre"), m_fileListGrid);
+        loadMusicHelper("[Video,Genre] ", filterQMap(getMusicHelper("VideoLibrary.GetMusicVideos", "musicvideos", "", "", "contains"), "genre"), uiCtx->fileListGrid);
     }
     if (!(musicMode == 1 || musicMode == 3)) {
         return;
     }
 
-    loadMusicHelper("", getByGenres(), m_fileListGrid);
+    loadMusicHelper("", getByGenres(), uiCtx->fileListGrid);
 }
 void MythApps::loadMusicHelper(QString labelPrefix, QMap<QString, QStringList> loadMusicType, MythUIButtonList *m_fileList) {
     QMapIterator<QString, QStringList> i(loadMusicType);
@@ -878,7 +878,7 @@ void MythApps::loadPlaylists() {
 
         QString image = obj.value("thumbnail").toString();
         QString url = obj.value("file").toString();
-        loadProgram(label, createProgramData("playlists", url, image, false, ""), image, m_fileListGrid);
+        loadProgram(label, createProgramData("playlists", url, image, false, ""), image, uiCtx->fileListGrid);
     }
 }
 
@@ -959,8 +959,8 @@ bool MythApps::handleMusicAction(const QString &action) {
         m_filterGrid->SetItemCurrent(0);
         SetFocusWidget(m_filterGrid);
     } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_filterGrid) {
-        if (m_SearchTextEdit->IsVisible()) {
-            SetFocusWidget(m_SearchTextEdit);
+        if (uiCtx->SearchTextEdit->IsVisible()) {
+            SetFocusWidget(uiCtx->SearchTextEdit);
         } else {
             goBack();
         }
@@ -977,9 +977,9 @@ bool MythApps::handleMusicAction(const QString &action) {
         } else if (GetFocusWidget() == m_next_buttonOn) {
             nextTrack();
         }
-    } else if (action == "UP" && GetFocusWidget() == m_SearchTextEdit) {
+    } else if (action == "UP" && GetFocusWidget() == uiCtx->SearchTextEdit) {
         SetFocusWidget(m_fileListMusicGrid);
-    } else if ((action == "DOWN" || action == "RIGHT") && GetFocusWidget() == m_searchButtonList) {
+    } else if ((action == "DOWN" || action == "RIGHT") && GetFocusWidget() == uiCtx->searchButtonList) {
         SetFocusWidget(m_fileListMusicGrid);
     } else if ((action == "RIGHT") and GetFocusWidget() == m_playlistVertical and m_ff_buttonOff->IsVisible()) {
         m_currentMusicButton = 1; // m_playing

@@ -205,39 +205,33 @@ bool MythApps::Create() {
     LOG(VB_GENERAL, LOG_INFO, "Loading " + xmlFile);
     foundtheme = LoadWindowFromXML(xmlFile, "mythapps", this);
 
-    if (!foundtheme) {
+    if (!foundtheme)
         return false;
-    }
 
     bool err = false;
     uiCtx = new UIContext();
 
-    UIUtilE::Assign(this, m_plot, "plot", &err);
-    UIUtilE::Assign(this, m_streamDetails, "streamDetails", &err);
-    UIUtilE::Assign(this, m_streamDetailsbackground, "streamDetailsbackground", &err);
-    UIUtilE::Assign(this, m_filepath, "filepath", &err);
-    UIUtilE::Assign(this, m_title, "title", &err);
-    UIUtilE::Assign(this, m_fileListGrid, "fileListGrid", &err); // main file browser used to display the apps.
-    UIUtilE::Assign(this, m_screenshotMainMythImage, "screenshotImageMain", &err);
-    UIUtilE::Assign(this, m_SearchTextEdit, "SearchTextEdit", &err);
-    UIUtilE::Assign(this, m_SearchTextEditBackgroundText, "SearchTextEditBackgroundText", &err);
-    UIUtilE::Assign(this, m_searchButtonList, "searchButtonList", &err);
+    UIUtilE::Assign(this, uiCtx->plot, "plot", &err);
+    UIUtilE::Assign(this, uiCtx->streamDetails, "streamDetails", &err);
+    UIUtilE::Assign(this, uiCtx->streamDetailsbackground, "streamDetailsbackground", &err);
+    UIUtilE::Assign(this, uiCtx->filepath, "filepath", &err);
+    UIUtilE::Assign(this, uiCtx->title, "title", &err);
+    UIUtilE::Assign(this, uiCtx->fileListGrid, "fileListGrid", &err); // main file browser used to display the apps.
+    UIUtilE::Assign(this, uiCtx->screenshotMainMythImage, "screenshotImageMain", &err);
+    UIUtilE::Assign(this, uiCtx->SearchTextEdit, "SearchTextEdit", &err);
+    UIUtilE::Assign(this, uiCtx->SearchTextEditBackgroundText, "SearchTextEditBackgroundText", &err);
+    UIUtilE::Assign(this, uiCtx->searchButtonList, "searchButtonList", &err);
     UIUtilE::Assign(this, uiCtx->searchSettingsButtonList, "searchSettingsButtonList", &err);
 
-    UIUtilE::Assign(this, m_loaderImage, "loaderImage", &err);
-    UIUtilE::Assign(this, m_searchButtonListGroup, "searchButtonListGroup", &err);
-
+    UIUtilE::Assign(this, uiCtx->loaderImage, "loaderImage", &err);
+    UIUtilE::Assign(this, uiCtx->searchButtonListGroup, "searchButtonListGroup", &err);
     UIUtilE::Assign(this, uiCtx->searchSettingsGroup, "searchSettingsGroup", &err);
+    UIUtilE::Assign(this, uiCtx->androidMenuBtn, "androidMenuBtn", &err);
+    UIUtilE::Assign(this, uiCtx->help, "help", &err);
 
-    UIUtilE::Assign(this, m_androidMenuBtn, "androidMenuBtn", &err);
-    setWidgetVisibility(m_androidMenuBtn, false);
-    UIUtilE::Assign(this, m_help, "help", &err);
-    setWidgetVisibility(m_help, false);
+    dialog = new Dialog(this, uiCtx->loaderImage);
 
-    m_SearchTextEdit->SetKeyboardPosition(VK_POSTOPDIALOG);
-    dialog = new Dialog(this, m_loaderImage);
-
-    MythUIButtonListItem *searchBtnList = new MythUIButtonListItem(m_searchButtonList, "");
+    MythUIButtonListItem *searchBtnList = new MythUIButtonListItem(uiCtx->searchButtonList, "");
     searchBtnList->SetText("Search", "buttontext2");
 
     bool err2 = initializeMusic(); // music
@@ -246,20 +240,24 @@ bool MythApps::Create() {
         return false;
     }
 
-    connect(m_fileListGrid, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(appsCallback(MythUIButtonListItem *)));
-    connect(m_fileListGrid, SIGNAL(itemSelected(MythUIButtonListItem *)), this, SLOT(selectAppsCallback(MythUIButtonListItem *)));
-    connect(m_fileListGrid, SIGNAL(itemVisible(MythUIButtonListItem *)), this, SLOT(visibleAppsCallback(MythUIButtonListItem *)));
+    setWidgetVisibility(uiCtx->androidMenuBtn, false);
+    setWidgetVisibility(uiCtx->help, false);
+    uiCtx->SearchTextEdit->SetKeyboardPosition(VK_POSTOPDIALOG);
 
-    connect(m_androidMenuBtn, SIGNAL(Clicked()), this, SLOT(androidMenuBtnSlot()));
+    connect(uiCtx->fileListGrid, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(appsCallback(MythUIButtonListItem *)));
+    connect(uiCtx->fileListGrid, SIGNAL(itemSelected(MythUIButtonListItem *)), this, SLOT(selectAppsCallback(MythUIButtonListItem *)));
+    connect(uiCtx->fileListGrid, SIGNAL(itemVisible(MythUIButtonListItem *)), this, SLOT(visibleAppsCallback(MythUIButtonListItem *)));
 
-    connect(m_searchButtonList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(clickedSearchList(MythUIButtonListItem *)));
-    connect(m_searchButtonList, SIGNAL(itemSelected(MythUIButtonListItem *)), this, SLOT(selectSearchList(MythUIButtonListItem *)));
+    connect(uiCtx->androidMenuBtn, SIGNAL(Clicked()), this, SLOT(androidMenuBtnSlot()));
+
+    connect(uiCtx->searchButtonList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(clickedSearchList(MythUIButtonListItem *)));
+    connect(uiCtx->searchButtonList, SIGNAL(itemSelected(MythUIButtonListItem *)), this, SLOT(selectSearchList(MythUIButtonListItem *)));
     connect(uiCtx->searchSettingsButtonList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(searchSettingsClicked(MythUIButtonListItem *)));
 
-    connect(m_SearchTextEdit, SIGNAL(valueChanged()), this, SLOT(searchTextEditValueChanged()));
-    connect(m_SearchTextEdit, SIGNAL(LosingFocus()), this, SLOT(searchTextEditLosingFocus()));
-    connect(m_SearchTextEdit, SIGNAL(TakingFocus()), this, SLOT(searchTextEditValueChanged()));
-    connect(m_searchButtonList, SIGNAL(LosingFocus()), this, SLOT(searchTextEditLosingFocus()));
+    connect(uiCtx->SearchTextEdit, SIGNAL(valueChanged()), this, SLOT(searchTextEditValueChanged()));
+    connect(uiCtx->SearchTextEdit, SIGNAL(LosingFocus()), this, SLOT(searchTextEditLosingFocus()));
+    connect(uiCtx->SearchTextEdit, SIGNAL(TakingFocus()), this, SLOT(searchTextEditValueChanged()));
+    connect(uiCtx->searchButtonList, SIGNAL(LosingFocus()), this, SLOT(searchTextEditLosingFocus()));
 
     controls->startKodiIfNotRunning();
     controls->waitUntilKodiPingable();
@@ -287,7 +285,7 @@ bool MythApps::Create() {
     currentSelectionDetails = new ProgramData("", "");
     lastPlayedDetails = new ProgramData("", "");
 
-    m_streamDetailsbackground->Hide();
+    uiCtx->streamDetailsbackground->Hide();
 
     pluginManager.setLoadProgramCallback([this](const QString &name, const QString &setdata, const QString &thumbnailUrl) { this->loadProgram(name, setdata, thumbnailUrl); });
     pluginManager.setToggleSearchVisibleCallback([this](bool visible) { this->toggleSearchVisible(visible); });
@@ -331,20 +329,20 @@ void MythApps::loadApps() {
     controls->resetActivePlayer();
 
 #ifdef __ANDROID__ // display a button to bring up the menu on a touch screen
-    m_androidMenuBtn->SetVisible(true);
-    m_androidMenuBtn->SetEnabled(true);
+    uiCtx->androidMenuBtn->SetVisible(true);
+    uiCtx->androidMenuBtn->SetEnabled(true);
 #endif
 
     playbackTimer->stop();
     partyMode = false;
-    m_fileListGrid->Reset();
+    uiCtx->fileListGrid->Reset();
     makeSearchTextEditEmpty();
 
     if (musicOpen) {
         clearAndStopPlaylist();
     }
     musicOpen = false;
-    m_filepath->SetText("");
+    uiCtx->filepath->SetText("");
 
     if (controls->getConnected() == 1) {
         if (!controls->isUserNamePasswordCorrect()) {
@@ -355,7 +353,7 @@ void MythApps::loadApps() {
                 return;
             }
         } else if (!controls->areAddonsInstalled()) {
-            m_filepath->SetText(tr("no video addons installed. press f3 to open kodi and install some addons."));
+            uiCtx->filepath->SetText(tr("no video addons installed. press f3 to open kodi and install some addons."));
             LOG(VB_GENERAL, LOG_DEBUG, "no kodi video addons installed");
         } else if (!controls->isInputAdaptive()) {
             LOG(VB_GENERAL, LOG_DEBUG, "please install the inputstream adaptive addon.");
@@ -372,12 +370,12 @@ void MythApps::loadApps() {
     loadPlugins(true);
 
     controls->loadAddons(pluginManager.hidePlugins());
-    SetFocusWidget(m_fileListGrid); // set the focus to the file list grid
+    SetFocusWidget(uiCtx->fileListGrid); // set the focus to the file list grid
 
     loadPlugins(false); // load plugins after sorting
 
     if (gCoreContext->GetSetting("MythAppsMusic").compare("1") == 0) {
-        loadImage(m_fileListGrid, tr("Music"), QString("Music~Music"), music_icon);
+        loadImage(uiCtx->fileListGrid, tr("Music"), QString("Music~Music"), music_icon);
     }
 
     pluginManager.getPluginByName("Favourites")->displayHomeScreenItems();
@@ -388,7 +386,7 @@ void MythApps::loadApps() {
 void MythApps::loadPlugins(bool start) {
     QList<PluginDisplayInfo> plugins = pluginManager.getPluginsForDisplay(start);
     for (const auto &plugin : plugins) {
-        loadImage(m_fileListGrid, plugin.name, plugin.setData, plugin.iconPath);
+        loadImage(uiCtx->fileListGrid, plugin.name, plugin.setData, plugin.iconPath);
     }
 }
 
@@ -422,7 +420,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
         } else if (action == "TOGGLERECORD") {
             pluginManager.handleAction(action, currentSelectionDetails);
         } else if (action == "HELP") {
-            m_help->SetVisible(!m_help->IsVisible());
+            uiCtx->help->SetVisible(!uiCtx->help->IsVisible());
         } else if (browser->proccessRemote(action)) {
 
         } else if ((action == "FULLSCREEN")) {
@@ -432,7 +430,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             toggleAutoMinimize();
 
             // player key events
-        } else if ((action == "BACK" || action == "ESCAPE") and (kodiPlayerOpen || GetFocusWidget() == m_filepath) and !musicOpen) {
+        } else if ((action == "BACK" || action == "ESCAPE") and (kodiPlayerOpen || GetFocusWidget() == uiCtx->filepath) and !musicOpen) {
             stopPlayBack(); // Kodi player running.
         } else if ((action == "PLAY" || action == "PAUSE") and (kodiPlayerOpen || musicOpen)) {
             pauseToggle();
@@ -461,28 +459,28 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             controls->setRWND();
             // searchSettings
         } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == uiCtx->searchSettingsButtonList) {
-            SetFocusWidget(m_fileListGrid);
+            SetFocusWidget(uiCtx->fileListGrid);
         } else if (handleMusicAction(action)) {
 
             // mythapps key events
         } else if (kodiPlayerOpen) { // do nothing.
 
-        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_fileListGrid and m_SearchTextEdit->IsVisible()) {
-            SetFocusWidget(m_SearchTextEdit);
-        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_fileListGrid) {
+        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == uiCtx->fileListGrid and uiCtx->SearchTextEdit->IsVisible()) {
+            SetFocusWidget(uiCtx->SearchTextEdit);
+        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == uiCtx->fileListGrid) {
             goBack();
-        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_SearchTextEdit and isHome) {
+        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == uiCtx->SearchTextEdit and isHome) {
             niceClose(false);
-        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == m_SearchTextEdit) {
+        } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == uiCtx->SearchTextEdit) {
             goBack();
-        } else if (action == "UP" and GetFocusWidget() == m_SearchTextEdit) {
-            SetFocusWidget(m_fileListGrid);
-        } else if (action == "DOWN" and GetFocusWidget() == m_SearchTextEdit) {
-            SetFocusWidget(m_searchButtonList);
-        } else if ((action == "BACK" || action == "ESCAPE" || action == "UP" || action == "LEFT") and GetFocusWidget() == m_searchButtonList) {
-            SetFocusWidget(m_SearchTextEdit);
-        } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == m_searchButtonList) {
-            SetFocusWidget(m_fileListGrid);
+        } else if (action == "UP" and GetFocusWidget() == uiCtx->SearchTextEdit) {
+            SetFocusWidget(uiCtx->fileListGrid);
+        } else if (action == "DOWN" and GetFocusWidget() == uiCtx->SearchTextEdit) {
+            SetFocusWidget(uiCtx->searchButtonList);
+        } else if ((action == "BACK" || action == "ESCAPE" || action == "UP" || action == "LEFT") and GetFocusWidget() == uiCtx->searchButtonList) {
+            SetFocusWidget(uiCtx->SearchTextEdit);
+        } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == uiCtx->searchButtonList) {
+            SetFocusWidget(uiCtx->fileListGrid);
 
             if (musicOpen) {
                 SetFocusWidget(m_fileListMusicGrid);
@@ -530,7 +528,7 @@ void MythApps::niceClose(bool forceClose) {
 void MythApps::loadProgramSlot(QString name, QString setdata, QString thumbnailUrl) { loadProgram(name, setdata, thumbnailUrl); }
 
 /** \brief helper function for loadProgram */
-void MythApps::loadProgram(QString name, QString setdata, QString thumbnailUrl) { loadProgram(name, setdata, thumbnailUrl, m_fileListGrid); }
+void MythApps::loadProgram(QString name, QString setdata, QString thumbnailUrl) { loadProgram(name, setdata, thumbnailUrl, uiCtx->fileListGrid); }
 
 /** \brief prepares to load the image onscreen. Will insert the image on a new line and sort the images if required \param name directory or file name.
  * \param setdata - all the parameters that need to be retrived on click or hover
@@ -650,45 +648,45 @@ void MythApps::handleImageSlot(int id, const QString thumbnailUrl, MythUIButtonL
 void MythApps::setFocusWidgetSlot(QString widetName) {
     LOG(VB_GENERAL, LOG_DEBUG, "setFocusWidgetSlot()");
 
-    if (widetName.compare("m_searchButtonList") == 0) {
-        SetFocusWidget(m_searchButtonList);
-    } else if (widetName.compare("m_fileListGrid") == 0) {
-        SetFocusWidget(m_fileListGrid);
+    if (widetName.compare("uiCtx->searchButtonList") == 0) {
+        SetFocusWidget(uiCtx->searchButtonList);
+    } else if (widetName.compare("uiCtx->fileListGrid") == 0) {
+        SetFocusWidget(uiCtx->fileListGrid);
     }
 }
 
 void MythApps::setSearchButtonListVisible(bool visible) {
-    m_searchButtonList->SetVisible(visible);
-    m_searchButtonListGroup->SetEnabled(visible);
+    uiCtx->searchButtonList->SetVisible(visible);
+    uiCtx->searchButtonListGroup->SetEnabled(visible);
 }
 
 /** \brief  toggle the visibilty of the seachbox including the search button.
  *  \param  visible - set the search box visibility status */
 void MythApps::toggleSearchVisible(bool visible) {
-    m_SearchTextEdit->SetVisible(visible);
+    uiCtx->SearchTextEdit->SetVisible(visible);
     setSearchButtonListVisible(false);
-    m_title->SetVisible(!visible);
+    uiCtx->title->SetVisible(!visible);
 
-    if (m_SearchTextEdit->GetText().isEmpty() and visible) {
-        m_SearchTextEditBackgroundText->SetVisible(true);
+    if (uiCtx->SearchTextEdit->GetText().isEmpty() and visible) {
+        uiCtx->SearchTextEditBackgroundText->SetVisible(true);
     } else {
-        m_SearchTextEditBackgroundText->SetVisible(false);
+        uiCtx->SearchTextEditBackgroundText->SetVisible(false);
     }
 }
 
 void MythApps::makeSearchTextEditEmpty() {
-    m_SearchTextEdit->SetText("");
+    uiCtx->SearchTextEdit->SetText("");
     showSearchTextEditBackgroundText();
 }
 
-void MythApps::showSearchTextEditBackgroundText() { m_SearchTextEditBackgroundText->SetText(tr("Search") + " " + firstDirectoryName); }
+void MythApps::showSearchTextEditBackgroundText() { uiCtx->SearchTextEditBackgroundText->SetText(tr("Search") + " " + firstDirectoryName); }
 
 /** \brief Display's the back button in the file browser grid*/
 void MythApps::loadBackButton() {
     LOG(VB_GENERAL, LOG_DEBUG, "loadBackButton()");
 
     if (searching) {
-        SetFocusWidget(m_fileListGrid);
+        SetFocusWidget(uiCtx->fileListGrid);
     }
     loadProgram(QString(tr("Back")), createProgramData(tr("Back"), "", "", false, ""), QString("file://") + back_icon);
 }
@@ -698,8 +696,8 @@ void MythApps::selectSearchList(MythUIButtonListItem *item) {
     QCoreApplication::processEvents();
     QString buttonName = item->GetText();
     if (buttonName.compare("Back to Search") == 0) {
-        SetFocusWidget(m_SearchTextEdit);
-        m_searchButtonList->SetItemCurrent(0);
+        SetFocusWidget(uiCtx->SearchTextEdit);
+        uiCtx->searchButtonList->SetItemCurrent(0);
     }
 }
 
@@ -715,7 +713,7 @@ void MythApps::clickedSearchList(MythUIButtonListItem *item) {
         goSearch("");
     } else if (buttonName.compare("Back to Search") == 0) {
     } else {
-        m_SearchTextEdit->SetText(buttonName);
+        uiCtx->SearchTextEdit->SetText(buttonName);
         goSearch("");
     }
 }
@@ -738,11 +736,11 @@ void MythApps::searchTextEditValueChanged() {
     if (!searching) {
         setSearchButtonListVisible(true); // sets visible when mouse is used instead of remote.
     }
-    if (m_SearchTextEdit->GetText().isEmpty()) { // make search button list disappear instantly
+    if (uiCtx->SearchTextEdit->GetText().isEmpty()) { // make search button list disappear instantly
         setSearchButtonListVisible(false);
         showSearchTextEditBackgroundText();
     } else {
-        m_SearchTextEditBackgroundText->SetText("");
+        uiCtx->SearchTextEditBackgroundText->SetText("");
         searchSuggestTimer->start(10); // run the code in a seperate run once timer 'thread'
     }
 }
@@ -752,36 +750,36 @@ void MythApps::searchTextEditLosingFocus() { searchFocusTimer->start(10); }
 
 /** \brief updates the search focus after a slight delay*/
 void MythApps::searchFocusTimerSlot() {
-    if (GetFocusWidget() != m_searchButtonList and GetFocusWidget() != m_SearchTextEdit) {
+    if (GetFocusWidget() != uiCtx->searchButtonList and GetFocusWidget() != uiCtx->SearchTextEdit) {
         setSearchButtonListVisible(false);
     }
 }
 
 /** \brief Looks up the search suggestions for the search box after a slight delay*/
 void MythApps::searchSuggestTimerSlot() {
-    QString localSearchText = m_SearchTextEdit->GetText();
+    QString localSearchText = uiCtx->SearchTextEdit->GetText();
     searchText = localSearchText;
 
     if (pluginManager.handleSuggestion(localSearchText)) {
-        m_SearchTextEdit->SetText("");
+        uiCtx->SearchTextEdit->SetText("");
         return;
     }
 
     SearchSuggestions suggestions;
     QStringList word = suggestions.getSuggestions(localSearchText);
 
-    m_searchButtonList->Reset();
-    MythUIButtonListItem *searchButton = new MythUIButtonListItem(m_searchButtonList,
+    uiCtx->searchButtonList->Reset();
+    MythUIButtonListItem *searchButton = new MythUIButtonListItem(uiCtx->searchButtonList,
                                                                   ""); // submit button. 1st result in search suggestion list
     searchButton->SetText("Search", "buttontext2");
 
     for (int i = 0; i < word.size(); ++i) {
-        MythUIButtonListItem *searchButton2 = new MythUIButtonListItem(m_searchButtonList, "");
+        MythUIButtonListItem *searchButton2 = new MythUIButtonListItem(uiCtx->searchButtonList, "");
         searchButton2->SetText(word.at(i).toLocal8Bit().constData(), "buttontext2");
     }
 
     if (word.size() > 1) {
-        MythUIButtonListItem *searchButton2 = new MythUIButtonListItem(m_searchButtonList, ""); // submit button. 1st result in search suggestion list
+        MythUIButtonListItem *searchButton2 = new MythUIButtonListItem(uiCtx->searchButtonList, ""); // submit button. 1st result in search suggestion list
         searchButton2->SetText("Back to Search", "buttontext2");
     }
 
@@ -798,7 +796,7 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
     browser->bringToFrontIfOpen();
     setSearchButtonListVisible(false);
     searchNoDuplicateCheck = QStringList();
-    searchText = m_SearchTextEdit->GetText();
+    searchText = uiCtx->SearchTextEdit->GetText();
 
     if (searchText.size() < 1) { // make sure search term is at least one character
         return;
@@ -809,14 +807,14 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
         return;
     }
 
-    m_fileListGrid->Reset();
+    uiCtx->fileListGrid->Reset();
     loadBackButton();
 
     if (fileBrowserHistory->isAppOpen()) {
         QString appPath = "app://" + fileBrowserHistory->getCurrentApp() + "/search?=" + searchText;
 
         fileBrowserHistory->append(appPath, appPath);
-        m_filepath->SetText(appPath);
+        uiCtx->filepath->SetText(appPath);
 
         pluginManager.search(searchText, fileBrowserHistory->getCurrentApp());
         return;
@@ -849,7 +847,7 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
     makeSearchTextEditEmpty();
 
     dialog->closeBusyDialog(); // close the Retrieving Search Results dialog
-    m_filepath->SetText(tr("Finished Searching - ") + m_filepath->GetText());
+    uiCtx->filepath->SetText(tr("Finished Searching - ") + uiCtx->filepath->GetText());
 }
 
 /** \brief gets search results from one app.
@@ -982,7 +980,7 @@ void MythApps::ReplyFinishedFileBrowser(QNetworkReply *reply) {
  * \param m_loadBackButton display the back button in the file browser */
 void MythApps::loadBackButtonIfRequired(bool m_loadBackButton) {
     if (m_loadBackButton) {
-        m_fileListGrid->Reset();
+        uiCtx->fileListGrid->Reset();
         loadBackButton();
         dialog->getLoader()->SetVisible(false);
     }
@@ -1077,7 +1075,7 @@ void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerm
     // if alphabetical folders are natively supported by the app, remove the
     // mythapps az search as we dont need duplicate az search functionality
     if (alphabeticalFolderFound and showAZsearch) {
-        m_fileListGrid->RemoveItem(m_fileListGrid->GetItemAt(1));
+        uiCtx->fileListGrid->RemoveItem(uiCtx->fileListGrid->GetItemAt(1));
     } else if (showAZsearch) {
         azShowOnUrl.append(hash); // used to restore az search for back button
     }
@@ -1168,7 +1166,7 @@ void MythApps::refreshPage() {
  * \param filePathParam url of the video
  * \param seekAmount amount to seek in hours minutes seconds. Can be blank */
 void MythApps::play(QString mediaLocation, QString seekAmount) {
-    m_plot->SetText("Play");
+    uiCtx->plot->SetText("Play");
     controls->play(mediaLocation, seekAmount);
 }
 
@@ -1182,8 +1180,8 @@ void MythApps::goFullscreen() {
         controls->activateWindow("screensaver"); // hides the kodi gui (may be unstable?)
     }
 
-    minimizeTimer->stop();      // stops minimizing kodi
-    SetFocusWidget(m_filepath); // hack to make the seek work in fullscreen as the remote requires focus
+    minimizeTimer->stop();           // stops minimizing kodi
+    SetFocusWidget(uiCtx->filepath); // hack to make the seek work in fullscreen as the remote requires focus
 
 #ifdef __ANDROID__
     if (!controls->androidAppSwitch("Kodi")) {
@@ -1287,8 +1285,8 @@ void MythApps::handleSettingsDialogs(QNetworkReply *reply) {
 /** \brief reset the screenshot to nothing */
 void MythApps::resetScreenshot() {
     m_screenshot = QImage();
-    m_screenshotMainMythImage->SetEnabled(false);
-    m_screenshotMainMythImage->Reset();
+    uiCtx->screenshotMainMythImage->SetEnabled(false);
+    uiCtx->screenshotMainMythImage->Reset();
 }
 
 /** \brief take a screenshot. Useful for getting a thumbnail for the currently playing video \return is the screenshot a black screen? */
@@ -1366,7 +1364,7 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
     // launch web browser if clicking on a link
     if (programData->hasWeb()) {
         browser->openBrowser(programData->getFilePathParam());
-        SetFocusWidget(m_searchButtonList);
+        SetFocusWidget(uiCtx->searchButtonList);
         return;
     }
 
@@ -1375,19 +1373,19 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
         PluginAPI *plugin = pluginManager.getPluginByName(appName);
         if (plugin) {
             if (programData->refreshGrid()) {
-                m_fileListGrid->Reset();
+                uiCtx->fileListGrid->Reset();
                 loadBackButton();
             }
             isHome = false;
             plugin->load(label, programData->getDataWithoutAppName(data));
-            m_filepath->SetText(programData->getFriendlyPathName(data));
+            uiCtx->filepath->SetText(programData->getFriendlyPathName(data));
         }
         return;
     }
 
     if (programData->hasSearchShowsAZ()) {
         searchStartLeter = label;
-        m_SearchTextEdit->SetText(searchStartLeter);
+        uiCtx->SearchTextEdit->SetText(searchStartLeter);
         goSearch(currentSearchUrl);
         return;
     }
@@ -1414,11 +1412,11 @@ bool MythApps::appsCallbackPlugins(QScopedPointer<ProgramData> &programData, QSt
     LOG(VB_GENERAL, LOG_DEBUG, "appsCallbackPlugins()");
     dialog->getLoader()->SetVisible(true);
 
-    m_androidMenuBtn->SetVisible(false);
-    m_androidMenuBtn->SetEnabled(false);
+    uiCtx->androidMenuBtn->SetVisible(false);
+    uiCtx->androidMenuBtn->SetEnabled(false);
 
     QString fileURL = friendlyUrl(programData->getFilePathParam());
-    m_filepath->SetText(fileURL);
+    uiCtx->filepath->SetText(fileURL);
 
     if (!QString(programData->getFilePathParam().at(0)).compare("/") == 0) { // file system if first character is a slash
         fileURL = "plugin://" + fileURL;
@@ -1455,7 +1453,7 @@ bool MythApps::appsCallbackPlugins(QScopedPointer<ProgramData> &programData, QSt
 /** \brief the hover selected button/image. Used to update the selected title and plot.
  \param  item - the mythui button */
 void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
-    m_title->SetText(removeBBCode(item->GetText("buttontext2")));
+    uiCtx->title->SetText(removeBBCode(item->GetText("buttontext2")));
 
     ProgramData programData(item->GetText("buttontext2"), item->GetData().toString());
 
@@ -1465,7 +1463,7 @@ void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
         currentSelectionDetails->set("", "");
     }
 
-    m_plot->SetText("");
+    uiCtx->plot->SetText("");
 
     if (programData.getPlot().size() > 30) {
         if (previouslyPlayedLink->contains(programData.getUrl())) {
@@ -1474,11 +1472,11 @@ void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
             currentSelectionDetails->setPreviouslyPlayed(false);
         }
 
-        m_plot->SetText(removeBBCode(programData.getPlot()));
+        uiCtx->plot->SetText(removeBBCode(programData.getPlot()));
     }
 
     if (stopScroll) {
-        m_fileListGrid->SetItemCurrent(nextPagePosm_fileListGrid - 1);
+        uiCtx->fileListGrid->SetItemCurrent(nextPagePosm_fileListGrid - 1);
     }
 }
 
@@ -1522,7 +1520,7 @@ void MythApps::delayWhileStopScroll(int maxDelay) {
 /** \brief runs when the button is visible on screen. Used to automatically request the next page to allow infinite scroll.
  \param item - the mythui button */
 void MythApps::visibleAppsCallback(MythUIButtonListItem *item) {
-    displayImage(item, m_fileListGrid);
+    displayImage(item, uiCtx->fileListGrid);
 
     if (item->GetText("buttontext2").contains("Next Page")) {
         item->SetText(tr("Back to App"), "buttontext2");
@@ -1532,7 +1530,7 @@ void MythApps::visibleAppsCallback(MythUIButtonListItem *item) {
         waitforRequests();
         nextPageTimer->start(50); // run this code is another single run 'timer thread' to avoid stacking/blocking visibleAppsCallback
 
-        nextPagePosm_fileListGrid = m_fileListGrid->GetCurrentPos();
+        nextPagePosm_fileListGrid = uiCtx->fileListGrid->GetCurrentPos();
         LOG(VB_FILE, LOG_DEBUG, "visibleAppsCallback finished");
     }
 }
@@ -1672,7 +1670,7 @@ void MythApps::searchSettingsClicked(MythUIButtonListItem *item) { pluginManager
 /** \brief load shows AZ( */
 void MythApps::loadShowsAZ() {
     LOG(VB_GENERAL, LOG_DEBUG, "loadShowsAZ()");
-    m_fileListGrid->Reset();
+    uiCtx->fileListGrid->Reset();
     loadBackButton();
     toggleSearchVisible(false);
 
@@ -1797,9 +1795,9 @@ void MythApps::reload() {
 
 /** \brief refresh the selection in the file list grid.  */
 void MythApps::refreshFileListGridSelection() {
-    int pos = m_fileListGrid->GetCurrentPos();
-    m_fileListGrid->SetItemCurrent(0);
-    m_fileListGrid->SetItemCurrent(pos);
+    int pos = uiCtx->fileListGrid->GetCurrentPos();
+    uiCtx->fileListGrid->SetItemCurrent(0);
+    uiCtx->fileListGrid->SetItemCurrent(pos);
 }
 
 /** \brief plays a video in kodi and seeks if required.
@@ -1885,8 +1883,8 @@ void MythApps::openOSD(QString screenType) {
     if (!m_screenshot.isNull()) {
         MythImage *m_image = GetPainter()->GetFormatImage();
         m_image->Assign(m_screenshot);
-        m_screenshotMainMythImage->SetEnabled(true);
-        m_screenshotMainMythImage->SetImage(m_image);
+        uiCtx->screenshotMainMythImage->SetEnabled(true);
+        uiCtx->screenshotMainMythImage->SetImage(m_image);
     }
 
     if (screenType.compare("Player.OnStop") == 0) {
@@ -1923,11 +1921,11 @@ void MythApps::waitforRequests() {
 
 /** \brief return the focus to the filelist*/
 void MythApps::returnFocus() {
-    if (GetFocusWidget() == m_filepath) {
+    if (GetFocusWidget() == uiCtx->filepath) {
         if (m_fileListMusicGrid->IsVisible()) {
             SetFocusWidget(m_fileListMusicGrid);
         } else {
-            SetFocusWidget(m_fileListGrid);
+            SetFocusWidget(uiCtx->fileListGrid);
         }
     }
 }
@@ -1950,13 +1948,13 @@ void MythApps::runMythSettingsSlot() {
  * \param watched shoud the button dispaly watched or unwatched coloured text */
 void MythApps::setButtonWatched(bool watched) {
     if (watched) {
-        QString btnText = m_fileListGrid->GetItemCurrent()->GetText("buttontext2");
-        m_fileListGrid->GetItemCurrent()->SetText("", "buttontext2");
-        m_fileListGrid->GetItemCurrent()->SetText(btnText, "buttontextWatched");
+        QString btnText = uiCtx->fileListGrid->GetItemCurrent()->GetText("buttontext2");
+        uiCtx->fileListGrid->GetItemCurrent()->SetText("", "buttontext2");
+        uiCtx->fileListGrid->GetItemCurrent()->SetText(btnText, "buttontextWatched");
     } else {
-        QString btnText = m_fileListGrid->GetItemCurrent()->GetText("buttontextWatched");
-        m_fileListGrid->GetItemCurrent()->SetText("", "buttontextWatched");
-        m_fileListGrid->GetItemCurrent()->SetText(btnText, "buttontext2");
+        QString btnText = uiCtx->fileListGrid->GetItemCurrent()->GetText("buttontextWatched");
+        uiCtx->fileListGrid->GetItemCurrent()->SetText("", "buttontextWatched");
+        uiCtx->fileListGrid->GetItemCurrent()->SetText(btnText, "buttontext2");
     }
 }
 
@@ -1971,12 +1969,12 @@ void MythApps::addToPreviouslyPlayed() {
 void MythApps::androidMenuBtnSlot() { showOptionsMenu(); }
 
 void MythApps::toggleStreamDetails() {
-    if (!m_streamDetailsbackground->IsVisible()) {
-        m_streamDetailsbackground->Show();
-        m_streamDetails->Show();
-        m_streamDetails->SetText(streamDetails);
+    if (!uiCtx->streamDetailsbackground->IsVisible()) {
+        uiCtx->streamDetailsbackground->Show();
+        uiCtx->streamDetails->Show();
+        uiCtx->streamDetails->SetText(streamDetails);
     } else {
-        m_streamDetailsbackground->Hide();
+        uiCtx->streamDetailsbackground->Hide();
     }
 }
 

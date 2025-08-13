@@ -27,21 +27,14 @@ void MythApps::CleanupResources() {
     managerFileBrowser->disconnect();
 
     SafeDelete(controls);
-    SafeDelete(m_filepath);
-    SafeDelete(m_title);
-    SafeDelete(m_SearchTextEdit);
-    SafeDelete(m_screenshotMainMythImage);
     SafeDelete(previouslyPlayedLink);
     SafeDelete(searchListLink);
     SafeDelete(m_thumbnailImage);
-    SafeDelete(m_fileListGrid);
-    SafeDelete(m_searchButtonList);
     SafeDelete(m_fileListMusicGrid);
     SafeDelete(m_fileListSongs);
     SafeDelete(m_filterGrid);
     SafeDelete(m_filterOptionsList);
     SafeDelete(m_playlistVertical);
-    SafeDelete(m_androidMenuBtn);
     SafeDelete(currentSelectionDetails);
     SafeDelete(lastPlayedDetails);
     SafeDelete(browser);
@@ -49,6 +42,13 @@ void MythApps::CleanupResources() {
     SafeDelete(dialog);
 
     // uiCtx
+    SafeDelete(uiCtx->filepath);
+    SafeDelete(uiCtx->title);
+    SafeDelete(uiCtx->fileListGrid);
+    SafeDelete(uiCtx->screenshotMainMythImage);
+    SafeDelete(uiCtx->SearchTextEdit);
+    SafeDelete(uiCtx->searchButtonList);
+    SafeDelete(uiCtx->androidMenuBtn);
     SafeDelete(uiCtx);
 
     // Music app

@@ -44,19 +44,7 @@ class MythApps : public MythScreenType {
     void customEvent(QEvent *event) override;
 
   private:
-    MythUIText *m_filepath{nullptr};
-    MythUIText *m_plot{nullptr};
-    MythUIText *m_streamDetails{nullptr};
-    MythUIShape *m_streamDetailsbackground{nullptr};
-    MythUIText *m_title{nullptr};
-    MythUITextEdit *m_SearchTextEdit{nullptr};
-    MythUIText *m_SearchTextEditBackgroundText{nullptr};
-    MythUIImage *m_screenshotMainMythImage{nullptr}; /*!< used to create thumbnail for pause menu */
-    QImage m_screenshot;                             /*!< used to create thumbnail for pause menu */
-    MythUIImage *m_loaderImage{nullptr};
-    MythUIType *m_searchButtonListGroup{nullptr};
-    MythUIType *m_help{nullptr};
-    MythUIButton *m_androidMenuBtn{nullptr};
+    QImage m_screenshot; /*!< used to create thumbnail for pause menu */
 
     ProgramData *currentSelectionDetails{nullptr}; /*!<  current selection in the file browser */
     ProgramData *lastPlayedDetails{nullptr};       /*!< last media played. used by the watch list feature */
@@ -328,8 +316,6 @@ class MythApps : public MythScreenType {
     QNetworkRequest request;
 
     MythUIImage *m_thumbnailImage{nullptr};
-    MythUIButtonList *m_fileListGrid{nullptr};
-    MythUIButtonList *m_searchButtonList{nullptr};
     MythUIButtonList *m_searchSettingsButtonList{nullptr};
 
     MythUIButtonList *m_fileListMusicGrid{nullptr};

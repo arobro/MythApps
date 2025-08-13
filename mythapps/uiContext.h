@@ -25,7 +25,7 @@ struct UIContext {
     MythUIType *searchButtonListGroup = nullptr;
     MythUIType *searchSettingsGroup = nullptr;
     MythUIButton *androidMenuBtn = nullptr;
-    MythUIText *help = nullptr;
+    MythUIType *help = nullptr;
 };
 
 #endif // UICONTEXT_H
