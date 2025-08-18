@@ -10,9 +10,8 @@ FileBrowserHistory::FileBrowserHistory() {}
 
 /** \brief Removes the last url from the previousURL list. Used for the back button.  */
 void FileBrowserHistory::removeCurrentUrlFromList() {
-    if (previousListItem.size() > 0) {
+    if (previousListItem.size() > 0)
         previousListItem.removeLast();
-    }
 }
 
 /** \brief go to the previous url in the file browser history. */
@@ -59,12 +58,17 @@ QString FileBrowserHistory::getCurrentLabel() {
 
 /** \brief get the current data for the currrent url in the file browser */
 QString FileBrowserHistory::getCurrentData() {
+    if (previousListItem.isEmpty())
+        return "";
+
     QStringList previousList = previousListItem.at(previousListItem.size() - 1);
     return previousList.at(1);
 }
 
 /** \brief Check if the current FileBrowser indicates an app is open */
 bool FileBrowserHistory::isAppOpen() { return getCurrentData().startsWith("app://"); }
+
+bool FileBrowserHistory::isMusicAppOpen() { return getCurrentData().startsWith("app://Music"); }
 
 QString FileBrowserHistory::getCurrentApp() {
     if (isEmpty())

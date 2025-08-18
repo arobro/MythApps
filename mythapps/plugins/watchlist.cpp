@@ -23,8 +23,6 @@ bool WatchList::getPluginStartPos() const { return true; }
 
 QString WatchList::getPluginIcon() const { return pluginIcon; }
 
-void WatchList::setDialog(Dialog *d) { dialog = d; }
-
 void WatchList::load(const QString label, const QString data) {
     m_toggleSearchVisibleCallback(false);
 
@@ -42,7 +40,7 @@ void WatchList::loadWatchList(bool unwatched) {
 
     if (!unwatched) {
         QString data = createProgramData("Unwatched", tr("Unwatched"), recent_icon, "", "");
-        m_loadProgramCallback(tr("Unwatched") + watchedLink.getUnWatchedSize(), appPathName + data, recent_icon);
+        m_loadProgramCallback(tr("Unwatched") + watchedLink.getUnWatchedSize(), appPathName + data, recent_icon, nullptr);
 
         limit = 22;
     }
@@ -56,7 +54,7 @@ void WatchList::loadWatchList(bool unwatched) {
             continue;
         }
 
-        m_loadProgramCallback(watched.title, createProgramData(watched.url, watched.plot, watched.image, watched.autoPlay, seek), watched.image);
+        m_loadProgramCallback(watched.title, createProgramData(watched.url, watched.plot, watched.image, watched.autoPlay, seek), watched.image, nullptr);
     }
 }
 

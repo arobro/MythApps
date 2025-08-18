@@ -1,6 +1,6 @@
-include ( ../../mythconfig.mak )
-include ( ../../settings.pro )
-include ( ../../programs-libs.pro )
+include(../../mythconfig.mak)
+include(../../settings.pro)
+include(../../programs-libs.pro)
 
 !exists(../../settings.pro) {
     message("WARNING: Using include fallback")
@@ -28,19 +28,25 @@ INSTALLS += target
 
 installfiles.path = $${PREFIX}/share/mythtv/mythapps
 installfiles.files = mythapps-ui.xml
-
 INSTALLS += installfiles
 
 # Input
-HEADERS += mythapps.h mythsettings.h mythinput.h imageThread.h searchSuggestions.h shared.h controls.h programData.h programLink.h netRequest.h
-HEADERS += mythappsdbcheck.h container.h libs/xbmcclient.h browser.h fileBrowserHistory.h NetSocketRequest.cpp
-HEADERS += plugins/plugin_manager.h plugins/plugin_api.h netSocketRequest.h dialog.h 
-HEADERS += plugins/favourites.h plugins/videos.h plugins/watchlist.h plugins/ytCustom.h
+HEADERS += \
+    mythapps.h mythsettings.h mythinput.h imageThread.h searchSuggestions.h shared.h controls.h programData.h programLink.h netRequest.h \
+    mythappsdbcheck.h container.h libs/xbmcclient.h browser.h fileBrowserHistory.h NetSocketRequest.cpp \
+    plugins/plugin_manager.h plugins/plugin_api.h netSocketRequest.h dialog.h \
+    plugins/favourites.h plugins/videos.h plugins/watchlist.h plugins/ytCustom.h plugins/music.h
 
-SOURCES += main.cpp mythapps.cpp mythsettings.cpp mythinput.cpp imageThread.cpp music_functions.cpp searchSuggestions.cpp netRequest.cpp 
-SOURCES += shared.cpp controls.cpp programData.cpp programLink.cpp mythappsdbcheck.cpp browser.cpp fileBrowserHistory.cpp
-SOURCES += plugins/plugin_manager.cpp netSocketRequest.cpp mythappsCleanup.cpp dialog.cpp
-SOURCES += plugins/favourites.cpp plugins/videos.cpp plugins/watchlist.cpp plugins/ytCustom.cpp
+SOURCES += \
+    main.cpp mythapps.cpp mythsettings.cpp mythinput.cpp imageThread.cpp searchSuggestions.cpp netRequest.cpp \
+    shared.cpp controls.cpp programData.cpp programLink.cpp mythappsdbcheck.cpp browser.cpp fileBrowserHistory.cpp \
+    plugins/plugin_manager.cpp netSocketRequest.cpp mythappsCleanup.cpp dialog.cpp \
+    plugins/favourites.cpp plugins/videos.cpp plugins/watchlist.cpp plugins/ytCustom.cpp plugins/music.cpp
+
+INCLUDEPATH += plugins
+
+MOC_DIR = moc
+OBJECTS_DIR = obj
 
 DEFINES += MPLUGIN_API
 
@@ -49,8 +55,7 @@ use_hidesyms {
 }
 
 android {
-    # to discriminate plugins in a flat directory structure
     TARGET = mythplugin$${TARGET}
 }
 
-include ( ../../libs-targetfix.pro )
+include(../../libs-targetfix.pro)

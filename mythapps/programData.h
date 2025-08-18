@@ -29,15 +29,9 @@ class ProgramData {
     QString getFilePathParam();
 
     bool hasBack();
-    bool hasArtists();
-    bool haAlbums();
-    bool hasGenres();
-    bool hasPlaylists();
-
     bool hasWeb();
     bool hasShowsAZ();
     bool hasSearchShowsAZ();
-    bool hasMusic();
 
     bool hasApp();
     QString getAppPluginName();

@@ -11,6 +11,7 @@
 #include "programLink.h"
 
 class WatchList : public PluginAPI {
+    Q_OBJECT
   public:
     WatchList();
     ~WatchList();
@@ -20,7 +21,6 @@ class WatchList : public PluginAPI {
     bool getPluginStartPos() const override;
     QString getPluginIcon() const override;
 
-    void setDialog(Dialog *d) override;
     void load(const QString label, const QString data) override;
     void displayHomeScreenItems() override;
 
@@ -39,8 +39,6 @@ class WatchList : public PluginAPI {
     ProgramLink watchedLink;
 
     QString recent_icon;
-
-    Dialog *dialog{nullptr};
 };
 
 #endif // WATCHLIST_H

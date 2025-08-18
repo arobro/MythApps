@@ -6,6 +6,7 @@
 #include <QPluginLoader>
 
 // MythApps headers
+#include "SafeDelete.h"
 #include "shared.h"
 
 PluginManager::PluginManager() {
@@ -13,9 +14,21 @@ PluginManager::PluginManager() {
     initializePlugin(m_videos, "Videos");
     initializePlugin(m_watchlist, "WatchList");
     initializePlugin(m_ytCustom, "ytCustom");
+    initializePlugin(m_music, "Music");
 }
 
-PluginManager::~PluginManager(){};
+PluginManager::~PluginManager() {
+    m_favourites.reset();
+    m_videos.reset();
+    m_watchlist.reset();
+    m_ytCustom.reset();
+    m_music.reset();
+
+    m_plugins.clear();
+    m_pluginIcons.clear();
+
+    SafeDelete(m_lastOpenedPlugin);
+};
 
 template <typename T> bool PluginManager::initializePlugin(QScopedPointer<T> &pluginInstance, const QString &pluginName) {
     if (!pluginInstance)
@@ -62,6 +75,11 @@ QList<PluginDisplayInfo> PluginManager::getPluginsForDisplay(bool start) const {
                 return;
         }
 
+        if (plugin == m_music.data()) {
+            if (gCoreContext->GetSetting("MythAppsMusic") != "1")
+                return;
+        }
+
         PluginDisplayInfo info;
         info.name = plugin->getPluginDisplayName();
         info.iconPath = createImageCachePath(plugin->getPluginIcon());
@@ -79,6 +97,11 @@ QList<PluginDisplayInfo> PluginManager::getPluginsForDisplay(bool start) const {
 void PluginManager::setLoadProgramCallback(PluginAPI::LoadProgramCallback cb) {
     for (auto plugin : m_plugins.values())
         plugin->setLoadProgramCallback(cb);
+}
+
+void PluginManager::setDisplayImageCallback(PluginAPI::DisplayImageCallback cb) {
+    for (auto plugin : m_plugins.values())
+        plugin->setDisplayImageCallback(cb);
 }
 
 void PluginManager::setToggleSearchVisibleCallback(PluginAPI::ToggleSearchVisibleCallback cb) {
@@ -99,6 +122,11 @@ void PluginManager::setFocusWidgetCallback(PluginAPI::SetFocusWidgetCallback cb)
 void PluginManager::setPlay_KodiCallback(PluginAPI::SetPlay_KodiCallback cb) {
     for (auto plugin : m_plugins.values())
         plugin->setPlay_KodiCallback(cb);
+}
+
+void PluginManager::setPlaybackInfoCallback(PluginAPI::PlaybackInfoCallback cb) {
+    if (m_music)
+        m_music->setPlaybackInfoCallback(cb);
 }
 
 PluginAPI *PluginManager::getPluginByName(const QString &name) {
@@ -151,11 +179,6 @@ void PluginManager::appendWatchedLink(FileFolderContainer data) {
         m_watchlist->appendWatchedLink(data);
 }
 
-void PluginManager::searchSettingsClicked(MythUIButtonListItem *item) {
-    if (m_ytCustom)
-        m_ytCustom->searchSettingsClicked(item);
-}
-
 QStringList PluginManager::hidePlugins() {
     QStringList hiddenPlugins;
 
@@ -187,4 +210,45 @@ bool PluginManager::useBasicMenu(QString appName) {
             return plugin->useBasicMenu();
         }
     return true;
+}
+
+void PluginManager::initializeUI(MythUIType *ui) {
+    for (auto plugin : m_plugins.values()) {
+        if (!plugin->initializeUI(ui)) {
+            LOG(VB_GENERAL, LOG_ERR, "Cannot load screen 'mythapps plugins'");
+        }
+    }
+}
+
+bool PluginManager::handleAction(const QString name, MythUIType *focusWidget) { return m_music->handleAction(name, focusWidget); }
+
+void PluginManager::onTextMessageReceived(const QString &method, const QString &message) {
+    for (auto plugin : m_plugins.values())
+        plugin->onTextMessageReceived(method, message);
+}
+
+void PluginManager::setExitToMainMenuSleepTimer(QTimer *timer) {
+    for (auto plugin : m_plugins.values())
+        plugin->setExitToMainMenuSleepTimer(timer);
+}
+
+void PluginManager::setGoFullscreenCallback(PluginAPI::FullscreenCallback cb) {
+    for (auto plugin : m_plugins.values())
+        plugin->setGoFullscreenCallback(cb);
+}
+
+void PluginManager::exitPlugin() {
+    if (m_lastOpenedPlugin) {
+        m_lastOpenedPlugin->exitPlugin();
+        m_lastOpenedPlugin = nullptr;
+    }
+}
+
+void PluginManager::load(const QString &pluginName, const QString &label, const QString &data) {
+    PluginAPI *plugin = getPluginByName(pluginName);
+    if (!plugin)
+        return;
+
+    plugin->load(label, data);
+    m_lastOpenedPlugin = plugin;
 }

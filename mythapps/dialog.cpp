@@ -51,3 +51,27 @@ void Dialog::closeBusyDialog() {
 }
 
 MythUIImage *Dialog::getLoader() { return m_loaderImage; }
+
+void Dialog::confirmDialog(QString description, QString type) {
+    if (m_menuPopup)
+        return;
+
+    MythScreenStack *popupStack = GetMythMainWindow()->GetStack("popup stack");
+    m_menuPopup = new MythDialogBox(description, popupStack, "mythappsmenupopup");
+
+    if (m_menuPopup->Create()) {
+        popupStack->AddScreen(m_menuPopup);
+        m_menuPopup->SetReturnEvent(this, type);
+
+        m_menuPopup->AddButton(tr("No"));
+        m_menuPopup->AddButton(tr("Yes"));
+
+        delay(6);
+        if (m_menuPopup) {
+            m_menuPopup->Close();
+        }
+    } else {
+        delete m_menuPopup;
+        m_menuPopup = nullptr;
+    }
+}

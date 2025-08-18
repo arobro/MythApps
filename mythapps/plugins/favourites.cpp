@@ -20,8 +20,6 @@ bool Favourites::getPluginStartPos() const { return true; }
 
 QString Favourites::getPluginIcon() const { return pluginIcon; }
 
-void Favourites::setDialog(Dialog *d) {}
-
 void Favourites::load(const QString label, const QString data) {
     m_toggleSearchVisibleCallback(false);
     loadFavourites(false);
@@ -34,7 +32,7 @@ void Favourites::loadFavourites(bool displayOnHome) {
         if (displayOnHome && !favourite.pinnedToHome) // Skip items not pinned to home
             continue;
 
-        m_loadProgramCallback(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image);
+        m_loadProgramCallback(favourite.title, createProgramData(favourite.url, favourite.plot, favourite.image, favourite.autoPlay, ""), favourite.image, nullptr);
     }
 }
 

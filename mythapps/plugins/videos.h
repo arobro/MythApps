@@ -12,6 +12,7 @@
 #include "controls.h"
 
 class Videos : public PluginAPI {
+    Q_OBJECT
   public:
     Videos();
     ~Videos() override;
@@ -20,7 +21,6 @@ class Videos : public PluginAPI {
     QString getPluginDisplayName() override;
     bool getPluginStartPos() const override;
     QString getPluginIcon() const override;
-    void setDialog(Dialog *d) override;
 
     void load(const QString label, const QString data) override;
     void displayHomeScreenItems() override;
@@ -38,10 +38,6 @@ class Videos : public PluginAPI {
 
     QString pluginName;
     QString pluginIcon;
-
-    Controls *controls = nullptr;
-    Dialog *dialog{nullptr};
-
     QString videos_icon;
 };
 

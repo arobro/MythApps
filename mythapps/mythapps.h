@@ -52,9 +52,6 @@ class MythApps : public MythScreenType {
     QTimer *exitToMainMenuSleepTimer; /*!< return to main menu after inactivty for power save. */
     QTimer *searchTimer;
     QTimer *minimizeTimer;        /*!< minimizes Kodi to the desktop every few seconds */
-    QTimer *playbackTimer;        /*!< update the playback status in the music app */
-    QTimer *hintTimer;            /*!< stops any hung searchs */
-    QTimer *musicBarOnStopTimer;  /*!< update the music bar status */
     QTimer *searchSuggestTimer;   /*!< micro singleshot timer to delay the search suggestions after keypress. */
     QTimer *searchFocusTimer;     /*!< micro singleshot timer to update the focus. */
     QTimer *isKodiConnectedTimer; /*!< pings Kodi to check connection is still alive */
@@ -83,9 +80,7 @@ class MythApps : public MythScreenType {
     bool searching = false;  /*!< are we currently waiting for search results after a search?  */
     bool isHome = true;      /*!< is the file browser on the home screen? */
     bool kodiPlayerOpen = false;
-    bool musicOpen = false;        /*!< is the music player open? */
     bool allowAutoMinimize = true; /*!< is auto minimizing kodi enabled? */
-    bool videoStopReceived = false;
     bool allShowsFolderFound = false;
     bool enableHiddenFolders = false;
     QStringList azShowOnUrl;
@@ -110,7 +105,6 @@ class MythApps : public MythScreenType {
     bool loadAZSearch(QString hash);
 
     void loadApps();
-    void loadMusic();
     void loadArtists(bool listview);
     void loadAlbums(bool listview);
     void loadGenres();
@@ -175,19 +169,11 @@ class MythApps : public MythScreenType {
     QScreen *screen{nullptr};
     Controls *controls{nullptr};
 
-    QString mm_albums_icon;    /*!< stores physical image location for the corresponding button */
-    QString mm_alltracks_icon; /*!< stores physical image location for the corresponding button */
-    QString mm_artists_icon;   /*!< stores physical image location for the corresponding button */
-    QString mm_genres_icon;    /*!< stores physical image location for the corresponding button */
-    QString mm_playlist_icon;  /*!< stores physical image location for the corresponding button */
-    QString music_icon;        /*!< stores physical image location for the corresponding button */
-    QString back_icon;         /*!< stores physical image location for the corresponding button */
-    QString ma_tv_icon;        /*!< stores physical image location for the corresponding button */
-    QString ma_popular_icon;   /*!< stores physical image location for the corresponding button */
-    QString ma_search_icon;    /*!< stores physical image location for the corresponding button */
+    QString back_icon;       /*!< stores physical image location for the corresponding button */
+    QString ma_tv_icon;      /*!< stores physical image location for the corresponding button */
+    QString ma_popular_icon; /*!< stores physical image location for the corresponding button */
+    QString ma_search_icon;  /*!< stores physical image location for the corresponding button */
 
-    void confirmDialog(QString description, QString type);
-    void returnFocus();
     void setButtonWatched(bool watched);
     void addToPreviouslyPlayed();
     void coolDown();
@@ -197,74 +183,18 @@ class MythApps : public MythScreenType {
     Dialog *dialog;
 
     void handlePlaybackEvent(const QString &method, const QString &message);
-    qint64 getKodiPlaybackTimeMs();
+    PlaybackTime getKodiPlaybackTimeMs();
     qint64 getCurrentPlaybackTimeMs() const;
     int getPlaybackPercentage() const;
 
-    QString playbackDuration = "00:00:00";
     qint64 playbackStartMs_ = -1;
     qint64 manualAccumulatedMs_ = 0;
 
     UIContext *uiCtx;
+    PlaybackInfo getPlaybackInfo();
 
     // music app
-    int m_currentMusicButton = 0;
-
-    MythUIType *m_musicDetailsUIGroup{nullptr};
-
-    MythUIText *m_textSong{nullptr};
-    MythUIText *m_textArtist{nullptr};
-    MythUIText *m_textAlbum{nullptr};
-    MythUIText *m_musicDuration{nullptr};
-    MythUIText *m_hint; /*!< hint used in music app */
-    MythUIShape *m_seekbar{nullptr};
-
-    MythUIText *m_musicTitle{nullptr};
-    MythUIProgressBar *m_trackProgress{nullptr};
-    MythUIImage *m_coverart{nullptr};
-    MythUIImage *m_blackhole_border{nullptr};
-    MythUIImage *m_playingOn{nullptr};
-    MythUIImage *m_next_buttonOn{nullptr};
-    MythUIImage *m_ff_buttonOn{nullptr};
-    MythUIImage *m_playingOff{nullptr};
-    MythUIImage *m_next_buttonOff{nullptr};
-    MythUIImage *m_ff_buttonOff{nullptr};
-
-    int musicMode; /*!< 1 for music, 2 for video in the music app */
-
-    QMap<QString, QStringList> getMusicHelper(QString methodValue, QString type, QString filterKey, QString filterValue, QString operatorValue);
-    QMap<QString, QStringList> getByAlbums(QString artist);
-    QMap<QString, QStringList> getByAlbumsSearch(QString s);
-    QMap<QString, QStringList> getByAlbumsWithGenre(QString genres);
-    QMap<QString, QStringList> getByArtist(QString artist);
-    QMap<QString, QStringList> getByGenres();
-    QStringList addSpacingToList(QMap<QString, QStringList> map, bool listview);
-    QMap<QString, QStringList> filterQMap(QMap<QString, QStringList> map, QString filterKey);
-
     void updateMusicPlayingBarStatus();
-    void showMusicPlayingBar(bool show);
-    void showMusicUI(bool show);
-
-    void refreshGuiPlaylist();
-    int isInPlaylist(QString label);
-    void removeFromPlaylist(QString label);
-    bool isMusicPlayingBarVisible();
-
-    void previousTrack();
-    void nextTrack();
-    void setPartyMode();
-
-    bool partyMode;
-    bool initializeMusic();
-    void clearAndStopPlaylist();
-
-    void musicSearch(QString search);
-    void loadMusicHelper(QString labelPrefix, QMap<QString, QStringList> loadMusicType, MythUIButtonList *m_fileList);
-    void loadMusicSetup();
-    void loadPlaylists();
-
-    bool handleMusicAction(const QString &action);
-    void updateMusicPlaylistUI();
 
     void CleanupResources();
 
@@ -287,19 +217,9 @@ class MythApps : public MythScreenType {
     void runMythSettingsSlot();
     void androidMenuBtnSlot();
 
-    void fileListMusicGridClickedCallback(MythUIButtonListItem *item);
-    void fileListMusicGridSelectedCallback(MythUIButtonListItem *item);
-    void fileListMusicGridVisibleCallback(MythUIButtonListItem *item);
-    void filterGridClickedCallback(MythUIButtonListItem *item);
-    void filterGridSelectedCallback(MythUIButtonListItem *item);
-    void filterOptionsListClickedCallback(MythUIButtonListItem *item);
-
     void exitToMainMenuSleepTimerClose();
     void minimizeTimerSlot();
     void searchTimerSlot();
-    void playbackTimerSlot();
-    void hintTimerSlot();
-    void musicBarOnStopTimerSlot();
     void searchSuggestTimerSlot();
     void searchFocusTimerSlot();
     void isKodiConnectedSlot();
@@ -318,15 +238,9 @@ class MythApps : public MythScreenType {
     MythUIImage *m_thumbnailImage{nullptr};
     MythUIButtonList *m_searchSettingsButtonList{nullptr};
 
-    MythUIButtonList *m_fileListMusicGrid{nullptr};
-    MythUIButtonList *m_fileListSongs{nullptr};
-    MythUIButtonList *m_filterGrid{nullptr};
-    MythUIButtonList *m_filterOptionsList{nullptr};
-    MythUIButtonList *m_playlistVertical{nullptr};
-
     QString firstDirectoryName;
 
-    static PluginManager pluginManager;
+    static PluginManager *pluginManager;
 };
 
 #endif /* MYTHKODI_H */

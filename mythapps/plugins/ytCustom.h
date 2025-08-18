@@ -16,6 +16,7 @@
 #include "uiContext.h"
 
 class ytCustom : public PluginAPI {
+    Q_OBJECT
   public:
     ytCustom();
     ~ytCustom() override;
@@ -24,18 +25,13 @@ class ytCustom : public PluginAPI {
     QString getPluginDisplayName() override;
     bool getPluginStartPos() const override;
     QString getPluginIcon() const override;
-    void setDialog(Dialog *d) override;
     QString hidePlugin() override;
     bool useBasicMenu() override;
 
     void load(const QString label, const QString data) override;
     void displayHomeScreenItems() override;
 
-    void setControls(Controls *c);
-    void setUIContext(UIContext *uiC);
-
-    void searchSettingsClicked(MythUIButtonListItem *item);
-    void search(const QString &searchText);
+    void search(const QString &searchText) override;
     bool handleSuggestion(const QString searchText);
 
   private:
@@ -79,12 +75,11 @@ class ytCustom : public PluginAPI {
     QString pluginName;
     QString pluginIcon;
 
-    Controls *controls{nullptr};
-    Dialog *dialog{nullptr};
-    UIContext *uiCtx{nullptr};
-
     QString ma_search_icon;
     QString ma_popular_icon;
+
+  private slots:
+    void searchSettingsClicked(MythUIButtonListItem *item);
 };
 
 #endif // YTCUSTOM_H

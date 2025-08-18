@@ -59,42 +59,6 @@ bool ProgramData::hasBack() {
     return false;
 }
 
-/** \brief is the folder an app called artists?
- * \return is the corresponding folder type? */
-bool ProgramData::hasArtists() {
-    if (getFilePathParam().compare("artists") == 0) {
-        return true;
-    }
-    return false;
-}
-
-/** \brief is the folder an app called albums?
- * \return is the corresponding folder type? */
-bool ProgramData::haAlbums() {
-    if (getFilePathParam().compare("albums") == 0) {
-        return true;
-    }
-    return false;
-}
-
-/** \brief is the folder an app called genres?
- * \return is the corresponding folder type? */
-bool ProgramData::hasGenres() {
-    if (getFilePathParam().compare("genres") == 0) {
-        return true;
-    }
-    return false;
-}
-
-/** \brief is the folder an app called playlists?
- * \return is the corresponding folder type? */
-bool ProgramData::hasPlaylists() {
-    if (getFilePathParam().compare("playlists") == 0) {
-        return true;
-    }
-    return false;
-}
-
 /** \brief is the folder an app called web?
  * \return is the corresponding folder type? */
 bool ProgramData::hasWeb() {
@@ -117,15 +81,6 @@ bool ProgramData::hasShowsAZ() {
  * \return is the corresponding folder type? */
 bool ProgramData::hasSearchShowsAZ() {
     if (getPlot().compare("searchShowsAZ") == 0) {
-        return true;
-    }
-    return false;
-}
-
-/** \brief is the folder an app called Music?
- * \return is the corresponding folder type? */
-bool ProgramData::hasMusic() {
-    if (getPlot().compare("Music") == 0) {
         return true;
     }
     return false;

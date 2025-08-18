@@ -13,4 +13,16 @@ struct FileFolderContainer {
     QString seek;
     bool pinnedToHome;
 };
+
+struct PlaybackTime {
+    qint64 currentMs = 0;
+    QString duration;
+};
+
+struct PlaybackInfo {
+    QString currentTime;
+    qint64 elapsedMs = 0;
+    QString duration;
+};
+
 #endif

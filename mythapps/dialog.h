@@ -6,6 +6,7 @@
 #include <QString>
 
 // MythTV headers
+#include <libmythui/mythdialogbox.h>
 #include <libmythui/mythuiimage.h>
 
 class MythUIBusyDialog;
@@ -23,9 +24,12 @@ class Dialog : public QObject {
 
     MythUIImage *getLoader();
 
+    void confirmDialog(QString description, QString type);
+
   private:
     MythUIBusyDialog *m_busyPopup;
     MythUIImage *m_loaderImage{nullptr};
+    MythDialogBox *m_menuPopup{nullptr};
 };
 
 #endif // DIALOG_H

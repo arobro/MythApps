@@ -11,6 +11,7 @@
 #include "programLink.h"
 
 class Favourites : public PluginAPI {
+    Q_OBJECT
   public:
     Favourites();
     ~Favourites();
@@ -19,7 +20,6 @@ class Favourites : public PluginAPI {
     QString getPluginDisplayName() override;
     bool getPluginStartPos() const override;
     QString getPluginIcon() const override;
-    void setDialog(Dialog *d) override;
 
     void load(const QString label, const QString data) override;
     void displayHomeScreenItems() override;

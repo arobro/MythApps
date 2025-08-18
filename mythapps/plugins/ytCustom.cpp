@@ -30,8 +30,8 @@ ytCustom::ytCustom() : pluginName("ytCustom"), pluginIcon("ytCustom.png") {
 }
 
 ytCustom::~ytCustom() {
-    SafeDelete(dateAfter);
-    SafeDelete(dateBefore);
+    // SafeDelete(dateAfter);
+    // SafeDelete(dateBefore);
 }
 
 QString ytCustom::getPluginName() const { return pluginName; }
@@ -66,12 +66,6 @@ QString ytCustom::getPluginIcon() const {
 
 bool ytCustom::getPluginStartPos() const { return false; }
 
-void ytCustom::setDialog(Dialog *d) { dialog = d; }
-
-void ytCustom::setControls(Controls *c) { controls = c; }
-
-void ytCustom::setUIContext(UIContext *uiC) { uiCtx = uiC; }
-
 void ytCustom::load(const QString label, const QString data) {
     m_toggleSearchVisibleCallback(true);
 
@@ -97,9 +91,9 @@ void ytCustom::loadYTCustom() {
         return;
     }
 
-    m_loadProgramCallback(tr("Search Settings"), ytAppPathName + "settings&refreshGrid=false", ma_search_icon);
-    m_loadProgramCallback(tr("Popular Right Now"), createProgramData(ytAppPathName + "popular", tr("Browse the most popular content"), ma_popular_icon, false, ""), ma_popular_icon);
-    m_loadProgramCallback(tr("Wrapped App"), createProgramData("plugin://" + getKodiYTPluginDomain(), tr("Wrapped App"), ma_popular_icon, false, ""), ma_popular_icon);
+    m_loadProgramCallback(tr("Search Settings"), ytAppPathName + "settings&refreshGrid=false", ma_search_icon, nullptr);
+    m_loadProgramCallback(tr("Popular Right Now"), createProgramData(ytAppPathName + "popular", tr("Browse the most popular content"), ma_popular_icon, false, ""), ma_popular_icon, nullptr);
+    m_loadProgramCallback(tr("Wrapped App"), createProgramData("plugin://" + getKodiYTPluginDomain(), tr("Wrapped App"), ma_popular_icon, false, ""), ma_popular_icon, nullptr);
 }
 
 void ytCustom::updateMediaListCallback(const QString &label, const QString &data) {
@@ -113,7 +107,7 @@ void ytCustom::updateMediaListCallback(const QString &label, const QString &data
     if (path.compare("settings&refreshGrid=false") == 0) {
         LOG(VB_GENERAL, LOG_DEBUG, "ytCustom::updateMediaListCallback() -settings");
         setWidgetVisibility(uiCtx->searchSettingsGroup, true);
-        m_SetFocusWidgetCallback(uiCtx->searchSettingsButtonList);
+        SetFocusWidget(uiCtx->searchSettingsButtonList);
         return;
     }
 
@@ -245,7 +239,7 @@ void ytCustom::loadProgramList(QString searchText, QString directory) {
     }
 
     for (const QStringList &entry : programList) {
-        m_loadProgramCallback(entry.at(0), entry.at(1), entry.at(2));
+        m_loadProgramCallback(entry.at(0), entry.at(1), entry.at(2), nullptr);
     }
     dialog->getLoader()->SetVisible(false);
 }
@@ -369,6 +363,8 @@ void ytCustom::initializeSettingsDialog() {
 
     dateAfterUrlBuilder = "";
     dateBeforeUrlBuilder = "";
+
+    connect(uiCtx->searchSettingsButtonList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(searchSettingsClicked(MythUIButtonListItem *)));
 }
 
 void ytCustom::processAndSaveImage(const QByteArray &data, const QString &path) const {

@@ -39,8 +39,6 @@ QString Videos::getPluginIcon() const { return pluginIcon; }
 
 bool Videos::getPluginStartPos() const { return false; }
 
-void Videos::setDialog(Dialog *d) { dialog = d; }
-
 void Videos::load(const QString label, const QString data) {
     m_toggleSearchVisibleCallback(false);
 
@@ -68,7 +66,7 @@ void Videos::loadVideos() {
             image = videos_icon;
 
         QString data = createProgramData(url, "", image, false, "");
-        m_loadProgramCallback(title, data, image);
+        m_loadProgramCallback(title, data, image, nullptr);
     }
 }
 
@@ -86,7 +84,7 @@ void Videos::loadDirectory(const QString &folderPath, bool recursive) {
         QString title = sd;
 
         QString data = createProgramData(fullPath, QString(), videos_icon, false, QString());
-        m_loadProgramCallback(title, appPathName + data, videos_icon);
+        m_loadProgramCallback(title, appPathName + data, videos_icon, nullptr);
     }
 
     // Handle video files
@@ -151,7 +149,7 @@ void Videos::handleThumbnailReady(const QString &videoFilePath, const QString &t
     QString thumbnail = QStringLiteral("file://%1").arg(thumbnailPath);
 
     QString data = createProgramData(videoFilePath, QString(), thumbnail, isPlay, QString());
-    m_loadProgramCallback(title, appPathName + data, thumbnail);
+    m_loadProgramCallback(title, appPathName + data, thumbnail, nullptr);
     m_activeThumbnailTasks--;
 
     if (m_activeThumbnailTasks == 0) {

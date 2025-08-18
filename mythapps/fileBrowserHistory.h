@@ -21,6 +21,7 @@ class FileBrowserHistory {
     QString getCurrentData();
 
     bool isAppOpen();
+    bool isMusicAppOpen();
     QString getCurrentApp();
 
   private:

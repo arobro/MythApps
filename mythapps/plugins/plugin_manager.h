@@ -16,6 +16,7 @@
 
 // Plugins
 #include "favourites.h"
+#include "music.h"
 #include "videos.h"
 #include "watchlist.h"
 #include "ytCustom.h"
@@ -36,13 +37,18 @@ class PluginManager {
     bool loadPlugin(const QString &pluginPath);
     void setLoadProgramCallback(PluginAPI::LoadProgramCallback cb);
     void setToggleSearchVisibleCallback(PluginAPI::ToggleSearchVisibleCallback cb);
+    void setDisplayImageCallback(PluginAPI::DisplayImageCallback cb);
     void setGoBackCallback(PluginAPI::GoBackCallback cb);
     void setFocusWidgetCallback(PluginAPI::SetFocusWidgetCallback cb);
     void setPlay_KodiCallback(PluginAPI::SetPlay_KodiCallback cb);
+    void setPlaybackInfoCallback(PluginAPI::PlaybackInfoCallback cb);
+    void setGoFullscreenCallback(PluginAPI::FullscreenCallback cb);
 
     void setControls(Controls *c);
     void setDialog(Dialog *d);
     void setUIContext(UIContext *uiC);
+
+    void onTextMessageReceived(const QString &method, const QString &message);
 
     PluginAPI *getPluginByName(const QString &name);
 
@@ -55,11 +61,18 @@ class PluginManager {
     void search(QString searchText, QString appName);
     bool handleSuggestion(const QString &);
 
+    void setExitToMainMenuSleepTimer(QTimer *);
+
     bool useBasicMenu(QString appName);
+    void initializeUI(MythUIType *ui);
+
+    void exitPlugin();
+
+    void load(const QString &pluginName, const QString &label, const QString &data);
 
     // non API
     void appendWatchedLink(FileFolderContainer data);
-    void searchSettingsClicked(MythUIButtonListItem *item);
+    bool handleAction(const QString, MythUIType *focusWidget);
 
   private:
     template <typename T> bool initializePlugin(QScopedPointer<T> &pluginInstance, const QString &pluginName);
@@ -71,6 +84,9 @@ class PluginManager {
     QScopedPointer<Videos> m_videos;
     QScopedPointer<WatchList> m_watchlist;
     QScopedPointer<ytCustom> m_ytCustom;
+    QScopedPointer<Music> m_music;
+
+    PluginAPI *m_lastOpenedPlugin{nullptr};
 };
 
 #endif /* PLUGIN_MANAGER_H */

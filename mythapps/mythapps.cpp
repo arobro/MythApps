@@ -21,7 +21,6 @@
 
 // MythApps headers
 #include "imageThread.h"
-#include "music_functions.cpp"
 #include "mythapps.h"
 #include "mythinput.h"
 #include "mythsettings.h"
@@ -37,6 +36,8 @@
 static QDateTime gLastPluginUnloadTime;
 QAtomicInteger<quint64> MythApps::currentLoadId{0};
 
+PluginManager *MythApps::pluginManager = nullptr;
+
 /** \brief Creates a new MythApps Screen
  *  \param parent Pointer to the screen stack
  *  \param name The name of the window */
@@ -46,10 +47,7 @@ MythApps::MythApps(MythScreenStack *parent, QString name) : MythScreenType(paren
 
     exitToMainMenuSleepTimer = new QTimer(this); // return to main menu after inactivty for power save.
     minimizeTimer = new QTimer(this);            // minimizes Kodi to the desktop every few seconds
-    playbackTimer = new QTimer(this);            // update the playback status in the music app
     searchTimer = new QTimer(this);              // stops any hung searchs
-    hintTimer = new QTimer(this);                // displays a hint message in the music app
-    musicBarOnStopTimer = new QTimer(this);      // update the music bar status
     isKodiConnectedTimer = new QTimer(this);     // pings Kodi to check connection is still alive
     nextPageTimer = new QTimer(this);            // micro singleshot timer to load any next pages. Stops
                                                  // race conditions with multithreaded code.
@@ -69,10 +67,7 @@ MythApps::MythApps(MythScreenStack *parent, QString name) : MythScreenType(paren
     minimizeTimer->start(5 * 1000);
 
     connect(isKodiConnectedTimer, SIGNAL(timeout()), this, SLOT(isKodiConnectedSlot()));
-    connect(playbackTimer, SIGNAL(timeout()), this, SLOT(playbackTimerSlot()));
     connect(searchTimer, SIGNAL(timeout()), this, SLOT(searchTimerSlot()));
-    connect(hintTimer, SIGNAL(timeout()), this, SLOT(hintTimerSlot()));
-    connect(musicBarOnStopTimer, SIGNAL(timeout()), this, SLOT(musicBarOnStopTimerSlot()));
     connect(searchSuggestTimer, SIGNAL(timeout()), this, SLOT(searchSuggestTimerSlot()));
     connect(searchFocusTimer, SIGNAL(timeout()), this, SLOT(searchFocusTimerSlot()));
     connect(nextPageTimer, SIGNAL(timeout()), this, SLOT(nextPageTimerSlot()));
@@ -92,35 +87,30 @@ MythApps::~MythApps() {
 void MythApps::onTextMessageReceived(const QString &method, const QString &message) {
     LOG(VB_GENERAL, LOG_DEBUG, "onTextMessageReceived():" + method);
 
-    if (method == "Player.OnStop" && (musicOpen || isHome)) {
-        musicBarOnStopTimer->start(500);
+    handlePlaybackEvent(method, message);
+
+    if (fileBrowserHistory->isAppOpen()) {
+        pluginManager->onTextMessageReceived(method, message);
+        return;
+    }
+
+    if (method == "Player.OnStop" && (isHome)) {
         if (controls->isFullscreen()) {
             goMinimize(true);
         }
-    } else if (method == "Player.OnStop" && !musicOpen) {
+    } else if (method == "Player.OnStop") {
         openOSD("Player.OnStop");
-        returnFocus();
+        SetFocusWidget(uiCtx->fileListGrid);
         exitToMainMenuSleepTimer->start();
 
-    } else if (method == "Player.OnPlay" && musicOpen) {
-        musicBarOnStopTimer->stop();
-
-        updateMusicPlayingBarStatus(); // update the music status bar
-        if (message.contains("video")) {
-            if (!controls->isFullscreen()) {
-                confirmDialog(tr("Do you want to open this video in fullscreen?"), "fullscreen");
-            }
-        }
     } else if (method == "Input.OnInputRequested" and !searching) {
         displayInputBox(message);
-    } else if (method == "Player.OnAVStart" && !musicOpen) {
+    } else if (method == "Player.OnAVStart") {
         handleDialogs(true);
         streamDetails = controls->getStreamDetailsAll();
 
         QTimer::singleShot(2000, this, [this]() { takeScreenshot(); });
     }
-
-    handlePlaybackEvent(method, message);
 }
 
 /** \brief Create a inputbox with a title, type and value with pre populated feilds.
@@ -177,8 +167,6 @@ void MythApps::exitToMainMenuSleepTimerReset() {
     }
 }
 
-PluginManager MythApps::pluginManager;
-
 /** \brief create the main screen and initialize the setting and state*/
 bool MythApps::Create() {
     LOG(VB_GENERAL, LOG_INFO, "Opening MythApp");
@@ -234,8 +222,7 @@ bool MythApps::Create() {
     MythUIButtonListItem *searchBtnList = new MythUIButtonListItem(uiCtx->searchButtonList, "");
     searchBtnList->SetText("Search", "buttontext2");
 
-    bool err2 = initializeMusic(); // music
-    if (err || err2) {
+    if (err) {
         LOG(VB_GENERAL, LOG_ERR, "Cannot load screen 'mythapps'");
         return false;
     }
@@ -252,7 +239,6 @@ bool MythApps::Create() {
 
     connect(uiCtx->searchButtonList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(clickedSearchList(MythUIButtonListItem *)));
     connect(uiCtx->searchButtonList, SIGNAL(itemSelected(MythUIButtonListItem *)), this, SLOT(selectSearchList(MythUIButtonListItem *)));
-    connect(uiCtx->searchSettingsButtonList, SIGNAL(itemClicked(MythUIButtonListItem *)), this, SLOT(searchSettingsClicked(MythUIButtonListItem *)));
 
     connect(uiCtx->SearchTextEdit, SIGNAL(valueChanged()), this, SLOT(searchTextEditValueChanged()));
     connect(uiCtx->SearchTextEdit, SIGNAL(LosingFocus()), this, SLOT(searchTextEditLosingFocus()));
@@ -268,12 +254,6 @@ bool MythApps::Create() {
     createDirectoryIfDoesNotExist(getGlobalPathPrefix() + "00cache/"); // Setup cache directories
 
     // load icons
-    mm_albums_icon = createImageCachePath("ma_mm_albums.png");
-    mm_alltracks_icon = createImageCachePath("ma_mm_alltracks.png");
-    mm_artists_icon = createImageCachePath("ma_mm_artists.png");
-    mm_genres_icon = createImageCachePath("ma_mm_genres.png");
-    mm_playlist_icon = createImageCachePath("ma_mm_playlists.png");
-    music_icon = createImageCachePath("ma_music.png");
     back_icon = createImageCachePath("ma_mv_gallery_dir_up.png");
     ma_tv_icon = createImageCachePath("ma_tv.png");
     ma_popular_icon = createImageCachePath("ma_popular.png");
@@ -287,16 +267,30 @@ bool MythApps::Create() {
 
     uiCtx->streamDetailsbackground->Hide();
 
-    pluginManager.setLoadProgramCallback([this](const QString &name, const QString &setdata, const QString &thumbnailUrl) { this->loadProgram(name, setdata, thumbnailUrl); });
-    pluginManager.setToggleSearchVisibleCallback([this](bool visible) { this->toggleSearchVisible(visible); });
-    pluginManager.setGoBackCallback([this]() { this->goBack(); });
-    pluginManager.setFocusWidgetCallback([this](MythUIType *widget) { this->SetFocusWidget(widget); });
-    pluginManager.setPlay_KodiCallback([this](QString mediaLocation) { play_Kodi(mediaLocation, "00:00:00"); });
+    pluginManager = new PluginManager();
+    pluginManager->setLoadProgramCallback([this](const QString name, const QString setdata, const QString thumbnailUrl, MythUIButtonList *mythUIButtonList) {
+        if (mythUIButtonList == nullptr) {
+            this->loadProgram(name, setdata, thumbnailUrl);
+        } else {
+            this->loadProgram(name, setdata, thumbnailUrl, mythUIButtonList);
+        }
+    });
+    pluginManager->setDisplayImageCallback([this](MythUIButtonListItem *item, MythUIButtonList *m_fileList) { displayImage(item, m_fileList); });
 
-    pluginManager.setControls(controls);
-    pluginManager.setDialog(dialog);
-    pluginManager.setUIContext(uiCtx);
+    pluginManager->setToggleSearchVisibleCallback([this](bool visible) { this->toggleSearchVisible(visible); });
+    pluginManager->setGoBackCallback([this]() { this->goBack(); });
+    pluginManager->setFocusWidgetCallback([this](MythUIType *widget) { this->SetFocusWidget(widget); });
+    pluginManager->setPlay_KodiCallback([this](QString mediaLocation) { play_Kodi(mediaLocation, "00:00:00"); });
 
+    pluginManager->setControls(controls);
+    pluginManager->setDialog(dialog);
+    pluginManager->setUIContext(uiCtx);
+    pluginManager->initializeUI(this);
+
+    pluginManager->setPlaybackInfoCallback([this]() { return getPlaybackInfo(); });
+    pluginManager->setExitToMainMenuSleepTimer(exitToMainMenuSleepTimer);
+
+    pluginManager->setGoFullscreenCallback([this]() { goFullscreen(); });
     loadApps();
 
 #ifdef _WIN32
@@ -316,14 +310,11 @@ void MythApps::loadApps() {
     isHome = true;
     browser->setOpenStatus(false);
     currentSearchUrl = "";
-    showMusicUI(false);
     azShowOnUrl.clear();
     delayMilli(5);
     toggleSearchVisible(true);
-    m_hint->SetVisible(false);
     dialog->getLoader()->SetVisible(false);
     setWidgetVisibility(uiCtx->searchSettingsGroup, false);
-    musicMode = 1;
     resetScreenshot();
     firstDirectoryName = tr("All");
     controls->resetActivePlayer();
@@ -333,15 +324,10 @@ void MythApps::loadApps() {
     uiCtx->androidMenuBtn->SetEnabled(true);
 #endif
 
-    playbackTimer->stop();
-    partyMode = false;
     uiCtx->fileListGrid->Reset();
     makeSearchTextEditEmpty();
 
-    if (musicOpen) {
-        clearAndStopPlaylist();
-    }
-    musicOpen = false;
+    pluginManager->exitPlugin();
     uiCtx->filepath->SetText("");
 
     if (controls->getConnected() == 1) {
@@ -369,22 +355,18 @@ void MythApps::loadApps() {
 
     loadPlugins(true);
 
-    controls->loadAddons(pluginManager.hidePlugins());
+    controls->loadAddons(pluginManager->hidePlugins());
     SetFocusWidget(uiCtx->fileListGrid); // set the focus to the file list grid
 
     loadPlugins(false); // load plugins after sorting
 
-    if (gCoreContext->GetSetting("MythAppsMusic").compare("1") == 0) {
-        loadImage(uiCtx->fileListGrid, tr("Music"), QString("Music~Music"), music_icon);
-    }
-
-    pluginManager.getPluginByName("Favourites")->displayHomeScreenItems();
+    pluginManager->getPluginByName("Favourites")->displayHomeScreenItems();
 
     LOG(VB_GENERAL, LOG_DEBUG, "loadApps() Finished");
 }
 
 void MythApps::loadPlugins(bool start) {
-    QList<PluginDisplayInfo> plugins = pluginManager.getPluginsForDisplay(start);
+    QList<PluginDisplayInfo> plugins = pluginManager->getPluginsForDisplay(start);
     for (const auto &plugin : plugins) {
         loadImage(uiCtx->fileListGrid, plugin.name, plugin.setData, plugin.iconPath);
     }
@@ -394,9 +376,10 @@ void MythApps::loadPlugins(bool start) {
 bool MythApps::keyPressEvent(QKeyEvent *event) {
     exitToMainMenuSleepTimerReset();
 
-    if (GetFocusWidget() && GetFocusWidget()->keyPressEvent(event)) {
+    if (GetFocusWidget() && GetFocusWidget()->keyPressEvent(event))
         return true;
-    }
+
+    bool musicOpen = fileBrowserHistory->isMusicAppOpen();
 
     browser->updateBrowserOpenStatus();
     bool handled = false;
@@ -418,7 +401,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
         } else if (action == "TOGGLEHIDDEN") {
             toggleHiddenFolders();
         } else if (action == "TOGGLERECORD") {
-            pluginManager.handleAction(action, currentSelectionDetails);
+            pluginManager->handleAction(action, currentSelectionDetails);
         } else if (action == "HELP") {
             uiCtx->help->SetVisible(!uiCtx->help->IsVisible());
         } else if (browser->proccessRemote(action)) {
@@ -460,7 +443,8 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             // searchSettings
         } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == uiCtx->searchSettingsButtonList) {
             SetFocusWidget(uiCtx->fileListGrid);
-        } else if (handleMusicAction(action)) {
+            // plugins
+        } else if (pluginManager->handleAction(action, GetFocusWidget())) {
 
             // mythapps key events
         } else if (kodiPlayerOpen) { // do nothing.
@@ -483,7 +467,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             SetFocusWidget(uiCtx->fileListGrid);
 
             if (musicOpen) {
-                SetFocusWidget(m_fileListMusicGrid);
+                // SetFocusWidget(m_fileListMusicGrid);
             }
         } else if (action == "MENU") {
             showOptionsMenu();
@@ -760,7 +744,7 @@ void MythApps::searchSuggestTimerSlot() {
     QString localSearchText = uiCtx->SearchTextEdit->GetText();
     searchText = localSearchText;
 
-    if (pluginManager.handleSuggestion(localSearchText)) {
+    if (pluginManager->handleSuggestion(localSearchText)) {
         uiCtx->SearchTextEdit->SetText("");
         return;
     }
@@ -802,11 +786,6 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
         return;
     }
 
-    if (musicOpen) { // search music
-        musicSearch(searchText);
-        return;
-    }
-
     uiCtx->fileListGrid->Reset();
     loadBackButton();
 
@@ -816,7 +795,7 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
         fileBrowserHistory->append(appPath, appPath);
         uiCtx->filepath->SetText(appPath);
 
-        pluginManager.search(searchText, fileBrowserHistory->getCurrentApp());
+        pluginManager->search(searchText, fileBrowserHistory->getCurrentApp());
         return;
     }
 
@@ -1174,7 +1153,7 @@ void MythApps::play(QString mediaLocation, QString seekAmount) {
 void MythApps::goFullscreen() {
     LOG(VB_GENERAL, LOG_DEBUG, "goFullscreen()");
 
-    if (musicOpen) {
+    if (fileBrowserHistory->isMusicAppOpen()) {
         controls->activateWindow("visualer");
     } else {
         controls->activateWindow("screensaver"); // hides the kodi gui (may be unstable?)
@@ -1294,9 +1273,6 @@ void MythApps::takeScreenshot() {
 #ifdef __ANDROID__
     return;
 #endif
-    if (musicOpen)
-        return;
-
     QImage screenshot = screen->grabWindow(0).toImage().convertToFormat(QImage::Format_ARGB32).scaled(1920, 1080, Qt::KeepAspectRatio);
 
     QColor imageColor(screenshot.pixel(600, 600));
@@ -1347,20 +1323,6 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
         fileBrowserHistory->append(label, data);
     }
 
-    // open internal plugins for Favourites, Music, Watched List or Videos if clicked
-    if (programData->hasArtists()) { // if music buttons clicked
-        loadSongsMain(label, "artists");
-        return;
-    } else if (programData->haAlbums()) {
-        loadSongsMain(label, "albums");
-        return;
-    } else if (programData->hasGenres()) {
-        loadSongsMain(label, "genres");
-        return;
-    } else if (programData->hasPlaylists()) {
-        loadSongsMain(programData->getPlot(), "playlists");
-        return;
-    }
     // launch web browser if clicking on a link
     if (programData->hasWeb()) {
         browser->openBrowser(programData->getFilePathParam());
@@ -1369,17 +1331,15 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
     }
 
     if (programData->hasApp()) {
-        QString appName = programData->getAppPluginName();
-        PluginAPI *plugin = pluginManager.getPluginByName(appName);
-        if (plugin) {
-            if (programData->refreshGrid()) {
-                uiCtx->fileListGrid->Reset();
-                loadBackButton();
-            }
-            isHome = false;
-            plugin->load(label, programData->getDataWithoutAppName(data));
-            uiCtx->filepath->SetText(programData->getFriendlyPathName(data));
+        if (programData->refreshGrid()) {
+            uiCtx->fileListGrid->Reset();
+            loadBackButton();
         }
+
+        isHome = false;
+        pluginManager->load(programData->getAppPluginName(), label, programData->getDataWithoutAppName(data));
+        uiCtx->filepath->SetText(programData->getFriendlyPathName(data));
+
         return;
     }
 
@@ -1392,11 +1352,6 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
 
     if (programData->hasShowsAZ()) { // Shows A-Z
         loadShowsAZ();
-        return;
-    }
-
-    if (programData->hasMusic()) { // Music
-        loadMusic();
         return;
     }
 
@@ -1453,7 +1408,8 @@ bool MythApps::appsCallbackPlugins(QScopedPointer<ProgramData> &programData, QSt
 /** \brief the hover selected button/image. Used to update the selected title and plot.
  \param  item - the mythui button */
 void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
-    uiCtx->title->SetText(removeBBCode(item->GetText("buttontext2")));
+    if (!isHome)
+        uiCtx->title->SetText(removeBBCode(item->GetText("buttontext2")));
 
     ProgramData programData(item->GetText("buttontext2"), item->GetData().toString());
 
@@ -1665,8 +1621,6 @@ void MythApps::requestFileBrowser(QString url, QStringList previousSearches, boo
     cacheFile.close();
 }
 
-void MythApps::searchSettingsClicked(MythUIButtonListItem *item) { pluginManager.searchSettingsClicked(item); }
-
 /** \brief load shows AZ( */
 void MythApps::loadShowsAZ() {
     LOG(VB_GENERAL, LOG_DEBUG, "loadShowsAZ()");
@@ -1693,18 +1647,18 @@ void MythApps::showOptionsMenu() {
         m_menuPopup->SetReturnEvent(this, tr("options"));
 
         if (!currentSelectionDetails->isEmpty()) {
-            QStringList menuItems = pluginManager.getOptionsMenuLabels(currentSelectionDetails, fileBrowserHistory->getCurrentData());
+            QStringList menuItems = pluginManager->getOptionsMenuLabels(currentSelectionDetails, fileBrowserHistory->getCurrentData());
             for (const QString &item : menuItems) {
                 m_menuPopup->AddButton(item);
             }
         }
 
-        if (musicOpen and m_playlistVertical->GetCount() > 0) {
-            m_menuPopup->AddButton(tr("Remove all tracks from playlist"));
-            if (GetFocusWidget() == m_playlistVertical) {
-                m_menuPopup->AddButton(tr("Remove selected track from playlist"));
-            }
-        }
+        // if (musicOpen and m_playlistVertical->GetCount() > 0) {
+        // m_menuPopup->AddButton(tr("Remove all tracks from playlist"));
+        // if (GetFocusWidget() == m_playlistVertical) {
+        // m_menuPopup->AddButton(tr("Remove selected track from playlist"));
+        //}
+        //}
         if (isHome) {
             m_menuPopup->AddButton(tr("Settings"));
             m_menuPopup->AddButton(tr("Clear Cache"));
@@ -1742,16 +1696,16 @@ void MythApps::customEvent(QEvent *event) {
                 refreshFileListGridSelection();
             } else if (resulttext == tr("Remove all tracks from playlist")) {
                 controls->playListClear();
-                m_playlistVertical->Reset();
+                // m_playlistVertical->Reset();
                 stopPlayBack();
             } else if (resulttext == tr("Remove selected track from playlist")) {
-                removeFromPlaylist(m_playlistVertical->GetItemCurrent()->GetText());
+                // removeFromPlaylist(m_playlistVertical->GetItemCurrent()->GetText());
 
             } else if (resulttext == tr("Exit to MythTV Menu")) {
                 niceClose(false);
             }
 
-            if (pluginManager.menuCallBack(resulttext, currentSelectionDetails))
+            if (pluginManager->menuCallBack(resulttext, currentSelectionDetails))
                 reload();
         }
 
@@ -1763,7 +1717,7 @@ void MythApps::customEvent(QEvent *event) {
                 resetScreenshot();
             } else if (resulttext == tr("Save Position to Watch List and Exit to Menu")) {
                 lastPlayedDetails->setSeek(getPlayBackTimeString(true, false));
-                pluginManager.appendWatchedLink(lastPlayedDetails->get());
+                pluginManager->appendWatchedLink(lastPlayedDetails->get());
                 resetScreenshot();
                 addToPreviouslyPlayed();
             } else if (resulttext.startsWith(tr("Keep Watching:"))) {
@@ -1816,7 +1770,6 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
     goFullscreen();
     smartDelay();
     play(mediaLocation, seekAmount); // play the media
-    videoStopReceived = false;
 
     m_screenshot.load(getStandardizedImagePath(lastPlayedDetails->getImageUrl()) + ".processed");
     m_screenshot = m_screenshot.copy(0, m_screenshot.height() * 0.20, m_screenshot.width(), m_screenshot.height() * 0.80);
@@ -1836,7 +1789,7 @@ void MythApps::createPlayBackMenu() {
         bool isApp = false;
 
         if (fileBrowserHistory->isAppOpen()) {
-            isApp = pluginManager.useBasicMenu(fileBrowserHistory->getCurrentApp());
+            isApp = pluginManager->useBasicMenu(fileBrowserHistory->getCurrentApp());
         }
 
         if (!previouslyPlayedLink->contains(lastPlayedDetails->getUrl()) && !excludePreviouslyPlayed(lastPlayedDetails->getUrl()) && !isApp) {
@@ -1888,8 +1841,7 @@ void MythApps::openOSD(QString screenType) {
     }
 
     if (screenType.compare("Player.OnStop") == 0) {
-        videoStopReceived = true;
-        playbackTimer->stop();
+        // playbackTimer->stop();
         createPlayBackMenu();
         goMinimize(true);
         minimizeTimer->start();
@@ -1916,17 +1868,6 @@ void MythApps::waitforRequests() {
             break;
         }
         delay(1);
-    }
-}
-
-/** \brief return the focus to the filelist*/
-void MythApps::returnFocus() {
-    if (GetFocusWidget() == uiCtx->filepath) {
-        if (m_fileListMusicGrid->IsVisible()) {
-            SetFocusWidget(m_fileListMusicGrid);
-        } else {
-            SetFocusWidget(uiCtx->fileListGrid);
-        }
     }
 }
 
@@ -1983,7 +1924,7 @@ void MythApps::handlePlaybackEvent(const QString &method, const QString &message
     qint64 now = QDateTime::currentMSecsSinceEpoch();
 
     if (method == "Player.OnAVStart" || method == "Player.OnResume" || method == "Player.OnSpeedChanged") {
-        manualAccumulatedMs_ = getKodiPlaybackTimeMs();
+        manualAccumulatedMs_ = getKodiPlaybackTimeMs().currentMs;
         playbackStartMs_ = now;
     } else if (method == "Player.OnSeek") {
         manualAccumulatedMs_ = controls->getTimeFromSeekTimeMs(message);
@@ -2002,16 +1943,20 @@ void MythApps::handlePlaybackEvent(const QString &method, const QString &message
 }
 
 /** \brief Query Kodi for the true position (in milliseconds) */
-qint64 MythApps::getKodiPlaybackTimeMs() {
-    QVariantMap map = controls->getPlayBackTime(); //
-    if (!map.contains("time"))
-        return 0;
+PlaybackTime MythApps::getKodiPlaybackTimeMs() {
+    QVariantMap map = controls->getPlayBackTime();
+    PlaybackTime info;
 
-    playbackDuration = map["duration"].toString();
+    if (!map.contains("time") || !map.contains("duration"))
+        return info;
+
+    info.duration = map["duration"].toString();
 
     QVariantMap t = map["time"].toMap();
     QTime qt(t["hours"].toInt(), t["minutes"].toInt(), t["seconds"].toInt());
-    return QTime(0, 0).msecsTo(qt);
+
+    info.currentMs = QTime(0, 0).msecsTo(qt);
+    return info;
 }
 
 /** \brief Compute the current total playback time (ms) */
@@ -2025,19 +1970,35 @@ qint64 MythApps::getCurrentPlaybackTimeMs() const {
 
 /** \return the playback time of the playing media as a string
  * \param adjustEnd - Check if current time is within 60 seconds of the end */
+
 QString MythApps::getPlayBackTimeString(bool adjustEnd, bool removeHoursIfNone) {
-    qint64 currentTimeMs = getCurrentPlaybackTimeMs();
-    QString time = formatTime(currentTimeMs);
+    PlaybackTime kt = getKodiPlaybackTimeMs();
+    qint64 currentTimeMs = kt.currentMs;
+    QString rawDuration = kt.duration;
 
-    qint64 playbackDurationMs = QTime(0, 0).msecsTo(QTime::fromString(playbackDuration, "hh:mm:ss"));
+    QString timeStr = formatTime(currentTimeMs);
 
-    if (adjustEnd) {
-        if (playbackDurationMs - currentTimeMs <= 30000)
-            time = "00:00:00";
-    }
+    qint64 durationMs = QTime(0, 0).msecsTo(QTime::fromString(rawDuration, "hh:mm:ss"));
+
+    if (adjustEnd && (durationMs - currentTimeMs <= 30000))
+        timeStr = "00:00:00";
 
     if (removeHoursIfNone)
-        time = removeHoursIfZero(time);
+        timeStr = removeHoursIfZero(timeStr);
 
-    return time;
+    return timeStr;
+}
+
+PlaybackInfo MythApps::getPlaybackInfo() {
+    PlaybackTime raw = getKodiPlaybackTimeMs();
+    PlaybackInfo info;
+    info.elapsedMs = raw.currentMs;
+    info.duration = raw.duration;
+    info.currentTime = formatTime(info.elapsedMs);
+
+    QTime dur = QTime::fromString(raw.duration, "hh:mm:ss");
+    qint64 durationMs = QTime(0, 0).msecsTo(dur);
+
+    info.currentTime = removeHoursIfZero(info.currentTime);
+    return info;
 }
