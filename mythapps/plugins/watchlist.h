@@ -24,7 +24,8 @@ class WatchList : public PluginAPI {
     void load(const QString label, const QString data) override;
     void displayHomeScreenItems() override;
 
-    QStringList getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath) override;
+    QStringList getOptionsMenuItems(ProgramData *, const QString &, bool appIsOpen) override;
+
     bool menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) override;
 
     void handleAction(const QString action, ProgramData *currentSelectionDetails);

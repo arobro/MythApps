@@ -58,7 +58,7 @@ void WatchList::loadWatchList(bool unwatched) {
     }
 }
 
-QStringList WatchList::getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath) {
+QStringList WatchList::getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath, bool appIsOpen) {
     Q_UNUSED(currentFilePath);
 
     QStringList options;

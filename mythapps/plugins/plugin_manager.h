@@ -43,6 +43,7 @@ class PluginManager {
     void setPlay_KodiCallback(PluginAPI::SetPlay_KodiCallback cb);
     void setPlaybackInfoCallback(PluginAPI::PlaybackInfoCallback cb);
     void setGoFullscreenCallback(PluginAPI::FullscreenCallback cb);
+    void setGetFocusWidgetCallback(PluginAPI::GetFocusWidgetCallback cb);
 
     void setControls(Controls *c);
     void setDialog(Dialog *d);

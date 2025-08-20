@@ -36,8 +36,11 @@ void Favourites::loadFavourites(bool displayOnHome) {
     }
 }
 
-QStringList Favourites::getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath) {
+QStringList Favourites::getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath, bool appIsOpen) {
     QStringList options;
+
+    if (currentSelectionDetails->isEmpty())
+        return {};
 
     if (favLink.contains(currentSelectionDetails->getUrl())) {
         options << tr("Remove Selection from Favourites");

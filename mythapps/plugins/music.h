@@ -15,6 +15,10 @@
 // MythApps headers
 #include "controls.h"
 
+// Music
+#include "music/IMediaSource.h"
+#include "music/KodiMediaSource.h"
+
 class Music : public PluginAPI {
     Q_OBJECT
   public:
@@ -33,6 +37,8 @@ class Music : public PluginAPI {
 
     void onTextMessageReceived(const QString &method, const QString &message) override;
     void exitPlugin() override;
+    QStringList getOptionsMenuItems(ProgramData *, const QString &, bool appIsOpen) override;
+    bool menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) override;
 
     bool handleAction(const QString &, MythUIType *focusWidget);
 
@@ -40,12 +46,13 @@ class Music : public PluginAPI {
     void loadMusic();
     void updateMediaListCallback(const QString &label, const QString &data);
 
-    QMap<QString, QStringList> getMusicHelper(QString methodValue, QString type, QString filterKey, QString filterValue, QString operatorValue);
-    QMap<QString, QStringList> getByArtist(QString artist);
-    QMap<QString, QStringList> getByAlbums(QString artist);
-    QMap<QString, QStringList> getByAlbumsSearch(QString search);
-    QMap<QString, QStringList> getByAlbumsWithGenre(QString genres);
-    QMap<QString, QStringList> getByGenres();
+    QMap<QString, MediaItem> getByArtist(QString artist);
+    QMap<QString, MediaItem> getByAlbums(QString artist);
+    QMap<QString, MediaItem> getByAlbumsSearch(QString search);
+    QMap<QString, MediaItem> getByGenres(QString searchText);
+    QMap<QString, MediaItem> getByPlaylist();
+
+    void loadCategory(const QMap<QString, MediaItem> &items, const QString &subPath, bool listview);
 
     void loadArtists(bool listview);
     void loadAlbums(bool listview);
@@ -62,7 +69,6 @@ class Music : public PluginAPI {
     void previousTrack();
     void nextTrack();
 
-    QMap<QString, QStringList> filterQMap(QMap<QString, QStringList> inputMap, QString key);
     QStringList addSpacingToList(QMap<QString, QStringList> inputMap, bool listview);
     QString createProgramData(QString category, QString extra, QString image, bool flag, QString info);
     void loadProgram(QString label, QString data, QString image, MythUIButtonList *list);
@@ -103,10 +109,10 @@ class Music : public PluginAPI {
     MythUIImage *m_ff_buttonOff{nullptr};
 
     MythUIButtonList *m_fileListMusicGrid{nullptr};
-    MythUIButtonList *m_fileListSongs{nullptr};
+    MythUIButtonList *m_songList{nullptr};
     MythUIButtonList *m_filterGrid{nullptr};
     MythUIButtonList *m_filterOptionsList{nullptr};
-    MythUIButtonList *m_playlistVertical{nullptr};
+    MythUIButtonList *m_playlist{nullptr};
 
     int musicMode; /*!< 1 for music, 2 for video in the music app */
 
@@ -123,11 +129,13 @@ class Music : public PluginAPI {
 
     QTimer *hintTimer;     /*!< stops any hung searchs */
     QTimer *playbackTimer; /*!< update the playback status in the music app */
-    
-    QString username;              /*!< username for Kodi */
-    QString password;              /*!< password for Kodi */
-    QString ip;                    /*!< ip for Kodi */
-    QString port;                  /*!< port for Kodi */
+
+    QString username; /*!< username for Kodi */
+    QString password; /*!< password for Kodi */
+    QString ip;       /*!< ip for Kodi */
+    QString port;     /*!< port for Kodi */
+
+    QScopedPointer<IMediaSource> mediaSource;
 
   private slots:
     void fileListMusicGridClickedCallback(MythUIButtonListItem *item);

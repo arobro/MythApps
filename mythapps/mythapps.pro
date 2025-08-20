@@ -35,13 +35,15 @@ HEADERS += \
     mythapps.h mythsettings.h mythinput.h imageThread.h searchSuggestions.h shared.h controls.h programData.h programLink.h netRequest.h \
     mythappsdbcheck.h container.h libs/xbmcclient.h browser.h fileBrowserHistory.h NetSocketRequest.cpp \
     plugins/plugin_manager.h plugins/plugin_api.h netSocketRequest.h dialog.h \
-    plugins/favourites.h plugins/videos.h plugins/watchlist.h plugins/ytCustom.h plugins/music.h
+    plugins/favourites.h plugins/videos.h plugins/watchlist.h plugins/ytCustom.h plugins/music.h \
+    plugins/music/IMediaSource.h plugins/music/KodiMediaSource.h
 
 SOURCES += \
     main.cpp mythapps.cpp mythsettings.cpp mythinput.cpp imageThread.cpp searchSuggestions.cpp netRequest.cpp \
     shared.cpp controls.cpp programData.cpp programLink.cpp mythappsdbcheck.cpp browser.cpp fileBrowserHistory.cpp \
     plugins/plugin_manager.cpp netSocketRequest.cpp mythappsCleanup.cpp dialog.cpp \
-    plugins/favourites.cpp plugins/videos.cpp plugins/watchlist.cpp plugins/ytCustom.cpp plugins/music.cpp
+    plugins/favourites.cpp plugins/videos.cpp plugins/watchlist.cpp plugins/ytCustom.cpp plugins/music.cpp \
+    plugins/music/KodiMediaSource.cpp
 
 INCLUDEPATH += plugins
 

@@ -129,6 +129,11 @@ void PluginManager::setPlaybackInfoCallback(PluginAPI::PlaybackInfoCallback cb) 
         m_music->setPlaybackInfoCallback(cb);
 }
 
+void PluginManager::setGetFocusWidgetCallback(PluginAPI::GetFocusWidgetCallback cb) {
+    for (auto plugin : m_plugins.values())
+        plugin->setGetFocusWidgetCallback(cb);
+}
+
 PluginAPI *PluginManager::getPluginByName(const QString &name) {
     if (m_plugins.contains(name)) {
         return m_plugins.value(name);
@@ -154,7 +159,8 @@ void PluginManager::setUIContext(UIContext *uiC) {
 QList<QString> PluginManager::getOptionsMenuLabels(ProgramData *currentSelectionDetails, const QString &currentFilePath) const {
     QList<QString> labels;
     for (PluginAPI *plugin : m_plugins.values()) {
-        labels.append(plugin->getOptionsMenuItems(currentSelectionDetails, currentFilePath));
+        bool appIsOpen = (plugin == m_lastOpenedPlugin);
+        labels.append(plugin->getOptionsMenuItems(currentSelectionDetails, currentFilePath, appIsOpen));
     }
     return labels;
 }

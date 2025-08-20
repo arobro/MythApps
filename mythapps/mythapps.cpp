@@ -291,6 +291,8 @@ bool MythApps::Create() {
     pluginManager->setExitToMainMenuSleepTimer(exitToMainMenuSleepTimer);
 
     pluginManager->setGoFullscreenCallback([this]() { goFullscreen(); });
+    pluginManager->setGetFocusWidgetCallback([this]() { return GetFocusWidget(); });
+
     loadApps();
 
 #ifdef _WIN32
@@ -1646,19 +1648,11 @@ void MythApps::showOptionsMenu() {
         popupStack->AddScreen(m_menuPopup);
         m_menuPopup->SetReturnEvent(this, tr("options"));
 
-        if (!currentSelectionDetails->isEmpty()) {
-            QStringList menuItems = pluginManager->getOptionsMenuLabels(currentSelectionDetails, fileBrowserHistory->getCurrentData());
-            for (const QString &item : menuItems) {
-                m_menuPopup->AddButton(item);
-            }
+        QStringList menuItems = pluginManager->getOptionsMenuLabels(currentSelectionDetails, fileBrowserHistory->getCurrentData());
+        for (const QString &item : menuItems) {
+            m_menuPopup->AddButton(item);
         }
 
-        // if (musicOpen and m_playlistVertical->GetCount() > 0) {
-        // m_menuPopup->AddButton(tr("Remove all tracks from playlist"));
-        // if (GetFocusWidget() == m_playlistVertical) {
-        // m_menuPopup->AddButton(tr("Remove selected track from playlist"));
-        //}
-        //}
         if (isHome) {
             m_menuPopup->AddButton(tr("Settings"));
             m_menuPopup->AddButton(tr("Clear Cache"));
@@ -1694,13 +1688,6 @@ void MythApps::customEvent(QEvent *event) {
                 previouslyPlayedLink->listRemove(currentSelectionDetails->get());
                 setButtonWatched(false);
                 refreshFileListGridSelection();
-            } else if (resulttext == tr("Remove all tracks from playlist")) {
-                controls->playListClear();
-                // m_playlistVertical->Reset();
-                stopPlayBack();
-            } else if (resulttext == tr("Remove selected track from playlist")) {
-                // removeFromPlaylist(m_playlistVertical->GetItemCurrent()->GetText());
-
             } else if (resulttext == tr("Exit to MythTV Menu")) {
                 niceClose(false);
             }
@@ -1977,7 +1964,6 @@ QString MythApps::getPlayBackTimeString(bool adjustEnd, bool removeHoursIfNone) 
     QString rawDuration = kt.duration;
 
     QString timeStr = formatTime(currentTimeMs);
-
     qint64 durationMs = QTime(0, 0).msecsTo(QTime::fromString(rawDuration, "hh:mm:ss"));
 
     if (adjustEnd && (durationMs - currentTimeMs <= 30000))
