@@ -322,8 +322,7 @@ void MythApps::loadApps() {
     controls->resetActivePlayer();
 
 #ifdef __ANDROID__ // display a button to bring up the menu on a touch screen
-    uiCtx->androidMenuBtn->SetVisible(true);
-    uiCtx->androidMenuBtn->SetEnabled(true);
+    setWidgetVisibility(uiCtx->androidMenuBtn, true);
 #endif
 
     uiCtx->fileListGrid->Reset();
@@ -641,10 +640,7 @@ void MythApps::setFocusWidgetSlot(QString widetName) {
     }
 }
 
-void MythApps::setSearchButtonListVisible(bool visible) {
-    uiCtx->searchButtonList->SetVisible(visible);
-    uiCtx->searchButtonListGroup->SetEnabled(visible);
-}
+void MythApps::setSearchButtonListVisible(bool visible) { setWidgetVisibility(uuiCtx->searchButtonListGroup, visible); }
 
 /** \brief  toggle the visibilty of the seachbox including the search button.
  *  \param  visible - set the search box visibility status */
@@ -1369,8 +1365,7 @@ bool MythApps::appsCallbackPlugins(QScopedPointer<ProgramData> &programData, QSt
     LOG(VB_GENERAL, LOG_DEBUG, "appsCallbackPlugins()");
     dialog->getLoader()->SetVisible(true);
 
-    uiCtx->androidMenuBtn->SetVisible(false);
-    uiCtx->androidMenuBtn->SetEnabled(false);
+    setWidgetVisibility(uiCtx->androidMenuBtn, false);
 
     QString fileURL = friendlyUrl(programData->getFilePathParam());
     uiCtx->filepath->SetText(fileURL);
