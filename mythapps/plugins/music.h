@@ -35,7 +35,7 @@ class Music : public PluginAPI {
     void load(const QString label, const QString data) override;
     void displayHomeScreenItems() override;
 
-    void onTextMessageReceived(const QString &method, const QString &message) override;
+    bool onTextMessageReceived(const QString &method, const QString &message) override;
     void exitPlugin() override;
     QStringList getOptionsMenuItems(ProgramData *, const QString &, bool appIsOpen) override;
     bool menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) override;

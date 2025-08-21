@@ -83,7 +83,7 @@ QList<PluginDisplayInfo> PluginManager::getPluginsForDisplay(bool start) const {
         PluginDisplayInfo info;
         info.name = plugin->getPluginDisplayName();
         info.iconPath = createImageCachePath(plugin->getPluginIcon());
-        info.setData = "app://" + plugin->getPluginName() + "/~";
+        info.setData = "app://" + plugin->getPluginName() + "/";
         list.append(info);
     };
 
@@ -175,9 +175,12 @@ bool PluginManager::menuCallBack(const QString &menuText, ProgramData *currentSe
     return reload;
 }
 
-void PluginManager::handleAction(const QString action, ProgramData *currentSelectionDetails) {
-    for (auto plugin : m_plugins.values())
-        plugin->handleAction(action, currentSelectionDetails);
+bool PluginManager::handleAction(const QString action, MythUIType *focusWidget) {
+    bool hAction = false;
+    if (m_music)
+        hAction = m_music->handleAction(action, focusWidget);
+
+    return hAction;
 }
 
 void PluginManager::appendWatchedLink(FileFolderContainer data) {
@@ -226,12 +229,20 @@ void PluginManager::initializeUI(MythUIType *ui) {
     }
 }
 
-bool PluginManager::handleAction(const QString name, MythUIType *focusWidget) { return m_music->handleAction(name, focusWidget); }
-
-void PluginManager::onTextMessageReceived(const QString &method, const QString &message) {
+bool PluginManager::onTextMessageReceived(const QString &method, const QString &message) {
     for (auto plugin : m_plugins.values())
         plugin->onTextMessageReceived(method, message);
+
+    return false;
 }
+
+// bool PluginManager::onTextMessageReceived(const QString &method, const QString &message) {
+// bool received = false;
+// if (m_lastOpenedPlugin) {
+// received = m_lastOpenedPlugin->onTextMessageReceived(method, message);
+//}
+// return received;
+//}
 
 void PluginManager::setExitToMainMenuSleepTimer(QTimer *timer) {
     for (auto plugin : m_plugins.values())

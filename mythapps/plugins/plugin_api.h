@@ -49,11 +49,11 @@ class PluginAPI : public QObject {
     virtual void setPlaybackInfoCallback(PlaybackInfoCallback cb) { m_PlaybackInfoCallback = cb; }
     virtual void setGetFocusWidgetCallback(GetFocusWidgetCallback cb) { m_GetFocusWidgetCallback = cb; }
 
-    virtual void onTextMessageReceived(const QString &method, const QString &message) { return; }
+    virtual bool onTextMessageReceived(const QString &method, const QString &message) { return false; }
     virtual QStringList getOptionsMenuItems(ProgramData *, const QString &, bool appIsOpen) { return {}; }
 
     virtual bool menuCallback(const QString &, ProgramData *) { return false; }
-    virtual void handleAction(const QString, ProgramData *) { return; }
+    virtual bool handleAction(const QString, MythUIType *) { return false; }
     virtual QString hidePlugin() { return ""; }
     virtual void search(const QString &) { return; }
     virtual bool handleSuggestion(const QString) { return false; }

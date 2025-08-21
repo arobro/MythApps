@@ -7,9 +7,12 @@
 
 // QT headers
 #include <QDir>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QThreadPool>
+#include <QVariantMap>
 #include <QtNetwork/QTcpSocket>
 
 // MythTV headers
@@ -22,17 +25,18 @@
  * \param 	play - should this addon open and play the file?
  * \param 	seek - the time to start playing the video from.
  * \return  Delimited string of file, plot,thumbnail, play, seek. */
-QString createProgramData(QString file, QString plot, QString thumbnail, bool play, QString seek) {
-    QString seekString = "";
-    if (seek.compare("") != 0) {
-        seekString = "~" + seek;
+QString createProgramData(const QString &file, const QString &plot, const QString &thumbnail, bool play, const QString &seek) {
+    QVariantMap map;
+    map["file"] = file;
+    map["plot"] = plot;
+    map["thumbnail"] = thumbnail;
+    map["play"] = play;
+    if (!seek.isEmpty()) {
+        map["seek"] = seek;
     }
 
-    QString playString = "";
-    if (play) {
-        playString = "~play";
-    }
-    return file + "~" + plot + "~" + thumbnail + playString + seekString;
+    QJsonDocument doc = QJsonDocument::fromVariant(map);
+    return QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
 }
 
 /** \brief dealy for the x seconds

@@ -15,7 +15,7 @@
 
 /** \class Shared
  *  \brief Contains shared functions or static functions */
-QString createProgramData(QString file, QString plot, QString thumbnail, bool play, QString seek);
+QString createProgramData(const QString &file, const QString &plot, const QString &thumbnail, bool play, const QString &seek);
 
 void delay(int seconds);
 void delayMilli(int milliseconds);

@@ -49,14 +49,12 @@ class PluginManager {
     void setDialog(Dialog *d);
     void setUIContext(UIContext *uiC);
 
-    void onTextMessageReceived(const QString &method, const QString &message);
+    bool onTextMessageReceived(const QString &method, const QString &message);
 
     PluginAPI *getPluginByName(const QString &name);
 
     QList<QString> getOptionsMenuLabels(ProgramData *currentSelectionDetails, const QString &currentFilePath) const;
     bool menuCallBack(const QString &menuText, ProgramData *currentSelectionDetails);
-
-    void handleAction(const QString action, ProgramData *currentSelectionDetails);
 
     QStringList hidePlugins();
     void search(QString searchText, QString appName);

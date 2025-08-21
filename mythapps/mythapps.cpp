@@ -90,8 +90,10 @@ void MythApps::onTextMessageReceived(const QString &method, const QString &messa
     handlePlaybackEvent(method, message);
 
     if (fileBrowserHistory->isAppOpen()) {
-        pluginManager->onTextMessageReceived(method, message);
-        return;
+        if (pluginManager->onTextMessageReceived(method, message)) {
+            LOG(VB_GENERAL, LOG_DEBUG, "exit onTextMessageReceived()");
+            return;
+        }
     }
 
     if (method == "Player.OnStop" && (isHome)) {
@@ -319,7 +321,6 @@ void MythApps::loadApps() {
     setWidgetVisibility(uiCtx->searchSettingsGroup, false);
     resetScreenshot();
     firstDirectoryName = tr("All");
-    controls->resetActivePlayer();
 
 #ifdef __ANDROID__ // display a button to bring up the menu on a touch screen
     setWidgetVisibility(uiCtx->androidMenuBtn, true);
@@ -329,6 +330,8 @@ void MythApps::loadApps() {
     makeSearchTextEditEmpty();
 
     pluginManager->exitPlugin();
+    // controls->resetActivePlayer();
+
     uiCtx->filepath->SetText("");
 
     if (controls->getConnected() == 1) {
@@ -402,7 +405,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
         } else if (action == "TOGGLEHIDDEN") {
             toggleHiddenFolders();
         } else if (action == "TOGGLERECORD") {
-            pluginManager->handleAction(action, currentSelectionDetails);
+
         } else if (action == "HELP") {
             uiCtx->help->SetVisible(!uiCtx->help->IsVisible());
         } else if (browser->proccessRemote(action)) {
@@ -640,7 +643,7 @@ void MythApps::setFocusWidgetSlot(QString widetName) {
     }
 }
 
-void MythApps::setSearchButtonListVisible(bool visible) { setWidgetVisibility(uuiCtx->searchButtonListGroup, visible); }
+void MythApps::setSearchButtonListVisible(bool visible) { setWidgetVisibility(uiCtx->searchButtonListGroup, visible); }
 
 /** \brief  toggle the visibilty of the seachbox including the search button.
  *  \param  visible - set the search box visibility status */
@@ -1386,7 +1389,7 @@ bool MythApps::appsCallbackPlugins(QScopedPointer<ProgramData> &programData, QSt
     }
 
     if (programData->isPlayRequest()) {
-        lastPlayedDetails->set(label, fileURL + "~" + programData->getPlot() + "~" + programData->getImageUrl() + "~play");
+        lastPlayedDetails->set(label, createProgramData(fileURL, programData->getPlot(), programData->getImageUrl(), true, ""));
 
         QString seek = "00:00:00"; // default no seek
         if (programData->hasSeek()) {
@@ -1823,7 +1826,6 @@ void MythApps::openOSD(QString screenType) {
     }
 
     if (screenType.compare("Player.OnStop") == 0) {
-        // playbackTimer->stop();
         createPlayBackMenu();
         goMinimize(true);
         minimizeTimer->start();

@@ -1,5 +1,9 @@
 #include "programData.h"
 
+// QT headers
+#include <QJsonDocument>
+#include <QJsonObject>
+
 ProgramData::ProgramData(QString label, QString setData) { set(label, setData); }
 
 /** \brief set wheather this is the first directory? */
@@ -105,37 +109,25 @@ QString ProgramData::getWebPage() { return getFilePathParam().replace("browser:/
 /** \brief set the program data
  * 	\param label title of the program data
  * 	\param data all program data  */
-void ProgramData::set(QString label, QString data) {
-    fileFolderContainer.url = "";
-    fileFolderContainer.plot = "";
-    fileFolderContainer.image = "";
-    fileFolderContainer.autoPlay = false;
-    fileFolderContainer.seek = "";
-
+void ProgramData::set(const QString label, const QString data) {
+    fileFolderContainer = {};
     fileFolderContainer.title = label;
+    fileFolderContainer.url = data;
 
-    QStringList paramsList = data.split('~');
-    fileFolderContainer.url = paramsList.at(0); // filepath
+    QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
+    if (!doc.isObject())
+        return;
 
-    if (paramsList.size() > 1) { // plot or app name
-        fileFolderContainer.plot = paramsList.at(1);
-        hasPlotText = true;
-    }
+    QJsonObject obj = doc.object();
 
-    if (paramsList.size() > 2) { // image
-        fileFolderContainer.image = paramsList.at(2);
-        plotandImageUrl = true;
-    }
+    fileFolderContainer.url = obj.value("file").toString();
+    fileFolderContainer.plot = obj.value("plot").toString();
+    fileFolderContainer.image = obj.value("thumbnail").toString();
+    fileFolderContainer.autoPlay = obj.value("play").toBool();
+    fileFolderContainer.seek = obj.value("seek").toString();
 
-    if (paramsList.size() > 3) {
-        if (paramsList.at(3).compare("play") == 0) {
-            fileFolderContainer.autoPlay = true;
-        }
-    }
-
-    if (paramsList.size() > 4) { // seek time. optional parameter
-        fileFolderContainer.seek = paramsList.at(4);
-    }
+    hasPlotText = !fileFolderContainer.plot.isEmpty();
+    plotandImageUrl = !fileFolderContainer.image.isEmpty();
 }
 
 /** \brief is the program data empty?

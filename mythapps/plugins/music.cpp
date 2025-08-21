@@ -581,7 +581,7 @@ void Music::loadMusicHelper(QString labelPrefix, QMap<QString, QStringList> load
         if (file.compare("") == 0) {
             setData = appPathName + "/genres/" + label;
         } else {
-            setData = i.value().at(1) + "~|";
+            setData = ::createProgramData(file, "", image, true, "");
         }
 
         m_loadProgramCallback(labelPrefix + label, setData, image, m_fileList);
@@ -634,7 +634,7 @@ void Music::loadSongs(QString album) {
         if (count < 10)
             number += " ";
 
-        QString payload = file + "~|" + thumbnail;
+        QString payload = ::createProgramData(file, "", thumbnail, true, "");
         m_loadProgramCallback(number + label, payload, thumbnail, m_songList);
     }
 }
@@ -697,7 +697,7 @@ void Music::updateMusicPlayingBarStatus() {
     QString thumbnail = mapItem["thumbnail"].toString();
 
     QList listArtist = mapItem["artist"].toList();
-    if (listArtist.size() > 0) {
+    if (!listArtist.isEmpty()) {
         m_textArtist->SetText(listArtist.at(0).toString());
     }
 
@@ -718,7 +718,7 @@ void Music::updateMusicPlayingBarStatus() {
 void Music::downloadImage(QString thumbnailPath) {
     LOG(VB_GENERAL, LOG_DEBUG, "downloadImage() " + thumbnailPath);
 
-    if (thumbnailPath.compare("") == 0) {
+    if (thumbnailPath.isEmpty() || thumbnailPath == "image://DefaultVideoCover.png/") {
         QString filename = QString("%1%2").arg(GetShareDir()).arg("themes/default/mv_browse_nocover.png");
 
         m_coverart->SetFilename(filename);
@@ -840,7 +840,9 @@ void Music::search(const QString &searchText) {
     SetFocusWidget(m_fileListMusicGrid);
 }
 
-void Music::onTextMessageReceived(const QString &method, const QString &message) {
+bool Music::onTextMessageReceived(const QString &method, const QString &message) {
+    LOG(VB_GENERAL, LOG_DEBUG, "Music::onTextMessageReceived: " + method);
+
     if (method == "Player.OnAVStart") {
         updateMusicPlayingBarStatus(); // update the music status bar
         refreshGuiPlaylist();
@@ -855,9 +857,12 @@ void Music::onTextMessageReceived(const QString &method, const QString &message)
         showMusicPlayingBar(false);
         SetFocusWidget(m_fileListMusicGrid);
     }
+    return true;
 }
 
 void Music::exitPlugin() {
+    LOG(VB_GENERAL, LOG_DEBUG, "Music::exitPlugin()");
+
     showMusicUI(false);
     clearAndStopPlaylist();
 }
