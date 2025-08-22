@@ -28,7 +28,8 @@ class WatchList : public PluginAPI {
 
     bool menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) override;
 
-    void handleAction(const QString action, ProgramData *currentSelectionDetails);
+    bool handleAction(const QString, MythUIType *, ProgramData *) override;
+
     void appendWatchedLink(FileFolderContainer &data);
 
   private:

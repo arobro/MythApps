@@ -68,10 +68,10 @@ class PluginManager {
     void exitPlugin();
 
     void load(const QString &pluginName, const QString &label, const QString &data);
+    bool handleAction(const QString, MythUIType *focusWidget, ProgramData *currentSelectionDetails);
 
     // non API
     void appendWatchedLink(FileFolderContainer data);
-    bool handleAction(const QString, MythUIType *focusWidget);
 
   private:
     template <typename T> bool initializePlugin(QScopedPointer<T> &pluginInstance, const QString &pluginName);

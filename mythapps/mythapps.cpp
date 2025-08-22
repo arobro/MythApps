@@ -258,7 +258,6 @@ bool MythApps::Create() {
     // load icons
     back_icon = createImageCachePath("ma_mv_gallery_dir_up.png");
     ma_tv_icon = createImageCachePath("ma_tv.png");
-    ma_popular_icon = createImageCachePath("ma_popular.png");
     ma_search_icon = createImageCachePath("ma_search.png");
 
     previouslyPlayedLink = new ProgramLink("previouslyPlayed"); // load previously played videos
@@ -269,6 +268,20 @@ bool MythApps::Create() {
 
     uiCtx->streamDetailsbackground->Hide();
 
+    loadPluginManager();
+    loadApps();
+
+#ifdef _WIN32
+    delayMilli(400);
+    wchar_t kodi_wchar[] = L"MythApps";
+    SetActiveWindow(FindWindow(NULL, kodi_wchar));
+#endif
+    LOG(VB_GENERAL, LOG_DEBUG, "Create() Finished. Threads: " + QString::number(QThread::idealThreadCount()) + ", 4+ recommended");
+
+    return true;
+}
+
+void MythApps::loadPluginManager() {
     pluginManager = new PluginManager();
     pluginManager->setLoadProgramCallback([this](const QString name, const QString setdata, const QString thumbnailUrl, MythUIButtonList *mythUIButtonList) {
         if (mythUIButtonList == nullptr) {
@@ -294,17 +307,6 @@ bool MythApps::Create() {
 
     pluginManager->setGoFullscreenCallback([this]() { goFullscreen(); });
     pluginManager->setGetFocusWidgetCallback([this]() { return GetFocusWidget(); });
-
-    loadApps();
-
-#ifdef _WIN32
-    delayMilli(400);
-    wchar_t kodi_wchar[] = L"MythApps";
-    SetActiveWindow(FindWindow(NULL, kodi_wchar));
-#endif
-    LOG(VB_GENERAL, LOG_DEBUG, "Create() Finished. Threads: " + QString::number(QThread::idealThreadCount()) + ", 4+ recommended");
-
-    return true;
 }
 
 /** \brief create and initialize the main app screen*/
@@ -404,8 +406,6 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             refreshPage();
         } else if (action == "TOGGLEHIDDEN") {
             toggleHiddenFolders();
-        } else if (action == "TOGGLERECORD") {
-
         } else if (action == "HELP") {
             uiCtx->help->SetVisible(!uiCtx->help->IsVisible());
         } else if (browser->proccessRemote(action)) {
@@ -448,7 +448,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
         } else if ((action == "BACK" || action == "ESCAPE") and GetFocusWidget() == uiCtx->searchSettingsButtonList) {
             SetFocusWidget(uiCtx->fileListGrid);
             // plugins
-        } else if (pluginManager->handleAction(action, GetFocusWidget())) {
+        } else if (pluginManager->handleAction(action, GetFocusWidget(), currentSelectionDetails)) {
 
             // mythapps key events
         } else if (kodiPlayerOpen) { // do nothing.
@@ -469,10 +469,6 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
             SetFocusWidget(uiCtx->SearchTextEdit);
         } else if ((action == "DOWN" || action == "RIGHT") and GetFocusWidget() == uiCtx->searchButtonList) {
             SetFocusWidget(uiCtx->fileListGrid);
-
-            if (musicOpen) {
-                // SetFocusWidget(m_fileListMusicGrid);
-            }
         } else if (action == "MENU") {
             showOptionsMenu();
         } else {
@@ -1903,25 +1899,42 @@ void MythApps::toggleStreamDetails() {
     }
 }
 
-/** \brief Central handler: call on Play, Pause, Resume, Seek, Stop*/
+/** \brief Central handler: call on Play, Pause, Resume, Seek, Stop */
 void MythApps::handlePlaybackEvent(const QString &method, const QString &message) {
     qint64 now = QDateTime::currentMSecsSinceEpoch();
 
-    if (method == "Player.OnAVStart" || method == "Player.OnResume" || method == "Player.OnSpeedChanged") {
-        manualAccumulatedMs_ = getKodiPlaybackTimeMs().currentMs;
+    if (method == "Player.OnPlay") {
+        lastKnownPlaybackMs_ = 0;
+        manualAccumulatedMs_ = 0;
+        playbackStartMs_ = -1;
+    } else if (method == "Player.OnAVStart" || method == "Player.OnResume" || method == "Player.OnSpeedChanged") {
+        PlaybackTime pt = getKodiPlaybackTimeMs();
+        manualAccumulatedMs_ = (pt.currentMs > 0) ? pt.currentMs : lastKnownPlaybackMs_;
         playbackStartMs_ = now;
+        lastKnownPlaybackMs_ = manualAccumulatedMs_;
     } else if (method == "Player.OnSeek") {
-        manualAccumulatedMs_ = controls->getTimeFromSeekTimeMs(message);
+        qint64 seekMs = controls->getTimeFromSeekTimeMs(message);
+
+        if (seekMs <= 0)
+            seekMs = lastKnownPlaybackMs_;
+
+        manualAccumulatedMs_ = seekMs;
         playbackStartMs_ = now;
+        lastKnownPlaybackMs_ = manualAccumulatedMs_;
     } else if (method == "Player.OnPause") {
         if (playbackStartMs_ != -1) {
             manualAccumulatedMs_ += now - playbackStartMs_;
             playbackStartMs_ = -1;
+            lastKnownPlaybackMs_ = manualAccumulatedMs_;
         }
     } else if (method == "Player.OnStop") {
         if (playbackStartMs_ != -1) {
             manualAccumulatedMs_ += now - playbackStartMs_;
             playbackStartMs_ = -1;
+        }
+
+        if (manualAccumulatedMs_ > 0) {
+            lastKnownPlaybackMs_ = manualAccumulatedMs_;
         }
     }
 }
@@ -1931,15 +1944,27 @@ PlaybackTime MythApps::getKodiPlaybackTimeMs() {
     QVariantMap map = controls->getPlayBackTime();
     PlaybackTime info;
 
-    if (!map.contains("time") || !map.contains("duration"))
+    if (!map.contains("time") || !map.contains("duration")) {
+        LOG(VB_GENERAL, LOG_ERR, "getKodiPlaybackTimeMs():Missing time/duration");
         return info;
+    }
 
     info.duration = map["duration"].toString();
 
     QVariantMap t = map["time"].toMap();
-    QTime qt(t["hours"].toInt(), t["minutes"].toInt(), t["seconds"].toInt());
+    int hours = t["hours"].toInt();
+    int minutes = t["minutes"].toInt();
+    int seconds = t["seconds"].toInt();
 
+    QTime qt(hours, minutes, seconds);
     info.currentMs = QTime(0, 0).msecsTo(qt);
+
+    if (info.currentMs <= 0 && lastKnownPlaybackMs_ > 0) {
+        info.currentMs = lastKnownPlaybackMs_;
+    } else if (info.currentMs > 0) {
+        lastKnownPlaybackMs_ = info.currentMs;
+    }
+
     return info;
 }
 
@@ -1958,12 +1983,17 @@ qint64 MythApps::getCurrentPlaybackTimeMs() const {
 QString MythApps::getPlayBackTimeString(bool adjustEnd, bool removeHoursIfNone) {
     PlaybackTime kt = getKodiPlaybackTimeMs();
     qint64 currentTimeMs = kt.currentMs;
+
+    if (currentTimeMs <= 0 && lastKnownPlaybackMs_ > 0)
+        currentTimeMs = lastKnownPlaybackMs_;
+
     QString rawDuration = kt.duration;
-
     QString timeStr = formatTime(currentTimeMs);
-    qint64 durationMs = QTime(0, 0).msecsTo(QTime::fromString(rawDuration, "hh:mm:ss"));
 
-    if (adjustEnd && (durationMs - currentTimeMs <= 30000))
+    QTime durTime = QTime::fromString(rawDuration, "hh:mm:ss");
+    qint64 durationMs = durTime.isValid() ? QTime(0, 0).msecsTo(durTime) : 0;
+
+    if (adjustEnd && durationMs > 0 && (durationMs - currentTimeMs <= 30000))
         timeStr = "00:00:00";
 
     if (removeHoursIfNone)

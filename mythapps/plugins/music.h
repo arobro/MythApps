@@ -40,7 +40,7 @@ class Music : public PluginAPI {
     QStringList getOptionsMenuItems(ProgramData *, const QString &, bool appIsOpen) override;
     bool menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) override;
 
-    bool handleAction(const QString &, MythUIType *focusWidget);
+    bool handleAction(const QString, MythUIType *, ProgramData *) override;
 
   private:
     void loadMusic();

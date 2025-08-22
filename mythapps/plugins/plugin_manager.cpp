@@ -166,21 +166,19 @@ QList<QString> PluginManager::getOptionsMenuLabels(ProgramData *currentSelection
 }
 
 bool PluginManager::menuCallBack(const QString &menuText, ProgramData *currentSelectionDetails) {
-    bool reload = false;
     for (PluginAPI *plugin : m_plugins.values()) {
-        if (plugin->menuCallback(menuText, currentSelectionDetails)) {
-            reload = true;
-        }
+        if (plugin->menuCallback(menuText, currentSelectionDetails))
+            return true;
     }
-    return reload;
+    return false;
 }
 
-bool PluginManager::handleAction(const QString action, MythUIType *focusWidget) {
-    bool hAction = false;
-    if (m_music)
-        hAction = m_music->handleAction(action, focusWidget);
-
-    return hAction;
+bool PluginManager::handleAction(const QString action, MythUIType *focusWidget, ProgramData *currentSelectionDetails) {
+    for (PluginAPI *plugin : m_plugins.values()) {
+        if (plugin->handleAction(action, focusWidget, currentSelectionDetails))
+            return true;
+    }
+    return false;
 }
 
 void PluginManager::appendWatchedLink(FileFolderContainer data) {
@@ -194,7 +192,6 @@ QStringList PluginManager::hidePlugins() {
     for (auto plugin : m_plugins.values()) {
         hiddenPlugins << plugin->hidePlugin();
     }
-
     return hiddenPlugins;
 }
 
@@ -206,18 +203,18 @@ void PluginManager::search(QString searchText, QString appName) {
 }
 
 bool PluginManager::handleSuggestion(const QString &searchText) {
-    bool handled = false;
-    for (auto plugin : m_plugins.values())
-        handled = plugin->handleSuggestion(searchText);
-
-    return handled;
+    for (PluginAPI *plugin : m_plugins.values()) {
+        if (plugin->handleSuggestion(searchText))
+            return true;
+    }
+    return false;
 }
 
 bool PluginManager::useBasicMenu(QString appName) {
-    for (auto plugin : m_plugins.values())
-        if (plugin->getPluginName() == appName) {
+    for (auto plugin : m_plugins.values()) {
+        if (plugin->getPluginName() == appName)
             return plugin->useBasicMenu();
-        }
+    }
     return true;
 }
 
@@ -230,19 +227,11 @@ void PluginManager::initializeUI(MythUIType *ui) {
 }
 
 bool PluginManager::onTextMessageReceived(const QString &method, const QString &message) {
-    for (auto plugin : m_plugins.values())
-        plugin->onTextMessageReceived(method, message);
+    if (m_lastOpenedPlugin)
+        return m_lastOpenedPlugin->onTextMessageReceived(method, message);
 
     return false;
 }
-
-// bool PluginManager::onTextMessageReceived(const QString &method, const QString &message) {
-// bool received = false;
-// if (m_lastOpenedPlugin) {
-// received = m_lastOpenedPlugin->onTextMessageReceived(method, message);
-//}
-// return received;
-//}
 
 void PluginManager::setExitToMainMenuSleepTimer(QTimer *timer) {
     for (auto plugin : m_plugins.values())

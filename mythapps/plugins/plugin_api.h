@@ -53,7 +53,7 @@ class PluginAPI : public QObject {
     virtual QStringList getOptionsMenuItems(ProgramData *, const QString &, bool appIsOpen) { return {}; }
 
     virtual bool menuCallback(const QString &, ProgramData *) { return false; }
-    virtual bool handleAction(const QString, MythUIType *) { return false; }
+    virtual bool handleAction(const QString, MythUIType *, ProgramData *) { return false; }
     virtual QString hidePlugin() { return ""; }
     virtual void search(const QString &) { return; }
     virtual bool handleSuggestion(const QString) { return false; }

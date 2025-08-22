@@ -832,12 +832,10 @@ void Music::search(const QString &searchText) {
 
         loadCategory(mediaSource->searchSongs(searchText), "songs", false);
     }
-    if (musicMode == 2) {
+    if (musicMode == 2)
         mediaSource->searchSongsVids(searchText);
-    }
 
-    delayMilli(100);
-    SetFocusWidget(m_fileListMusicGrid);
+    SetFocusWidget(uiCtx->fileListGrid);
 }
 
 bool Music::onTextMessageReceived(const QString &method, const QString &message) {
@@ -867,7 +865,7 @@ void Music::exitPlugin() {
     clearAndStopPlaylist();
 }
 
-bool Music::handleAction(const QString &action, MythUIType *focusWidget) {
+bool Music::handleAction(const QString action, MythUIType *focusWidget, ProgramData *currentSelectionDetails) {
     bool musicPlayerFullscreenOpen = false; // todo: not working
 
     if (action == "NEXTTRACK") {
@@ -900,7 +898,6 @@ bool Music::handleAction(const QString &action, MythUIType *focusWidget) {
         } else {
             // goBack();
         }
-
     } else if (action == "SEEKFFWD") {
         controls->seekFoward();
     } else if (action == "SEEKRWND") {
@@ -950,6 +947,8 @@ bool Music::handleAction(const QString &action, MythUIType *focusWidget) {
         } else {
             SetFocusWidget(m_fileListMusicGrid);
         }
+    } else if ((action == "DOWN" || action == "RIGHT") and focusWidget == uiCtx->searchButtonList) {
+        SetFocusWidget(m_fileListMusicGrid);
     } else {
         return false; // Not handled
     }

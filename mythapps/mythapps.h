@@ -162,6 +162,7 @@ class MythApps : public MythScreenType {
     QVariantMap playBackTimeMap;
     QString getStandardizedImagePath(QString imagePath);
     void loadPlugins(bool start);
+    void loadPluginManager();
 
     MythDialogBox *m_menuPopup{nullptr};
     MythUIButtonListItem *nextPageitem{nullptr};
@@ -169,10 +170,9 @@ class MythApps : public MythScreenType {
     QScreen *screen{nullptr};
     Controls *controls{nullptr};
 
-    QString back_icon;       /*!< stores physical image location for the corresponding button */
-    QString ma_tv_icon;      /*!< stores physical image location for the corresponding button */
-    QString ma_popular_icon; /*!< stores physical image location for the corresponding button */
-    QString ma_search_icon;  /*!< stores physical image location for the corresponding button */
+    QString back_icon;      /*!< stores physical image location for the corresponding button */
+    QString ma_tv_icon;     /*!< stores physical image location for the corresponding button */
+    QString ma_search_icon; /*!< stores physical image location for the corresponding button */
 
     void setButtonWatched(bool watched);
     void addToPreviouslyPlayed();
@@ -189,12 +189,10 @@ class MythApps : public MythScreenType {
 
     qint64 playbackStartMs_ = -1;
     qint64 manualAccumulatedMs_ = 0;
+    qint64 lastKnownPlaybackMs_ = 0;
 
     UIContext *uiCtx;
     PlaybackInfo getPlaybackInfo();
-
-    // music app
-    void updateMusicPlayingBarStatus();
 
     void CleanupResources();
 

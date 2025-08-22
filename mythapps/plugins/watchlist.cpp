@@ -106,9 +106,12 @@ void WatchList::addToUnWatchedList(bool menu, ProgramData *currentSelectionDetai
     }
 }
 
-void WatchList::handleAction(const QString action, ProgramData *currentSelectionDetails) {
-    if (action == "TOGGLERECORD")
+bool WatchList::handleAction(const QString action, MythUIType *focusWidget, ProgramData *currentSelectionDetails) {
+    if (action == "TOGGLERECORD") {
         addToUnWatchedList(true, currentSelectionDetails);
+        return true;
+    }
+    return false;
 }
 
 void WatchList::appendWatchedLink(FileFolderContainer &data) { watchedLink.append(data); }
