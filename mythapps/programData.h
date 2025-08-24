@@ -8,6 +8,7 @@
 #include <QVariant>
 
 // MythApps headers
+#include "FunctionLogger.h"
 #include "container.h"
 
 /** \class ProgramData

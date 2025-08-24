@@ -24,6 +24,7 @@ QMap<QString, MediaItem> KodiMediaSource::getArtists(const QString &searchText) 
 }
 
 QMap<QString, MediaItem> KodiMediaSource::getArtistsVids(const QString &searchText) {
+    LOGS(0, "", "searchText", searchText);
     if (!searchText.isEmpty()) {
         return reindexByField(fetchMediaItems("VideoLibrary.GetMusicVideos", "musicvideos", "artist", searchText, "contains"), "artist");
     } else {
@@ -32,16 +33,19 @@ QMap<QString, MediaItem> KodiMediaSource::getArtistsVids(const QString &searchTe
 }
 
 QMap<QString, MediaItem> KodiMediaSource::getAlbums(const QString &searchText) {
+    LOGS(0, "", "searchText", searchText);
     QString filterKey = searchText.isEmpty() ? "" : "artist";
     return fetchMediaItems("AudioLibrary.GetAlbums", "albums", filterKey, searchText, "is");
 }
 
 QMap<QString, MediaItem> KodiMediaSource::getAlbumsVids(const QString &searchText) {
+    LOGS(0, "", "searchText", searchText);
     QString filterKey = searchText.isEmpty() ? "" : "artist";
     return reindexByField(fetchMediaItems("VideoLibrary.GetMusicVideos", "musicvideos", filterKey, searchText, "is"), "album");
 }
 
 QMap<QString, MediaItem> KodiMediaSource::getGenres(const QString &searchText) {
+    LOGS(0, "", "searchText", searchText);
     if (searchText.isEmpty()) {
         return fetchMediaItems("AudioLibrary.GetGenres", "genres", "", "", "is");
     }
@@ -50,7 +54,7 @@ QMap<QString, MediaItem> KodiMediaSource::getGenres(const QString &searchText) {
 }
 
 QMap<QString, MediaItem> KodiMediaSource::getGenresVids(const QString &searchText) {
-    LOG(+VB_GENERAL, LOG_DEBUG, "KodiMediaSource::getGenresVids(): " + searchText);
+    LOGS(0, "", "searchText", searchText);
     if (searchText.isEmpty()) {
         return reindexByField(fetchMediaItems("VideoLibrary.GetMusicVideos", "musicvideos", "", "", ""), "genre");
     }
@@ -65,7 +69,7 @@ QMap<QString, MediaItem> KodiMediaSource::searchSongsVids(const QString &query) 
 }
 
 QMap<QString, MediaItem> KodiMediaSource::getPlaylist() {
-    LOG(+VB_GENERAL, LOG_DEBUG, "KodiMediaSource::getPlaylist()");
+    LOGS(1, "");
     QMap<QString, MediaItem> playlistMap;
 
     QJsonObject params;
@@ -96,7 +100,10 @@ QMap<QString, MediaItem> KodiMediaSource::getPlaylist() {
     return playlistMap;
 }
 
-QStringList KodiMediaSource::getPlaylistSongs(const QString &searchText) { return getSongsFromPlaylist(findPlaylistByName(searchText)); }
+QStringList KodiMediaSource::getPlaylistSongs(const QString &searchText) {
+    LOGS(0, "", "searchText", searchText);
+    return getSongsFromPlaylist(findPlaylistByName(searchText));
+}
 
 /** @brief Fetches media items
  * @param rpcMethodName     The name of the Kodi JSON-RPC method to call.
@@ -108,7 +115,7 @@ QStringList KodiMediaSource::getPlaylistSongs(const QString &searchText) { retur
  */
 QMap<QString, MediaItem> KodiMediaSource::fetchMediaItems(const QString &rpcMethodName, const QString &responseKey, const QString &filterField, const QString &filterValue,
                                                           const QString &filterOperator) {
-    LOG(+VB_GENERAL, LOG_DEBUG, "fetchMediaItems() " + rpcMethodName);
+    LOGS(0, "", "rpcMethodName", rpcMethodName, "responseKey", responseKey, "filterField", filterField, "filterValue", filterValue, "filterOperator", filterOperator);
 
     QMap<QString, MediaItem> mediaMap;
     QJsonArray requestedProperties;
@@ -171,6 +178,7 @@ QMap<QString, MediaItem> KodiMediaSource::fetchMediaItems(const QString &rpcMeth
 
 /** \brief Reindex a map of MediaItem objects using a specified field as the new key. */
 QMap<QString, MediaItem> KodiMediaSource::reindexByField(QMap<QString, MediaItem> map, QString filterKey) {
+    LOGS(0, "");
     QMap<QString, MediaItem> list;
 
     QMapIterator<QString, MediaItem> i(map);
@@ -196,7 +204,7 @@ QMap<QString, MediaItem> KodiMediaSource::reindexByField(QMap<QString, MediaItem
 }
 
 QStringList KodiMediaSource::getSongsFromPlaylist(const QString &playlistPath) {
-    LOG(+VB_GENERAL, LOG_DEBUG, "KodiMediaSource::getPlaylist() " + playlistPath);
+    LOGS(0, "", "playlistPath", playlistPath);
 
     QStringList songs;
     QFile file(playlistPath);
@@ -216,6 +224,7 @@ QStringList KodiMediaSource::getSongsFromPlaylist(const QString &playlistPath) {
 }
 
 QString KodiMediaSource::findPlaylistByName(const QString &searchText) {
+    LOGS(0, "", "searchText", searchText);
 #ifdef __ANDROID__
     return QString();
 #endif

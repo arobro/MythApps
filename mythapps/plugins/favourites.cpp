@@ -21,6 +21,7 @@ bool Favourites::getPluginStartPos() const { return true; }
 QString Favourites::getPluginIcon() const { return pluginIcon; }
 
 void Favourites::load(const QString label, const QString data) {
+    LOGS(0, "", "label", label, "data", data);
     m_toggleSearchVisibleCallback(false);
     loadFavourites(false);
 }
@@ -28,6 +29,7 @@ void Favourites::load(const QString label, const QString data) {
 void Favourites::displayHomeScreenItems() { loadFavourites(true); }
 
 void Favourites::loadFavourites(bool displayOnHome) {
+    LOGS(0, "", "displayOnHome", displayOnHome);
     Q_FOREACH (const FileFolderContainer &favourite, favLink.getList(true, 0)) {
         if (displayOnHome && !favourite.pinnedToHome) // Skip items not pinned to home
             continue;
@@ -37,6 +39,7 @@ void Favourites::loadFavourites(bool displayOnHome) {
 }
 
 QStringList Favourites::getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath, bool appIsOpen) {
+    LOGS(0, "", "currentFilePath", currentFilePath, "appIsOpen", appIsOpen);
     QStringList options;
 
     if (currentSelectionDetails->isEmpty())
@@ -58,6 +61,7 @@ QStringList Favourites::getOptionsMenuItems(ProgramData *currentSelectionDetails
 }
 
 bool Favourites::menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) {
+    LOGS(0, "", "menuText", menuText);
     if (menuText == tr("Add Selection to Favourites")) {
         if (currentSelectionDetails->isPlayRequest()) { // remove seek time when saving to favourites
             currentSelectionDetails->resetSeek();

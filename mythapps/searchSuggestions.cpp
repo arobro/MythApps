@@ -9,7 +9,11 @@
 // MythTV headers
 #include <libmyth/mythcontext.h>
 
+// MythApps headers
+#include "FunctionLogger.h"
+
 SearchSuggestions::SearchSuggestions() {
+    LOGS(0, "");
     netRequestSearchSuggestions = new NetRequest("", "", "", "", false);
 
     // Is there a custom search suggest url?
@@ -26,6 +30,7 @@ SearchSuggestions::SearchSuggestions() {
  *  \param search search query
  *  \return list of search suggestions */
 QStringList SearchSuggestions::getSuggestions(QString search) {
+    LOGS(0, "", "search", search);
     QStringList suggestions;
     QString response = netRequestSearchSuggestions->requestUrlPublic(customSearchSuggestUrl + search, "");
 

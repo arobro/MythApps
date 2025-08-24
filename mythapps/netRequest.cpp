@@ -27,6 +27,7 @@ NetRequest::~NetRequest() {
 /** \brief helper function to send and receive any public urls without opional authentication
  *  \param url - external url to send the request to */
 QString NetRequest::requestUrlPublic(QString url, QString authorization) {
+    LOGS(0, "", "url", url, "authorization", authorization);
     QUrl qurl(url);
     QNetworkRequest request(qurl);
 
@@ -58,6 +59,7 @@ QString NetRequest::requestUrlPublic(QString url, QString authorization) {
  *  \param tryDirectDownload Download directly (faster) instead of via Kodi
  *  \return binary image object */
 QByteArray NetRequest::downloadImage(QString imageUrl, bool tryDirectDownload) {
+    LOGS(0, "", "imageUrl", imageUrl, "tryDirectDownload", tryDirectDownload);
     QUrl l_url;
 
     if (tryDirectDownload && imageUrl.contains("http")) {
@@ -92,6 +94,7 @@ QByteArray NetRequest::downloadImage(QString imageUrl, bool tryDirectDownload) {
  * 	\param websiteUrl to autodiscover the favourite icon for
  *  \return url of the highest quailty website icon */
 QString NetRequest::getFavIconUrl(QString websiteUrl) {
+    LOGS(0, "", "websiteUrl", websiteUrl);
     QUrl l_url(websiteUrl);
     QNetworkRequest l_req(l_url);
     l_req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);

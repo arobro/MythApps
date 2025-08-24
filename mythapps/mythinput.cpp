@@ -19,8 +19,8 @@ MythInput::MythInput(MythScreenStack *parent, const QString &name) : MythScreenT
 MythInput::~MythInput() {}
 
 bool MythInput::Create() {
-    bool foundtheme = LoadWindowFromXML("mythapps-input.xml", "osd_input",
-                                        this); // Load the theme for this screen
+    LOGS(0, "");
+    bool foundtheme = LoadWindowFromXML("mythapps-input.xml", "osd_input", this);
     bool err = false;
 
     UIUtilE::Assign(this, m_title, "title", &err);
@@ -39,6 +39,7 @@ bool MythInput::Create() {
 
 /** \brief handle key press events  */
 bool MythInput::keyPressEvent(QKeyEvent *event) {
+    LOGS(0, "");
     if (GetFocusWidget() && GetFocusWidget()->keyPressEvent(event)) {
         return true;
     }
@@ -77,6 +78,7 @@ void MythInput::setTitle(QString title) { m_title->SetText(title); }
 /** \brief set the inputbox text value
  * 	\param value value of the textbox */
 void MythInput::setTextValue(QString value) {
+    LOGS(0, "", "value", value);
     if (!passwordActive) {
         m_TextEditValue->SetText(value);
     }
@@ -89,6 +91,7 @@ void MythInput::setTextValue(QString value) {
  * 	\param type is a password?
  *  \return contains password */
 bool MythInput::setType(QString type) {
+    LOGS(0, "", "type", type);
     bool containsPassword = false;
     if (type.compare("password") == 0) {
         m_TextEditValue->SetPassword(true);
@@ -104,7 +107,10 @@ bool MythInput::setType(QString type) {
     return containsPassword;
 }
 
-QString MythInput::getTextValue() { return m_TextEditValue->GetText(); }
+QString MythInput::getTextValue() {
+    LOGS(0, "");
+    return m_TextEditValue->GetText();
+}
 
 /** \brief wait for the text to be entered
  *  \return was the text entered? */

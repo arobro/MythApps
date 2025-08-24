@@ -11,6 +11,7 @@
 #include <QtNetwork/QNetworkReply>
 
 // MythTV headers
+#include "FunctionLogger.h"
 #include <libmythbase/mythdirs.h>
 
 /** \class Shared

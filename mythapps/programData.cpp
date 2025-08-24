@@ -4,13 +4,17 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-ProgramData::ProgramData(QString label, QString setData) { set(label, setData); }
+ProgramData::ProgramData(QString label, QString setData) {
+    LOGS(0, "", "label", label, "setData", setData);
+    set(label, setData);
+}
 
 /** \brief set wheather this is the first directory? */
 void ProgramData::setFirstDirectory(bool m_FirstDirectory) { firstDirectory = m_FirstDirectory; }
 
 /** \brief get the name of the app by using the first directory name? */
 QString ProgramData::getAppName(QString currentFirstDirectoryName) {
+    LOGS(0, "", "currentFirstDirectoryName", currentFirstDirectoryName);
     if (firstDirectory) {
         return fileFolderContainer.title;
     }
@@ -110,6 +114,7 @@ QString ProgramData::getWebPage() { return getFilePathParam().replace("browser:/
  * 	\param label title of the program data
  * 	\param data all program data  */
 void ProgramData::set(const QString label, const QString data) {
+    LOGS(0, "", "label", label, "data", data);
     fileFolderContainer = {};
     fileFolderContainer.title = label;
     fileFolderContainer.url = data;

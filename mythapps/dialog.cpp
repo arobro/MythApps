@@ -22,6 +22,7 @@ Dialog::~Dialog() {
  *  \param  dialogText to display onscreen
  *  \param  delaySeconds seconds to autoclose */
 void Dialog::createAutoClosingBusyDialog(QString dialogText, int delaySeconds) {
+    LOGS(0, "", "dialogText", dialogText, "delaySeconds", delaySeconds);
     createBusyDialog(dialogText);
     delay(delaySeconds);
     closeBusyDialog();
@@ -30,6 +31,7 @@ void Dialog::createAutoClosingBusyDialog(QString dialogText, int delaySeconds) {
 /** \brief create the busy dialog
  *  \param title lablel for the dialog */
 void Dialog::createBusyDialog(const QString &title) {
+    LOGS(0, "", "title", title);
     if (m_busyPopup)
         return;
 
@@ -44,6 +46,7 @@ void Dialog::createBusyDialog(const QString &title) {
 
 /** \brief close the busy dialoge */
 void Dialog::closeBusyDialog() {
+    LOGS(0, "");
     if (m_busyPopup) {
         m_busyPopup->Close();
         m_busyPopup = nullptr;
@@ -53,6 +56,7 @@ void Dialog::closeBusyDialog() {
 MythUIImage *Dialog::getLoader() { return m_loaderImage; }
 
 void Dialog::confirmDialog(QString description, QString type) {
+    LOGS(0, "", "description", description, "type", type);
     if (m_menuPopup)
         return;
 

@@ -8,6 +8,7 @@ Browser::Browser(Controls *m_controls) { controls = m_controls; }
 /** \brief open the web browser
  * 	\param websiteUrl url of the website */
 void Browser::openBrowser(QString website) {
+    LOGS(0, "", "website", website);
     browserOpen = true;
 #ifdef __ANDROID__
     if (!website.contains("http")) {
@@ -29,10 +30,14 @@ void Browser::openBrowser(QString website) {
 #endif
 }
 
-void Browser::setOpenStatus(bool open) { browserOpen = open; }
+void Browser::setOpenStatus(bool open) {
+    LOGS(0, "", "open", open);
+    browserOpen = open;
+}
 
 /** \brief updates the status of browserOpen varaible and returns the focus if required */
 void Browser::updateBrowserOpenStatus() {
+    LOGS(0, "");
     if (browserOpen) {
         FILE *cmd = popen("pgrep -c --full 'chrome*.*kios*.*'", "r");
         char result[24] = {0x0};
@@ -50,6 +55,7 @@ void Browser::updateBrowserOpenStatus() {
 
 /** \brief proccess keyboard / remote commands for the browser */
 bool Browser::proccessRemote(QString action) {
+    LOGS(0, "", "action", action);
     bool found = false;
 #ifndef _WIN32
 #ifndef __ANDROID__
@@ -108,6 +114,7 @@ bool Browser::proccessRemote(QString action) {
 
 /** \brief Bring the webbrowser to the front if open */
 void Browser::bringToFrontIfOpen() {
+    LOGS(0, "");
 #ifndef _WIN32
 #ifndef __ANDROID__
     if (browserOpen) {

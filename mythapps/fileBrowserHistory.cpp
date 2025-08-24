@@ -6,16 +6,20 @@
 // MythApps headers
 #include "programData.h"
 
-FileBrowserHistory::FileBrowserHistory() {}
+FileBrowserHistory::FileBrowserHistory() { LOGS(0, ""); }
 
 /** \brief Removes the last url from the previousURL list. Used for the back button.  */
 void FileBrowserHistory::removeCurrentUrlFromList() {
+    LOGS(0, "");
     if (previousListItem.size() > 0)
         previousListItem.removeLast();
 }
 
 /** \brief go to the previous url in the file browser history. */
-void FileBrowserHistory::goBack() { removeCurrentUrlFromList(); }
+void FileBrowserHistory::goBack() {
+    LOGS(0, "");
+    removeCurrentUrlFromList();
+}
 
 void FileBrowserHistory::debug() {
     foreach (QStringList previousList, previousListItem) {
@@ -25,6 +29,7 @@ void FileBrowserHistory::debug() {
 
 /** \brief append the current url in the file browser */
 void FileBrowserHistory::append(QString label, QString data) {
+    LOGS(0, "", "label", label, "data", data);
     ProgramData programData(label, data);
 
     if (!programData.refreshGrid())
@@ -44,6 +49,7 @@ void FileBrowserHistory::append(QString label, QString data) {
 
 /** \brief is the file browser hisotry empty? */
 bool FileBrowserHistory::isEmpty() {
+    LOGS(0, "");
     if (previousListItem.size() > 0) {
         return false;
     }
@@ -52,12 +58,14 @@ bool FileBrowserHistory::isEmpty() {
 
 /** \brief get the current label for the currrent url in the file browser */
 QString FileBrowserHistory::getCurrentLabel() {
+    LOGS(0, "");
     QStringList previousList = previousListItem.at(previousListItem.size() - 1);
     return previousList.at(0);
 }
 
 /** \brief get the current data for the currrent url in the file browser */
 QString FileBrowserHistory::getCurrentData() {
+    LOGS(0, "");
     if (previousListItem.isEmpty())
         return "";
 
@@ -66,11 +74,15 @@ QString FileBrowserHistory::getCurrentData() {
 }
 
 /** \brief Check if the current FileBrowser indicates an app is open */
-bool FileBrowserHistory::isAppOpen() { return getCurrentData().startsWith("app://"); }
+bool FileBrowserHistory::isAppOpen() {
+    LOGS(0, "");
+    return getCurrentData().startsWith("app://");
+}
 
 bool FileBrowserHistory::isMusicAppOpen() { return getCurrentData().startsWith("app://Music"); }
 
 QString FileBrowserHistory::getCurrentApp() {
+    LOGS(0, "");
     if (isEmpty())
         return QString();
 

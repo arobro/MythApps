@@ -24,6 +24,7 @@ bool WatchList::getPluginStartPos() const { return true; }
 QString WatchList::getPluginIcon() const { return pluginIcon; }
 
 void WatchList::load(const QString label, const QString data) {
+    LOGS(0, "", "label", label, "data", data);
     m_toggleSearchVisibleCallback(false);
 
     if (data.length() < 2) {
@@ -33,9 +34,10 @@ void WatchList::load(const QString label, const QString data) {
     }
 }
 
-void WatchList::displayHomeScreenItems() {}
+void WatchList::displayHomeScreenItems() { LOGS(0, ""); }
 
 void WatchList::loadWatchList(bool unwatched) {
+    LOGS(0, "", "unwatched", unwatched);
     int limit = 0;
 
     if (!unwatched) {
@@ -59,6 +61,7 @@ void WatchList::loadWatchList(bool unwatched) {
 }
 
 QStringList WatchList::getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath, bool appIsOpen) {
+    LOGS(0, "", "currentFilePath", currentFilePath, "appIsOpen", appIsOpen);
     Q_UNUSED(currentFilePath);
 
     QStringList options;
@@ -78,6 +81,7 @@ QStringList WatchList::getOptionsMenuItems(ProgramData *currentSelectionDetails,
 }
 
 bool WatchList::menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) {
+    LOGS(0, "", "menuText", menuText);
     if (menuText == tr("Remove from Watch List")) {
         watchedLink.listRemove(currentSelectionDetails->get());
         return true; // reload
@@ -90,7 +94,7 @@ bool WatchList::menuCallback(const QString &menuText, ProgramData *currentSelect
 
 /** \brief add to the watched list as unwatched for later viewing  */
 void WatchList::addToUnWatchedList(bool menu, ProgramData *currentSelectionDetails) {
-    LOG(VB_GENERAL, LOG_INFO, "addToUnWatchedList");
+    LOGS(0, "", "menu", menu);
     if (currentSelectionDetails->isPlayRequest()) {
         if (!watchedLink.contains(currentSelectionDetails->getUrl())) {
             currentSelectionDetails->setUnWatched();
@@ -107,6 +111,7 @@ void WatchList::addToUnWatchedList(bool menu, ProgramData *currentSelectionDetai
 }
 
 bool WatchList::handleAction(const QString action, MythUIType *focusWidget, ProgramData *currentSelectionDetails) {
+    LOGS(0, "", "action", action);
     if (action == "TOGGLERECORD") {
         addToUnWatchedList(true, currentSelectionDetails);
         return true;

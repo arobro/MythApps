@@ -24,6 +24,7 @@ Controls::~Controls() {
 
 /** \brief connect to kodi event client (remote control interface) if not connected */
 void Controls::ensureEventClient() {
+    LOGS(0, "");
     if (!eventClientConnected) {
         sockfd = socket(AF_INET, SOCK_DGRAM, 0);
         if (sockfd < 0) {
@@ -37,23 +38,34 @@ void Controls::ensureEventClient() {
 
 /** send any remote-control action **/
 void Controls::sendEventAction(const QString &action) {
+    LOGS(0, "", "action", action);
     ensureEventClient();
     CPacketACTION pkt = CPacketACTION(action.toUtf8().constData());
     pkt.Send(sockfd, eventClientIpAddress);
 }
 
 /** window-minimize **/
-void Controls::goMinimize() { sendEventAction("Minimize"); }
+void Controls::goMinimize() {
+    LOGS(0, "");
+    sendEventAction("Minimize");
+}
 
 /** quit kodi **/
 void Controls::quitKodi() { callJsonRpc("Application.Quit"); }
 
-void Controls::initializeWebSocket() { netSocketRequest.reset(new NetSocketRequest(QString("ws://%1:9090").arg(ip))); }
+void Controls::initializeWebSocket() {
+    LOGS(0, "");
+    netSocketRequest.reset(new NetSocketRequest(QString("ws://%1:9090").arg(ip)));
+}
 
 /** high-level JSON-RPC caller; returns the "result" object **/
-QJsonValue Controls::callJsonRpc(const QString &method, const QJsonObject &params, const QJsonArray &props) { return netSocketRequest->call(method, params, props); }
+QJsonValue Controls::callJsonRpc(const QString &method, const QJsonObject &params, const QJsonArray &props) {
+    LOGS(0, "", "method", method);
+    return netSocketRequest->call(method, params, props);
+}
 
 QString Controls::callJsonRpcString(const QString &method, const QJsonObject &params, const QJsonArray &props) {
+    LOGS(0, "", "method", method);
     QJsonValue result = callJsonRpc(method, params, props);
 
     QJsonDocument doc;
@@ -73,6 +85,7 @@ QString Controls::callJsonRpcString(const QString &method, const QJsonObject &pa
 /** \brief toggle the player debug menu to show bitrate overlay
  *  \param doubleclick require the function to be called twice within one second. (used for double button press).*/
 void Controls::togglePlayerDebug(bool doubleclick) {
+    LOGS(0, "", "doubleclick", doubleclick);
     static QTime time = QTime(0, 0, 0, 0);
 
     if (!doubleclick || time > QTime::currentTime()) {
@@ -84,6 +97,7 @@ void Controls::togglePlayerDebug(bool doubleclick) {
 
 /** \brief Start kodi if not running */
 void Controls::startKodiIfNotRunning() {
+    LOGS(0, "");
 #ifdef __ANDROID__
 #elif _WIN32
     system("tasklist /nh /fi \"imagename eq kodi.exe\" | find /i \"kodi.exe\" > "
@@ -109,6 +123,7 @@ void Controls::startKodiIfNotRunning() {
  *  \return true if the setting equals the value, false otherwise.
  */
 bool Controls::isKodiSetting(const QString &SettingName, const QString &SettingValue) {
+    LOGS(0, "", "SettingName", SettingName, "SettingValue", SettingValue);
     QJsonObject params;
     params["setting"] = SettingName;
 
@@ -134,6 +149,7 @@ template <typename T> void Controls::setKodiSetting(const QString &SettingName, 
 
 /** \brief are any addons installed? */
 bool Controls::areAddonsInstalled() {
+    LOGS(0, "");
     QString answer = getAddons();
 
     if (answer.contains("total:0")) {
@@ -144,6 +160,7 @@ bool Controls::areAddonsInstalled() {
 
 /** \brief Get JSON with a list of video addons */
 QString Controls::getAddons(bool forceRefresh) {
+    LOGS(0, "", "forceRefresh", forceRefresh);
     static QString cachedResult;
 
     if (!cachedResult.isEmpty() && !forceRefresh) {
@@ -169,6 +186,7 @@ QString Controls::getAddons(bool forceRefresh) {
 
 /** \brief Load all addons */
 void Controls::loadAddons(QStringList hiddenPluginList) {
+    LOGS(0, "");
     QString json = getAddons(true);
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
 
@@ -195,11 +213,15 @@ void Controls::loadAddons(QStringList hiddenPluginList) {
     }
 }
 
-QString Controls::getLocationFromUrlAddress(QString urlAddress) { return urlToThumbnailMap.value(getWebSiteDomain(urlAddress)); }
+QString Controls::getLocationFromUrlAddress(QString urlAddress) {
+    LOGS(0, "", "urlAddress", urlAddress);
+    return urlToThumbnailMap.value(getWebSiteDomain(urlAddress));
+}
 
 /** \brief  Checks if input adative addon installed. This is used by Kodi to play DRM video
  *  \return Is the input adative addon installed? */
 bool Controls::isInputAdaptive() {
+    LOGS(0, "");
     QJsonObject params;
     params["type"] = "kodi.inputstream";
     params["enabled"] = true;
@@ -217,6 +239,7 @@ bool Controls::isInputAdaptive() {
  *  \param minutes - time to seek
  *  \param seconds  - time to seek */
 void Controls::seek(int hours, int minutes, int seconds) {
+    LOGS(0, "", "hours", hours, "minutes", minutes, "seconds", seconds);
     int time = (hours * 3600) + (minutes * 60) + seconds;
     LOG(VB_GENERAL, LOG_DEBUG, "controls_seek() " + QString::number(time));
 
@@ -233,6 +256,7 @@ void Controls::seek(int hours, int minutes, int seconds) {
 /** \brief active a window in Kodi
  *  \param window- name of window to active */
 void Controls::activateWindow(QString window) {
+    LOGS(0, "", "window", window);
     LOG(VB_GENERAL, LOG_DEBUG, "controls_activateSplash()");
 
     QJsonObject params;
@@ -241,7 +265,10 @@ void Controls::activateWindow(QString window) {
 }
 
 /** \brief show the on screen display */
-void Controls::showOSD() { callJsonRpc("Input.ShowOSD"); }
+void Controls::showOSD() {
+    LOGS(0, "");
+    callJsonRpc("Input.ShowOSD");
+}
 
 /** \brief show video player info */
 void Controls::showPlayerProcessInfo() { callJsonRpc("Input.ShowPlayerProcessInfo"); }
@@ -252,6 +279,7 @@ void Controls::showInfo() { callJsonRpc("Input.Info"); }
 /** \brief Get the current volume level
  *  \return Volume as an integer (0–100) */
 int Controls::getVol() {
+    LOGS(0, "");
     QJsonArray props;
     props.append("volume");
 
@@ -262,7 +290,7 @@ int Controls::getVol() {
 /** \brief close dialog if one pops up. e.g. for a subscription
  *  \return True if the virtual keyboard is open, false otherwise */
 bool Controls::isVirtualKeyboardOpen() {
-    LOG(VB_GENERAL, LOG_DEBUG, "isVirtualKeyboardOpen()");
+    LOGS(1, "");
 
     QJsonObject params;
     QJsonArray labels;
@@ -279,7 +307,7 @@ bool Controls::isVirtualKeyboardOpen() {
  * \param url Path to the directory
  * \return get plot, thumbnail, file etc */
 QJsonObject Controls::getDirectoryObject(QString url) {
-    LOG(VB_GENERAL, LOG_DEBUG, "getDirectoryObject() " + url);
+    LOGS(1, "", "url", url);
 
     QJsonObject params;
     params["directory"] = url;
@@ -296,7 +324,10 @@ QJsonObject Controls::getDirectoryObject(QString url) {
 }
 
 /** \brief press the back button in kodi */
-void Controls::inputBack() { callJsonRpc("Input.Back"); }
+void Controls::inputBack() {
+    LOGS(0, "");
+    callJsonRpc("Input.Back");
+}
 
 /** \brief mute the playing media */
 void Controls::setMute() {
@@ -323,6 +354,7 @@ void Controls::increaseVol() {
 
 /** \brief decrease the volume if enabled */
 void Controls::decreaseVol() {
+    LOGS(0, "");
     if (!isInternalVolEnabled()) {
         return;
     }
@@ -347,12 +379,15 @@ bool Controls::isPaused() {
     return result.value("speed").toInt() == 0;
 }
 
-void Controls::setActivePlayer(int player) { globalActivePlayer = player; }
+void Controls::setActivePlayer(int player) {
+    LOGS(0, "", "player", player);
+    globalActivePlayer = player;
+}
 
 /** \brief kodi can have multible active video players.
  * \return the first active player id. zero indicates an error */
 void Controls::setActivePlayer() {
-    LOG(VB_GENERAL, LOG_DEBUG, "getActivePlayer()");
+    LOGS(0, "");
 
     const int maxAttempts = 3;
     int attempt = 0;
@@ -376,6 +411,7 @@ void Controls::setActivePlayer() {
 }
 
 int Controls::getActivePlayer() {
+    LOGS(0, "");
     QMutexLocker locker(&mutex);
 
     if (globalActivePlayer != -1)
@@ -398,10 +434,14 @@ int Controls::getActivePlayer() {
     return globalActivePlayer;
 }
 
-void Controls::resetActivePlayer() { globalActivePlayer = -1; }
+void Controls::resetActivePlayer() {
+    LOGS(0, "");
+    globalActivePlayer = -1;
+}
 
 /** \brief stop playing the video */
 void Controls::stopPlayBack() {
+    LOGS(0, "");
     QJsonObject params;
     params["playerid"] = getActivePlayer();
 
@@ -410,6 +450,7 @@ void Controls::stopPlayBack() {
 
 /** \brief is kodi fullscreen */
 bool Controls::isFullscreen() {
+    LOGS(0, "");
     QJsonObject params;
     params["setting"] = QString("videoscreen.screen");
 
@@ -431,6 +472,7 @@ bool Controls::ping() {
  *  \param playerid Kodi player id
  *  \return playback/total time*/
 QVariantMap Controls::getPlayBackTime() {
+    LOGS(0, "");
     QJsonArray properties = {"time", "totaltime", "percentage"};
     QJsonObject params;
     params["playerid"] = getActivePlayer();
@@ -452,6 +494,7 @@ QVariantMap Controls::getPlayBackTime() {
 
 /** \brief close open dialogs in kodi */
 QString Controls::handleDialogs() {
+    LOGS(0, "");
     QJsonArray labels = {"System.CurrentWindow"};
     QJsonObject params;
     params["labels"] = labels;
@@ -471,6 +514,7 @@ QString Controls::handleDialogs() {
 
 /**  \brief Open media in Kodi and optionally resume playback */
 void Controls::play(const QString &mediaLocation, const QString &seekAmount) {
+    LOGS(0, "", "mediaLocation", mediaLocation, "seekAmount", seekAmount);
     FFspeed = 1;
 
     QJsonObject item;
@@ -499,6 +543,7 @@ void Controls::play(const QString &mediaLocation, const QString &seekAmount) {
 
 /** \brief toggle pause the playing media */
 void Controls::pauseToggle() {
+    LOGS(0, "");
     QJsonObject params;
     params["playerid"] = getActivePlayer();
 
@@ -507,6 +552,7 @@ void Controls::pauseToggle() {
 
 /** \brief Determines if media is currently playing */
 bool Controls::isPlaying() {
+    LOGS(0, "");
     QString response = callJsonRpcString("Player.GetActivePlayers");
 
     QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
@@ -516,6 +562,7 @@ bool Controls::isPlaying() {
 
 /** \brief get videos on the file system in Kodi */
 QVariantMap Controls::getVideos() {
+    LOGS(0, "");
     QJsonObject params;
     params["media"] = "video";
 
@@ -529,6 +576,7 @@ QVariantMap Controls::getVideos() {
 
 /** \brief sent text */
 void Controls::inputSendText(const QString &text) {
+    LOGS(0, "", "text", text);
     QJsonObject params;
     params["text"] = text;
     params["done"] = true;
@@ -538,6 +586,7 @@ void Controls::inputSendText(const QString &text) {
 
 /** \brief get stream details helper function */
 QString Controls::getStreamDetails() {
+    LOGS(0, "");
     QJsonArray properties = {"dynpath", "streamdetails"};
     QJsonObject params;
     params["playerid"] = getActivePlayer();
@@ -547,7 +596,7 @@ QString Controls::getStreamDetails() {
 
 /** \brief Format stream details to a string: codec, resolution, etc. */
 QString Controls::getStreamDetailsAll() {
-    LOG(VB_GENERAL, LOG_DEBUG, "getStreamDetailsAll()");
+    LOGS(1, "");
     QString response = getStreamDetails();
     if (response.contains("error") || response.contains("invalid"))
         return "";
@@ -610,6 +659,7 @@ QString Controls::getStreamDetailsAll() {
  * \param  searchTextValue search text to look for.
  * \return fileurl / path of the directory as specified by searchTextValue  */
 QString Controls::getSearchDirectory(QString url, QString searchTextValue) {
+    LOGS(0, "", "url", url, "searchTextValue", searchTextValue);
     QString trimmedUrl = url.trimmed();
     QJsonObject params;
     params["directory"] = trimmedUrl;
@@ -637,6 +687,7 @@ QString Controls::getSearchDirectory(QString url, QString searchTextValue) {
 /** \brief speed to fast foward at.
  * \param speed. Can be +- 1-32 times speed of the video */
 void Controls::setSpeed(int speed) {
+    LOGS(0, "", "speed", speed);
     QJsonObject params;
     params["playerid"] = getActivePlayer();
     params["speed"] = speed;
@@ -646,6 +697,7 @@ void Controls::setSpeed(int speed) {
 
 /** \brief fast foward */
 void Controls::setFFWD() {
+    LOGS(0, "");
     if (FFspeed == 1) {
         FFspeed = 2;
     } else if (FFspeed < 1) {
@@ -675,7 +727,7 @@ void Controls::seekFoward() { queueSeek(30); }
 void Controls::seekBack() { queueSeek(-10); }
 
 void Controls::queueSeek(int seconds) {
-    LOG(VB_GENERAL, LOG_DEBUG, "queueSeek()");
+    LOGS(1, "", "seconds", seconds);
     pendingSeekSeconds += seconds;
 
     if (!seekTimer.isActive()) {
@@ -689,12 +741,14 @@ void Controls::queueSeek(int seconds) {
 }
 
 void Controls::inputActionHelper(QString action) {
+    LOGS(0, "", "action", action);
     QJsonObject params;
     params["action"] = action;
     callJsonRpc("Input.ExecuteAction", params);
 }
 
 void Controls::activateFullscreenVideo() {
+    LOGS(0, "");
     QJsonObject params;
     params["window"] = "fullscreenvideo";
 
@@ -713,13 +767,16 @@ void Controls::toggleFullscreen() {
  * 	\param app name of app to switch to
  *  \return is the helper switching app (mythapp services) running? */
 bool Controls::androidAppSwitch(QString app) {
+    LOGS(0, "", "app", app);
     return netSocketRequest->androidAppSwitch(app);
-    return false;
 }
 
 /** \brief set the connection status
  * 	\param connectStatus the new connection status */
-void Controls::setConnected(int connectStatus) { connected = connectStatus; }
+void Controls::setConnected(int connectStatus) {
+    LOGS(0, "", "connectStatus", connectStatus);
+    connected = connectStatus;
+}
 
 /** \brief get the connection status
  *  \return 0 = not connected, 1 = connected, 2 = connected and authenticated */
@@ -751,10 +808,16 @@ void Controls::waitUntilKodiPingable() {
 // music
 
 /** \brief set the number of seconds for music crossfade */
-void Controls::setCrossFade(int seconds) { setKodiSetting("musicplayer.crossfade", seconds); }
+void Controls::setCrossFade(int seconds) {
+    LOGS(0, "", "seconds", seconds);
+    setKodiSetting("musicplayer.crossfade", seconds);
+}
 
 /** \brief is crossfade enabled? */
-bool Controls::getCrossFade() { return isKodiSetting("musicplayer.crossfade", "0"); }
+bool Controls::getCrossFade() {
+    LOGS(0, "");
+    return isKodiSetting("musicplayer.crossfade", "0");
+}
 
 /** \brief set Audio Library Scan */
 void Controls::setAudioLibraryScan() { callJsonRpc("AudioLibrary.Scan"); }
@@ -763,7 +826,7 @@ void Controls::setAudioLibraryScan() { callJsonRpc("AudioLibrary.Scan"); }
 void Controls::setProjectM() { setKodiSetting("musicplayer.visualisation", "visualization.projectm"); }
 
 void Controls::playListClear() {
-    LOG(VB_GENERAL, LOG_DEBUG, "playListClear()");
+    LOGS(1, "");
     if (globalActivePlayer == 0) {
         return;
     }
@@ -775,7 +838,7 @@ void Controls::playListClear() {
 }
 
 void Controls::playListOpen(int position) {
-    LOG(VB_GENERAL, LOG_DEBUG, "playListOpen()");
+    LOGS(0, "", "position", position);
 
     QJsonObject itemObj;
     itemObj["playlistid"] = 1;
@@ -788,6 +851,8 @@ void Controls::playListOpen(int position) {
 }
 
 void Controls::playListAdd(QString file) {
+    LOGS(0, "", "file", file);
+    LOGS(0, "", "file", file);
     LOG(VB_GENERAL, LOG_DEBUG, "playListAdd(): " + file);
 
     QJsonObject itemObj;
@@ -812,6 +877,7 @@ void Controls::setPartyMode() {
 }
 
 QString Controls::playerGetItem() {
+    LOGS(0, "");
     QJsonArray array;
     array.push_back("album");
     array.push_back("artist");
@@ -825,6 +891,7 @@ QString Controls::playerGetItem() {
 }
 
 void Controls::removeFromPlaylist(int inPlaylistPos) {
+    LOGS(0, "", "inPlaylistPos", inPlaylistPos);
     QJsonObject params;
     params["playlistid"] = 1;
     params["position"] = inPlaylistPos;
@@ -833,6 +900,7 @@ void Controls::removeFromPlaylist(int inPlaylistPos) {
 }
 
 qint64 Controls::getTimeFromSeekTimeMs(const QString &message) {
+    LOGS(0, "", "message", message);
     QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
     QJsonObject rootObj = doc.object();
     QJsonObject paramsObj = rootObj["params"].toObject();

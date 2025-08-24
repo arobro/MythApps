@@ -20,6 +20,7 @@
 #include <libmythui/mythuitext.h>
 
 // MythApps headers
+#include "FunctionLogger.h"
 #include "imageThread.h"
 #include "mythapps.h"
 #include "mythinput.h"
@@ -85,7 +86,7 @@ MythApps::~MythApps() {
 /** \brief Listens to OnPause,OnStop,OnPlay,OnInputRequested messages recieved from Kodi via the websocket.
  * \param kodi websocket message  */
 void MythApps::onTextMessageReceived(const QString &method, const QString &message) {
-    LOG(VB_GENERAL, LOG_DEBUG, "onTextMessageReceived():" + method);
+    LOGS(1, "", "method", method, "message", message);
 
     handlePlaybackEvent(method, message);
 
@@ -118,7 +119,7 @@ void MythApps::onTextMessageReceived(const QString &method, const QString &messa
 /** \brief Create a inputbox with a title, type and value with pre populated feilds.
  * \param sonMessage json string from onTextMessageReceived() */
 void MythApps::displayInputBox(QString jsonMessage) {
-    LOG(VB_GENERAL, LOG_DEBUG, "displayInputBox()");
+    LOGS(1, "", "jsonMessage", jsonMessage);
     MythScreenStack *mainStack = GetMythMainWindow()->GetMainStack();
     auto *mythInput = new MythInput(mainStack, "mythinput");
 
@@ -157,12 +158,13 @@ void MythApps::displayInputBox(QString jsonMessage) {
 
 /** \brief close the 'exitToMainMenu' sleep timer and exit to the main menu */
 void MythApps::exitToMainMenuSleepTimerClose() {
-    LOG(VB_GENERAL, LOG_DEBUG, "exitToMainMenuSleepTimerClose()");
+    LOGS(1, "");
     niceClose(false);
 }
 
 /** \brief reset the 'exitToMainMenu' timer to zero seconds*/
 void MythApps::exitToMainMenuSleepTimerReset() {
+    LOGS(0, "");
     if (exitToMainMenuSleepTimer->isActive()) {
         exitToMainMenuSleepTimer->stop();
         exitToMainMenuSleepTimer->start();
@@ -171,7 +173,7 @@ void MythApps::exitToMainMenuSleepTimerReset() {
 
 /** \brief create the main screen and initialize the setting and state*/
 bool MythApps::Create() {
-    LOG(VB_GENERAL, LOG_INFO, "Opening MythApp");
+    LOGS(1, "Opening MythApp. Threads: " + QString::number(QThread::idealThreadCount()));
     coolDown();
 
     username = QString(gCoreContext->GetSetting("MythAppsusername"));
@@ -276,12 +278,11 @@ bool MythApps::Create() {
     wchar_t kodi_wchar[] = L"MythApps";
     SetActiveWindow(FindWindow(NULL, kodi_wchar));
 #endif
-    LOG(VB_GENERAL, LOG_DEBUG, "Create() Finished. Threads: " + QString::number(QThread::idealThreadCount()) + ", 4+ recommended");
-
     return true;
 }
 
 void MythApps::loadPluginManager() {
+    LOGS(0, "");
     pluginManager = new PluginManager();
     pluginManager->setLoadProgramCallback([this](const QString name, const QString setdata, const QString thumbnailUrl, MythUIButtonList *mythUIButtonList) {
         if (mythUIButtonList == nullptr) {
@@ -311,7 +312,8 @@ void MythApps::loadPluginManager() {
 
 /** \brief create and initialize the main app screen*/
 void MythApps::loadApps() {
-    LOG(VB_GENERAL, LOG_DEBUG, "loadApps() Start");
+    LOGS(1, "");
+
     // Initialize the load apps state
     isHome = true;
     browser->setOpenStatus(false);
@@ -367,11 +369,10 @@ void MythApps::loadApps() {
     loadPlugins(false); // load plugins after sorting
 
     pluginManager->getPluginByName("Favourites")->displayHomeScreenItems();
-
-    LOG(VB_GENERAL, LOG_DEBUG, "loadApps() Finished");
 }
 
 void MythApps::loadPlugins(bool start) {
+    LOGS(0, "", "start", start);
     QList<PluginDisplayInfo> plugins = pluginManager->getPluginsForDisplay(start);
     for (const auto &plugin : plugins) {
         loadImage(uiCtx->fileListGrid, plugin.name, plugin.setData, plugin.iconPath);
@@ -380,6 +381,7 @@ void MythApps::loadPlugins(bool start) {
 
 /** \brief handle key press events  */
 bool MythApps::keyPressEvent(QKeyEvent *event) {
+    LOGS(0, "");
     exitToMainMenuSleepTimerReset();
 
     if (GetFocusWidget() && GetFocusWidget()->keyPressEvent(event))
@@ -485,7 +487,7 @@ bool MythApps::keyPressEvent(QKeyEvent *event) {
 /** \brief Delay the closing of this addon to allow any threads to complete. Will also close kodi if required.
  * \param forceClose force close the addon */
 void MythApps::niceClose(bool forceClose) {
-    LOG(VB_GENERAL, LOG_DEBUG, "niceClose()");
+    LOGS(1, "", "forceClose", forceClose);
 
     if (forceClose) {
         controls->setConnected(0);
@@ -509,7 +511,10 @@ void MythApps::niceClose(bool forceClose) {
 }
 
 /** \brief helper function for loadProgram */
-void MythApps::loadProgramSlot(QString name, QString setdata, QString thumbnailUrl) { loadProgram(name, setdata, thumbnailUrl); }
+void MythApps::loadProgramSlot(QString name, QString setdata, QString thumbnailUrl) {
+    loadProgram(name, setdata, thumbnailUrl);
+    LOGS(0, "", "name", name, "setdata", setdata, "thumbnailUrl", thumbnailUrl);
+}
 
 /** \brief helper function for loadProgram */
 void MythApps::loadProgram(QString name, QString setdata, QString thumbnailUrl) { loadProgram(name, setdata, thumbnailUrl, uiCtx->fileListGrid); }
@@ -552,6 +557,7 @@ void MythApps::loadProgram(QString name, QString setdata, QString thumbnailUrl, 
  * \param thumbnailUrl - Can be blank, a local file or a http link
  * \return cached image full path */
 QString MythApps::getStandardizedImagePath(QString imagePath) {
+    LOGS(0, "", "imagePath", imagePath);
     QString localImagePath = "";
 
     if (imagePath.contains(QString("file://"), Qt::CaseInsensitive)) { // local file location, such as the favourite image
@@ -571,6 +577,7 @@ QString MythApps::getStandardizedImagePath(QString imagePath) {
  * \param setdata all the parameters that need to be retrived on click or hover
  * \param thumbnailUrl */
 void MythApps::loadImage(MythUIButtonList *mythUIButtonList, QString name, QString setdata, QString thumbnailUrl) {
+    LOGS(0, "", "name", name, "setdata", setdata, "thumbnailUrl", thumbnailUrl);
     auto *item = new MythUIButtonListItem(mythUIButtonList, "");
 
     if (name.compare("BlankR") == 0) { // no image and no click or hover
@@ -605,6 +612,7 @@ void MythApps::loadImage(MythUIButtonList *mythUIButtonList, QString name, QStri
  *  \param id id of the button to update with the new image
  *  \param fileListType button list or file browser to update*/
 void MythApps::handleImageSlot(int id, const QString thumbnailUrl, MythUIButtonList *fileListType) {
+    LOGS(0, "", "id", id, "thumbnailUrl", thumbnailUrl);
     if (id <= fileListType->GetCount()) {
         auto *item = fileListType->GetItemAt(id);
         QVariant itemData = item->GetData();
@@ -630,7 +638,7 @@ void MythApps::handleImageSlot(int id, const QString thumbnailUrl, MythUIButtonL
 /** \brief allows child classess to set the focus Widget
  *  \param widetName the name of the widget to set focus*/
 void MythApps::setFocusWidgetSlot(QString widetName) {
-    LOG(VB_GENERAL, LOG_DEBUG, "setFocusWidgetSlot()");
+    LOGS(1, "", "widetName", widetName);
 
     if (widetName.compare("uiCtx->searchButtonList") == 0) {
         SetFocusWidget(uiCtx->searchButtonList);
@@ -639,7 +647,10 @@ void MythApps::setFocusWidgetSlot(QString widetName) {
     }
 }
 
-void MythApps::setSearchButtonListVisible(bool visible) { setWidgetVisibility(uiCtx->searchButtonListGroup, visible); }
+void MythApps::setSearchButtonListVisible(bool visible) {
+    setWidgetVisibility(uiCtx->searchButtonListGroup, visible);
+    LOGS(0, "", "visible", visible);
+}
 
 /** \brief  toggle the visibilty of the seachbox including the search button.
  *  \param  visible - set the search box visibility status */
@@ -656,6 +667,7 @@ void MythApps::toggleSearchVisible(bool visible) {
 }
 
 void MythApps::makeSearchTextEditEmpty() {
+    LOGS(0, "");
     uiCtx->SearchTextEdit->SetText("");
     showSearchTextEditBackgroundText();
 }
@@ -664,7 +676,7 @@ void MythApps::showSearchTextEditBackgroundText() { uiCtx->SearchTextEditBackgro
 
 /** \brief Display's the back button in the file browser grid*/
 void MythApps::loadBackButton() {
-    LOG(VB_GENERAL, LOG_DEBUG, "loadBackButton()");
+    LOGS(1, "");
 
     if (searching) {
         SetFocusWidget(uiCtx->fileListGrid);
@@ -684,6 +696,7 @@ void MythApps::selectSearchList(MythUIButtonListItem *item) {
 
 /** \brief clicked callback for the search list. */
 void MythApps::clickedSearchList(MythUIButtonListItem *item) {
+    LOGS(0, "");
     if (searchListLink->getListSizeEnabled() == 0) { // display error is no search sources
         dialog->createAutoClosingBusyDialog(tr("Please setup search sources in M->Setting"), 3);
         return;
@@ -714,6 +727,7 @@ void MythApps::isKodiConnectedSlot() {
 
 /** \brief text changed in the searchbox */
 void MythApps::searchTextEditValueChanged() {
+    LOGS(0, "");
     if (!searching) {
         setSearchButtonListVisible(true); // sets visible when mouse is used instead of remote.
     }
@@ -738,6 +752,7 @@ void MythApps::searchFocusTimerSlot() {
 
 /** \brief Looks up the search suggestions for the search box after a slight delay*/
 void MythApps::searchSuggestTimerSlot() {
+    LOGS(0, "");
     QString localSearchText = uiCtx->SearchTextEdit->GetText();
     searchText = localSearchText;
 
@@ -772,7 +787,7 @@ void MythApps::searchSuggestTimerSlot() {
 /** \brief Can search music or apps from one or more sources
  *  \param overrideCurrentSearchUrl override the search source url used to retrieve the search result from */
 void MythApps::goSearch(QString overrideCurrentSearchUrl) {
-    LOG(VB_GENERAL, LOG_DEBUG, "goSearch()");
+    LOGS(1, "", "overrideCurrentSearchUrl", overrideCurrentSearchUrl);
 
     browser->bringToFrontIfOpen();
     setSearchButtonListVisible(false);
@@ -829,7 +844,8 @@ void MythApps::goSearch(QString overrideCurrentSearchUrl) {
 /** \brief gets search results from one app.
  * \param The app searchUrl */
 void MythApps::fetchSearch(QString searchUrl) {
-    LOG(VB_GENERAL, LOG_DEBUG, "fetchSearch(): " + searchUrl);
+    LOGS(1, "", "searchUrl", searchUrl);
+
     searchTimer->stop();
     searchTimer->start(20 * 1000); // timer to timeout hung searchs
 
@@ -857,6 +873,7 @@ void MythApps::fetchSearch(QString searchUrl) {
 
 /** \brief toggle showing and hiding hidden folders such as login, logout etc*/
 void MythApps::toggleHiddenFolders() {
+    LOGS(0, "");
     if (enableHiddenFolders) {
         dialog->createAutoClosingBusyDialog(tr("Hiding Folders"), 3);
     } else {
@@ -882,7 +899,7 @@ void MythApps::toggleAutoMinimize() {
 /** \brief send text to Kodi. Useful for dialogs without an api.
  * \param The text to send */
 void MythApps::inputSendText(QString text) {
-    LOG(VB_GENERAL, LOG_DEBUG, "inputSendText");
+    LOGS(1, "", "text", text);
 
     int openDialogTimeout = 0; // confirm dialog is open
     while (!controls->isVirtualKeyboardOpen()) {
@@ -913,6 +930,7 @@ void MythApps::inputSendText(QString text) {
  *  \param  previousSearchTerms - list of search terms than should not appear as a folder name. (helps to filter out previous searches)
  * \return is the folder allowed?*/
 bool MythApps::folderAllowed(const QString &label, const QStringList &previousSearchTerms) {
+    LOGS(0, "", "label", label);
     static const QSet<QString> blacklist = {"Bookmarks", "Settings", "Logout", "Search", "New Search", "Switch User", "Select Profile", "Quick Search (Incognito)"};
     static const QSet<QString> searchBlacklist = {"Live", "Playlists"};
 
@@ -931,6 +949,7 @@ bool MythApps::folderAllowed(const QString &label, const QStringList &previousSe
 /** \brief Runs when a directory or file is clicked in the file browser and loads the next directory or plays a video. Passes the json result to the
  * DispalyFileBrowser function and caches the json data*/
 void MythApps::ReplyFinishedFileBrowser(QNetworkReply *reply) {
+    LOGS(0, "");
     QStringList previousSearchTerms = reply->property("previousSearchTerms").toStringList();
     QString filePathName = reply->property("filePathName").toString();
 
@@ -955,6 +974,7 @@ void MythApps::ReplyFinishedFileBrowser(QNetworkReply *reply) {
 /** \brief Load Back Button If Required
  * \param m_loadBackButton display the back button in the file browser */
 void MythApps::loadBackButtonIfRequired(bool m_loadBackButton) {
+    LOGS(0, "", "m_loadBackButton", m_loadBackButton);
     if (m_loadBackButton) {
         uiCtx->fileListGrid->Reset();
         loadBackButton();
@@ -966,6 +986,7 @@ void MythApps::loadBackButtonIfRequired(bool m_loadBackButton) {
  *  \param hash hash of the answered contents from displayFileBrowser
  *  \return is the showAZsearch being displayed*/
 bool MythApps::loadAZSearch(QString hash) {
+    LOGS(0, "", "hash", hash);
     if ((!searching and allShowsFolderFound and currentSearchUrl.size() > 1) || azShowOnUrl.contains(hash) || overrideAppAZSearch(hash)) {
         loadProgram(tr("Shows A-Z"), createProgramData("", "Shows A-Z", "", false, ""), QString("file://") + ma_tv_icon);
         return true;
@@ -978,7 +999,7 @@ bool MythApps::loadAZSearch(QString hash) {
  * \param previousSearchTerms Pass a list of 'directory names' or 'previous search terms' to hide in the file browser
  * \param m_loadBackButton display the back button in the file browser */
 void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerms, bool m_loadBackButton) {
-    LOG(VB_GENERAL, LOG_DEBUG, "displayFileBrowser() Start");
+    LOGS(1, "", "answer", answer, "m_loadBackButton", m_loadBackButton);
     toggleSearchVisible(false);
     bool alphabeticalFolderFound = false;
 
@@ -1063,13 +1084,13 @@ void MythApps::displayFileBrowser(QString answer, QStringList previousSearchTerm
         dialog->getLoader()->SetVisible(false);
         stopScroll = false;
     }
-    LOG(VB_GENERAL, LOG_DEBUG, "displayFileBrowser() Finished");
 }
 
 /** \brief discover if the directory is a search url. Used by the searchbox to pass the search term to the searching url
  * \param label - directory label
  * \param  file - directory path */
 void MythApps::discoverSearchURLs(QString label, QString file) {
+    LOGS(0, "", "label", label, "file", file);
     QString searchUrl;
     QString searchUrl2;
 
@@ -1113,6 +1134,7 @@ void MythApps::discoverSearchURLs(QString label, QString file) {
 
 /** \brief return url search source for apps with "new search" button */
 QString MythApps::getNewSearch(QString url) {
+    LOGS(0, "", "url", url);
     QString searchDirectory = controls->getSearchDirectory(url, "New Search");
     if (searchDirectory.compare("") == 0) {
         searchDirectory = QString();
@@ -1123,6 +1145,7 @@ QString MythApps::getNewSearch(QString url) {
 
 /** \brief go to the previous url in the file browser*/
 void MythApps::goBack() {
+    LOGS(0, "");
     searchNoDuplicateCheck = QStringList();
     currentLoadId.fetchAndAddOrdered(0);
     fileBrowserHistory->goBack();
@@ -1131,7 +1154,7 @@ void MythApps::goBack() {
 
 /** \brief refresh the currrent page wihtout cache*/
 void MythApps::refreshPage() {
-    LOG(VB_GENERAL, LOG_DEBUG, "refreshPage()");
+    LOGS(1, "");
 
     searchNoDuplicateCheck = QStringList();
     dialog->createAutoClosingBusyDialog(tr("Refreshing Page"), 2);
@@ -1142,13 +1165,14 @@ void MythApps::refreshPage() {
  * \param filePathParam url of the video
  * \param seekAmount amount to seek in hours minutes seconds. Can be blank */
 void MythApps::play(QString mediaLocation, QString seekAmount) {
+    LOGS(0, "", "mediaLocation", mediaLocation, "seekAmount", seekAmount);
     uiCtx->plot->SetText("Play");
     controls->play(mediaLocation, seekAmount);
 }
 
 /** \brief make kodi go fullscreen */
 void MythApps::goFullscreen() {
-    LOG(VB_GENERAL, LOG_DEBUG, "goFullscreen()");
+    LOGS(1, "");
 
     if (fileBrowserHistory->isMusicAppOpen()) {
         controls->activateWindow("visualer");
@@ -1202,6 +1226,7 @@ void MythApps::goFullscreen() {
 
 /** \brief minimizes kodi by toggling out of fullscreen. Suggested to call multible times for reliability incase kodi drops a request */
 void MythApps::goMinimize(bool fullscreenCheck) {
+    LOGS(0, "", "fullscreenCheck", fullscreenCheck);
     if (!allowAutoMinimize) {
         return;
     }
@@ -1225,6 +1250,7 @@ void MythApps::goMinimize(bool fullscreenCheck) {
 /** \brief close dialog if one pops up. e.g. for a subscription
  * \param  forceFullScreenVideo hide seekbar OSD when video first opens*/
 void MythApps::handleDialogs(bool forceFullScreenVideo) {
+    LOGS(0, "", "forceFullScreenVideo", forceFullScreenVideo);
     QString systemCurrentWindow = controls->handleDialogs();
     LOG(VB_GENERAL, LOG_DEBUG, "handleDialogs() -" + systemCurrentWindow);
 
@@ -1240,6 +1266,7 @@ void MythApps::handleDialogs(bool forceFullScreenVideo) {
 /** \brief open kodi if a dialog is on screen
  *  \param reply QNetworkReply from the file browser*/
 void MythApps::handleSettingsDialogs(QNetworkReply *reply) {
+    LOGS(0, "");
     if (reply->isRunning()) {
         QString systemCurrentWindow = controls->handleDialogs();
         LOG(VB_GENERAL, LOG_DEBUG, "handleSettingsDialogs() -" + systemCurrentWindow);
@@ -1283,6 +1310,7 @@ void MythApps::takeScreenshot() {
 
 /** \brief toggle the pause status */
 void MythApps::pauseToggle() {
+    LOGS(0, "");
     controls->pauseToggle();
     delayMilli(200); // button debounce
 }
@@ -1299,7 +1327,7 @@ void MythApps::stopPlayBack() {
 void MythApps::appsCallback(MythUIButtonListItem *item) { appsCallback(item->GetText("buttontext2"), item->GetData().toString()); }
 
 void MythApps::appsCallback(QString label, QString data, bool allowBack) {
-    LOG(VB_GENERAL, LOG_DEBUG, "appsCallback()-" + data);
+    LOGS(0, "", "label", label, "data", data, "allowBack", allowBack);
 
     searching = false;
 
@@ -1361,7 +1389,7 @@ void MythApps::appsCallback(QString label, QString data, bool allowBack) {
 /** \brief handle any app directories clicked. Used to load the next directory or open a video
 \param  item - the selected button */
 bool MythApps::appsCallbackPlugins(QScopedPointer<ProgramData> &programData, QString label, QString data) {
-    LOG(VB_GENERAL, LOG_DEBUG, "appsCallbackPlugins()");
+    LOGS(1, "", "label", label, "data", data);
     dialog->getLoader()->SetVisible(true);
 
     setWidgetVisibility(uiCtx->androidMenuBtn, false);
@@ -1404,6 +1432,7 @@ bool MythApps::appsCallbackPlugins(QScopedPointer<ProgramData> &programData, QSt
 /** \brief the hover selected button/image. Used to update the selected title and plot.
  \param  item - the mythui button */
 void MythApps::selectAppsCallback(MythUIButtonListItem *item) {
+    LOGS(0, "");
     if (!isHome)
         uiCtx->title->SetText(removeBBCode(item->GetText("buttontext2")));
 
@@ -1460,6 +1489,7 @@ void MythApps::nextPageTimerSlot() {
 /** \brief set a max delay when the stopscroll varibles is true
  * \param maxDelay - max seconds to delay for */
 void MythApps::delayWhileStopScroll(int maxDelay) {
+    LOGS(0, "", "maxDelay", maxDelay);
     int delayCount = 0;
     while (stopScroll) {
         delay(1);
@@ -1472,6 +1502,7 @@ void MythApps::delayWhileStopScroll(int maxDelay) {
 /** \brief runs when the button is visible on screen. Used to automatically request the next page to allow infinite scroll.
  \param item - the mythui button */
 void MythApps::visibleAppsCallback(MythUIButtonListItem *item) {
+    LOGS(0, "");
     displayImage(item, uiCtx->fileListGrid);
 
     if (item->GetText("buttontext2").contains("Next Page")) {
@@ -1512,7 +1543,7 @@ void MythApps::displayImage(MythUIButtonListItem *item, MythUIButtonList *fileLi
 /** \brief send a request to load the clicked directory. A cache is used to speed up the requests
  * \param  url - url of the clicked directory. */
 void MythApps::requestFileBrowser(QString url, QStringList previousSearches, bool loadBackButton, QString itemData) {
-    LOG(VB_GENERAL, LOG_DEBUG, "requestFileBrowser()");
+    LOGS(1, "", "url", url, "loadBackButton", loadBackButton, "itemData", itemData);
 
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     QUrl qurl("http://" + ip + ":" + port + "/jsonrpc");
@@ -1619,7 +1650,7 @@ void MythApps::requestFileBrowser(QString url, QStringList previousSearches, boo
 
 /** \brief load shows AZ( */
 void MythApps::loadShowsAZ() {
-    LOG(VB_GENERAL, LOG_DEBUG, "loadShowsAZ()");
+    LOGS(1, "");
     uiCtx->fileListGrid->Reset();
     loadBackButton();
     toggleSearchVisible(false);
@@ -1634,7 +1665,7 @@ void MythApps::loadShowsAZ() {
 
 /** \brief display the options menu */
 void MythApps::showOptionsMenu() {
-    LOG(VB_GENERAL, LOG_DEBUG, "showOptionsMenu()");
+    LOGS(1, "");
     MythScreenStack *popupStack = GetMythMainWindow()->GetStack("popup stack");
     m_menuPopup = new MythDialogBox(tr("Options"), popupStack, "mythappsmenupopup");
 
@@ -1661,6 +1692,7 @@ void MythApps::showOptionsMenu() {
 
 /** \brief customEvent from the options menus. Used to connect buttons to actions.*/
 void MythApps::customEvent(QEvent *event) {
+    LOGS(0, "");
     if (event->type() == DialogCompletionEvent::kEventType) {
         auto *dce = dynamic_cast<DialogCompletionEvent *>(event);
         if (dce == nullptr)
@@ -1721,6 +1753,7 @@ void MythApps::customEvent(QEvent *event) {
 
 /** \brief reload either the home screen or favourites screen*/
 void MythApps::reload() {
+    LOGS(1, "");
     if (fileBrowserHistory->isEmpty()) {
         loadApps();
     } else {
@@ -1739,7 +1772,7 @@ void MythApps::refreshFileListGridSelection() {
  * \param mediaLocation url of the video
  * \param seekAmount amount to seek in hours minutes seconds. Can be blank */
 void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
-    LOG(VB_GENERAL, LOG_INFO, "play_Kodi(): " + mediaLocation + " seek: " + seekAmount);
+    LOGS(1, "", "mediaLocation", mediaLocation, "seekAmount", seekAmount);
 
     if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0) {
         kodiPlayerOpen = true; // enable myth remote
@@ -1760,7 +1793,7 @@ void MythApps::play_Kodi(QString mediaLocation, QString seekAmount) {
 
 /** \brief Create menu list GUI prompt when video playback ends */
 void MythApps::createPlayBackMenu() {
-    LOG(VB_GENERAL, LOG_DEBUG, "createPlayBackMenu()");
+    LOGS(1, "");
     MythScreenStack *popupStack = GetMythMainWindow()->GetStack("popup stack");
     m_menuPopup = new MythDialogBox(tr("Options"), popupStack, "mythappsmenupopup");
 
@@ -1811,6 +1844,7 @@ void MythApps::searchTimerSlot() {
 /** \brief decides what menu to open when media playback has finished
  * \param screenType Player.OnStop */
 void MythApps::openOSD(QString screenType) {
+    LOGS(0, "", "screenType", screenType);
     goMinimize(true);
     kodiPlayerOpen = false;
 
@@ -1853,6 +1887,7 @@ void MythApps::waitforRequests() {
 
 /** \brief used to micro delay opening mythsettings to avoid race conditions */
 void MythApps::runMythSettingsSlot() {
+    LOGS(0, "");
     MythScreenStack *mainStack = GetMythMainWindow()->GetMainStack();
     auto *mythsettings = new MythSettings(mainStack, "mythsettings");
 
@@ -1868,6 +1903,7 @@ void MythApps::runMythSettingsSlot() {
 /** \brief  set the button as watched/ unwatched in the gui. THe green text colour on the button means watched flag
  * \param watched shoud the button dispaly watched or unwatched coloured text */
 void MythApps::setButtonWatched(bool watched) {
+    LOGS(0, "", "watched", watched);
     if (watched) {
         QString btnText = uiCtx->fileListGrid->GetItemCurrent()->GetText("buttontext2");
         uiCtx->fileListGrid->GetItemCurrent()->SetText("", "buttontext2");
@@ -1901,6 +1937,7 @@ void MythApps::toggleStreamDetails() {
 
 /** \brief Central handler: call on Play, Pause, Resume, Seek, Stop */
 void MythApps::handlePlaybackEvent(const QString &method, const QString &message) {
+    LOGS(0, "", "method", method, "message", message);
     qint64 now = QDateTime::currentMSecsSinceEpoch();
 
     if (method == "Player.OnPlay") {
@@ -1941,6 +1978,7 @@ void MythApps::handlePlaybackEvent(const QString &method, const QString &message
 
 /** \brief Query Kodi for the true position (in milliseconds) */
 PlaybackTime MythApps::getKodiPlaybackTimeMs() {
+    LOGS(0, "");
     QVariantMap map = controls->getPlayBackTime();
     PlaybackTime info;
 
@@ -1981,6 +2019,7 @@ qint64 MythApps::getCurrentPlaybackTimeMs() const {
  * \param adjustEnd - Check if current time is within 60 seconds of the end */
 
 QString MythApps::getPlayBackTimeString(bool adjustEnd, bool removeHoursIfNone) {
+    LOGS(0, "", "adjustEnd", adjustEnd, "removeHoursIfNone", removeHoursIfNone);
     PlaybackTime kt = getKodiPlaybackTimeMs();
     qint64 currentTimeMs = kt.currentMs;
 
@@ -2003,6 +2042,7 @@ QString MythApps::getPlayBackTimeString(bool adjustEnd, bool removeHoursIfNone) 
 }
 
 PlaybackInfo MythApps::getPlaybackInfo() {
+    LOGS(0, "");
     PlaybackTime raw = getKodiPlaybackTimeMs();
     PlaybackInfo info;
     info.elapsedMs = raw.currentMs;

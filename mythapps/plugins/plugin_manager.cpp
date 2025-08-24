@@ -10,6 +10,7 @@
 #include "shared.h"
 
 PluginManager::PluginManager() {
+    LOGS(0, "");
     initializePlugin(m_favourites, "Favourites");
     initializePlugin(m_videos, "Videos");
     initializePlugin(m_watchlist, "WatchList");
@@ -41,6 +42,7 @@ template <typename T> bool PluginManager::initializePlugin(QScopedPointer<T> &pl
 }
 
 bool PluginManager::loadPlugin(const QString &pluginPath) {
+    LOGS(0, "", "pluginPath", pluginPath);
     QPluginLoader loader(pluginPath);
     QObject *plugin = loader.instance();
     if (plugin) {
@@ -56,6 +58,7 @@ bool PluginManager::loadPlugin(const QString &pluginPath) {
 }
 
 QList<PluginDisplayInfo> PluginManager::getPluginsForDisplay(bool start) const {
+    LOGS(0, "", "start", start);
     QList<PluginDisplayInfo> list;
 
     auto addDisplayInfo = [&](PluginAPI *plugin) {
@@ -95,6 +98,7 @@ QList<PluginDisplayInfo> PluginManager::getPluginsForDisplay(bool start) const {
 }
 
 void PluginManager::setLoadProgramCallback(PluginAPI::LoadProgramCallback cb) {
+    LOGS(0, "");
     for (auto plugin : m_plugins.values())
         plugin->setLoadProgramCallback(cb);
 }
@@ -105,6 +109,7 @@ void PluginManager::setDisplayImageCallback(PluginAPI::DisplayImageCallback cb) 
 }
 
 void PluginManager::setToggleSearchVisibleCallback(PluginAPI::ToggleSearchVisibleCallback cb) {
+    LOGS(0, "");
     for (auto plugin : m_plugins.values())
         plugin->setToggleSearchVisibleCallback(cb);
 }
@@ -115,6 +120,7 @@ void PluginManager::setGoBackCallback(PluginAPI::GoBackCallback cb) {
 }
 
 void PluginManager::setFocusWidgetCallback(PluginAPI::SetFocusWidgetCallback cb) {
+    LOGS(0, "");
     for (auto plugin : m_plugins.values())
         plugin->setFocusWidgetCallback(cb);
 }
@@ -125,6 +131,7 @@ void PluginManager::setPlay_KodiCallback(PluginAPI::SetPlay_KodiCallback cb) {
 }
 
 void PluginManager::setPlaybackInfoCallback(PluginAPI::PlaybackInfoCallback cb) {
+    LOGS(0, "");
     if (m_music)
         m_music->setPlaybackInfoCallback(cb);
 }
@@ -142,6 +149,7 @@ PluginAPI *PluginManager::getPluginByName(const QString &name) {
 }
 
 void PluginManager::setControls(Controls *c) {
+    LOGS(0, "");
     for (auto plugin : m_plugins.values())
         plugin->setControls(c);
 }
@@ -152,11 +160,13 @@ void PluginManager::setDialog(Dialog *d) {
 }
 
 void PluginManager::setUIContext(UIContext *uiC) {
+    LOGS(0, "");
     for (auto plugin : m_plugins.values())
         plugin->setUIContext(uiC);
 }
 
 QList<QString> PluginManager::getOptionsMenuLabels(ProgramData *currentSelectionDetails, const QString &currentFilePath) const {
+    LOGS(0, "", "currentFilePath", currentFilePath);
     QList<QString> labels;
     for (PluginAPI *plugin : m_plugins.values()) {
         bool appIsOpen = (plugin == m_lastOpenedPlugin);
@@ -166,6 +176,7 @@ QList<QString> PluginManager::getOptionsMenuLabels(ProgramData *currentSelection
 }
 
 bool PluginManager::menuCallBack(const QString &menuText, ProgramData *currentSelectionDetails) {
+    LOGS(0, "", "menuText", menuText);
     for (PluginAPI *plugin : m_plugins.values()) {
         if (plugin->menuCallback(menuText, currentSelectionDetails))
             return true;
@@ -174,6 +185,7 @@ bool PluginManager::menuCallBack(const QString &menuText, ProgramData *currentSe
 }
 
 bool PluginManager::handleAction(const QString action, MythUIType *focusWidget, ProgramData *currentSelectionDetails) {
+    LOGS(0, "", "action", action);
     for (PluginAPI *plugin : m_plugins.values()) {
         if (plugin->handleAction(action, focusWidget, currentSelectionDetails))
             return true;
@@ -182,6 +194,7 @@ bool PluginManager::handleAction(const QString action, MythUIType *focusWidget, 
 }
 
 void PluginManager::appendWatchedLink(FileFolderContainer data) {
+    LOGS(0, "");
     if (m_watchlist)
         m_watchlist->appendWatchedLink(data);
 }
@@ -196,6 +209,7 @@ QStringList PluginManager::hidePlugins() {
 }
 
 void PluginManager::search(QString searchText, QString appName) {
+    LOGS(0, "", "searchText", searchText, "appName", appName);
     for (auto plugin : m_plugins.values()) {
         if (plugin->getPluginName() == appName)
             plugin->search(searchText);
@@ -203,6 +217,7 @@ void PluginManager::search(QString searchText, QString appName) {
 }
 
 bool PluginManager::handleSuggestion(const QString &searchText) {
+    LOGS(0, "", "searchText", searchText);
     for (PluginAPI *plugin : m_plugins.values()) {
         if (plugin->handleSuggestion(searchText))
             return true;
@@ -211,6 +226,7 @@ bool PluginManager::handleSuggestion(const QString &searchText) {
 }
 
 bool PluginManager::useBasicMenu(QString appName) {
+    LOGS(0, "", "appName", appName);
     for (auto plugin : m_plugins.values()) {
         if (plugin->getPluginName() == appName)
             return plugin->useBasicMenu();
@@ -219,6 +235,7 @@ bool PluginManager::useBasicMenu(QString appName) {
 }
 
 void PluginManager::initializeUI(MythUIType *ui) {
+    LOGS(0, "");
     for (auto plugin : m_plugins.values()) {
         if (!plugin->initializeUI(ui)) {
             LOG(VB_GENERAL, LOG_ERR, "Cannot load screen 'mythapps plugins'");
@@ -227,6 +244,7 @@ void PluginManager::initializeUI(MythUIType *ui) {
 }
 
 bool PluginManager::onTextMessageReceived(const QString &method, const QString &message) {
+    LOGS(0, "", "method", method, "message", message);
     if (m_lastOpenedPlugin)
         return m_lastOpenedPlugin->onTextMessageReceived(method, message);
 
@@ -239,6 +257,7 @@ void PluginManager::setExitToMainMenuSleepTimer(QTimer *timer) {
 }
 
 void PluginManager::setGoFullscreenCallback(PluginAPI::FullscreenCallback cb) {
+    LOGS(0, "");
     for (auto plugin : m_plugins.values())
         plugin->setGoFullscreenCallback(cb);
 }
@@ -251,6 +270,7 @@ void PluginManager::exitPlugin() {
 }
 
 void PluginManager::load(const QString &pluginName, const QString &label, const QString &data) {
+    LOGS(0, "", "pluginName", pluginName, "label", label, "data", data);
     PluginAPI *plugin = getPluginByName(pluginName);
     if (!plugin)
         return;

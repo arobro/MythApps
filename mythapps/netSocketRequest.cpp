@@ -15,7 +15,7 @@
 QStringList allowedMethods = {"Player.OnPlay", "Player.OnStop", "Input.OnInputRequested", "Player.OnAVStart", "Player.OnResume", "Player.OnSeek", "Player.OnPause"};
 
 NetSocketRequest::NetSocketRequest(const QString &url, QObject *parent) : QObject(parent) {
-    LOG(VB_GENERAL, LOG_DEBUG, "NetSocketRequest() " + url);
+    LOGS(1, "", "url", url);
 
     m_request.setUrl(QUrl(url));
 
@@ -33,16 +33,17 @@ NetSocketRequest::NetSocketRequest(const QString &url, QObject *parent) : QObjec
 NetSocketRequest::~NetSocketRequest() { m_ws.abort(); }
 
 void NetSocketRequest::onConnected() {
-    LOG(VB_GENERAL, LOG_DEBUG, "WebSocket connected");
+    LOGS(1, "WebSocket connected");
     m_ready = true;
 }
 
 void NetSocketRequest::onDisconnected() {
-    LOG(VB_GENERAL, LOG_DEBUG, "WebSocket disconnected");
+    LOGS(1, "WebSocket disconnected");
     m_ready = false;
 }
 
 void NetSocketRequest::onTextMessageReceived(const QString &message) {
+    LOGS(0, "", "message", message);
     QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
     QJsonObject obj = doc.object();
     int msgId = obj["id"].toInt();
@@ -59,6 +60,7 @@ void NetSocketRequest::onTextMessageReceived(const QString &message) {
 }
 
 void NetSocketRequest::ensureConnected() {
+    LOGS(0, "");
     static int totalFailures = 0;   // Tracks cumulative failures
     const int maxRetries = 2;       // Per-call retry limit
     const int maxTotalFailures = 3; // Global failure threshold
@@ -93,6 +95,7 @@ void NetSocketRequest::ensureConnected() {
 }
 
 QJsonValue NetSocketRequest::call(const QString &method, const QJsonObject &params, const QJsonArray &properties) {
+    LOGS(0, "", "method", method);
     ensureConnected();
     if (!m_ready)
         return {};
@@ -123,7 +126,7 @@ QJsonValue NetSocketRequest::call(const QString &method, const QJsonObject &para
  * 	\param app name of app to switch to
  *  \return is the helper switching app (mythapp services) running? */
 bool NetSocketRequest::androidAppSwitch(QString app) {
-    LOG(VB_GENERAL, LOG_INFO, "androidAppSwitch() " + app);
+    LOGS(1, "", "app", app);
 
     if (!m_webSocketAndroid.isValid()) {
         m_webSocketAndroid.open(QUrl("ws://127.0.0.1:8088"));

@@ -11,6 +11,7 @@
 #include <libmythbase/mythdbcheck.h>
 
 // MythApps headers
+#include "FunctionLogger.h"
 #include "mythappsdbcheck.h"
 
 const QString currentDatabaseVersion = "1000";
@@ -37,7 +38,10 @@ QMap<QString, bool> &getSettingLocationMap() {
     return settingLocationMap;
 }
 
-void saveSetting(QString settingName, bool settingValue) { saveSetting(settingName, QString::number(settingValue)); }
+void saveSetting(QString settingName, bool settingValue) {
+    saveSetting(settingName, QString::number(settingValue));
+    LOGS(0, "", "settingName", settingName, "settingValue", settingValue);
+}
 
 void saveSetting(QString settingName, QString settingValue) {
     const auto &map = getSettingLocationMap();
@@ -54,6 +58,7 @@ void saveSetting(QString settingName, QString settingValue) {
 
 /** \brief *updates tthe database schema*/
 bool UpgradeMythAppsDatabaseSchema(void) {
+    LOGS(0, "");
     createSetting("MythAppsusername", "kodi", false);
     createSetting("MythAppspassword", "kodi", false);
     createSetting("MythAppsip", "127.0.0.1", false);

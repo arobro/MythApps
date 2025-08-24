@@ -36,8 +36,8 @@ MythSettings::MythSettings(MythScreenStack *parent, const QString &name) : MythS
 
 MythSettings::~MythSettings() = default;
 
-bool MythSettings::Create() // _videoUrl,_seek
-{
+bool MythSettings::Create() {
+    LOGS(1, "");
     // Load the theme for this screen
     bool foundtheme = LoadWindowFromXML("mythapps-settings.xml", "settings", this);
 
@@ -191,6 +191,7 @@ bool MythSettings::Create() // _videoUrl,_seek
 }
 
 void MythSettings::togglePage() {
+    LOGS(0, "");
     pageOne = !pageOne;
 
     m_pageOne->SetVisible(pageOne);
@@ -208,6 +209,7 @@ void MythSettings::togglePage() {
 }
 
 bool MythSettings::keyPressEvent(QKeyEvent *event) {
+    LOGS(0, "");
     if (auto current = GetFocusWidget()) {
         if (current->keyPressEvent(event))
             return true;
@@ -260,6 +262,7 @@ bool MythSettings::keyPressEvent(QKeyEvent *event) {
 }
 
 void MythSettings::button_cancell() {
+    LOGS(0, "");
     if (m_cancelBtn->GetText().compare("Back") == 0) {
         togglePage();
     } else {
@@ -268,12 +271,14 @@ void MythSettings::button_cancell() {
 }
 
 void MythSettings::button_ResetImageCache() {
+    LOGS(0, "");
     m_ResetImages->SetVisible(false);
     QDir dir(GetConfDir() + "/MythApps/");
     dir.removeRecursively();
 }
 
 void MythSettings::button_ResetSearchList() {
+    LOGS(0, "");
     m_searchSourcesList->Reset();
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("DELETE FROM mythconverg.mythapps_programlink WHERE type = 'searchList'");
@@ -283,6 +288,7 @@ void MythSettings::button_ResetSearchList() {
 }
 
 QString MythSettings::savedWebSite(QString website) {
+    LOGS(0, "", "website", website);
     NetRequest *netRequest = new NetRequest("", "", "", "", false);
     QString favIconUrl = netRequest->getFavIconUrl(website);
 
@@ -290,6 +296,7 @@ QString MythSettings::savedWebSite(QString website) {
 }
 
 void MythSettings::button_save() {
+    LOGS(0, "");
     if (m_saveBtn->GetText().compare("Save") == 0) {
         save();
         Close();
@@ -299,6 +306,7 @@ void MythSettings::button_save() {
 }
 
 void MythSettings::save() {
+    LOGS(0, "");
     saveAllCheckboxSettings();
 
     saveSetting("MythAppsusername", m_settingUser->GetText());
@@ -367,6 +375,7 @@ void MythSettings::save() {
 }
 
 void MythSettings::m_searchListCallback(MythUIButtonListItem *item) {
+    LOGS(0, "");
     if (item->GetText("buttontext2").isEmpty()) {
         item->SetText(item->GetData().toString(), "buttontext2");
         item->SetText("");
@@ -378,6 +387,7 @@ void MythSettings::m_searchListCallback(MythUIButtonListItem *item) {
 
 /** \brief search directories for the .json config file and update the api keys if found */
 void MythSettings::updateApikey(QString appfilePath) {
+    LOGS(0, "", "appfilePath", appfilePath);
     QString apiYTJson = QString("{\"keys\":{\"developer\":{},\"personal\":{\"api_key\": \"") + m_YTapi->GetText() + QString("\",\"client_id\": \"") + m_YTid->GetText() +
                         QString("\",\"client_secret\":\"") + m_YTcs->GetText() + QString("\"}}}");
 
@@ -398,6 +408,7 @@ void MythSettings::updateApikey(QString appfilePath) {
  * @param programName The name of the program to check.
  * @param displayMessageIfInstalled Whether to display a installed message if the program is found. */
 void MythSettings::appendProgramInstallStatus(QString programName, bool displayMessageIfInstalled) {
+    LOGS(0, "", "programName", programName, "displayMessageIfInstalled", displayMessageIfInstalled);
 #ifdef __linux__
     QString command = "command -v " + programName + " >/dev/null 2>&1 || { exit 1; }";
 
@@ -412,6 +423,7 @@ void MythSettings::appendProgramInstallStatus(QString programName, bool displayM
 }
 
 void MythSettings::setCheckboxFromSetting(MythUICheckBox *checkbox, const QString &settingName) {
+    LOGS(0, "", "settingName", settingName);
     checkboxCollection.append(qMakePair(checkbox, settingName)); // Remember for saving later
 
     bool isChecked = (gCoreContext->GetSetting(settingName).compare("1") == 0);
@@ -419,6 +431,7 @@ void MythSettings::setCheckboxFromSetting(MythUICheckBox *checkbox, const QStrin
 }
 
 void MythSettings::saveAllCheckboxSettings() {
+    LOGS(0, "");
     for (const auto &entry : checkboxCollection) {
         if (entry.first) {
             saveSetting(entry.second, entry.first->GetBooleanCheckState());

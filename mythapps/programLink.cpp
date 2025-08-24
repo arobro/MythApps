@@ -6,7 +6,10 @@
 /** \class ProgramLink
  *  \brief Find, Add and remove program links such as favourites, watchlist, previously played & search List */
 
-ProgramLink::ProgramLink(QString _linkName) { linkName = _linkName; }
+ProgramLink::ProgramLink(QString _linkName) {
+    LOGS(0, "", "_linkName", _linkName);
+    linkName = _linkName;
+}
 
 /** \brief How many favourites/'program links' are there?
  *  \return number of program links */
@@ -29,6 +32,7 @@ int ProgramLink::getListSizeEnabled() { return getListEnabled().size(); }
  *  \return list of favourites/'program links in a fileFolderContainer'
  */
 QList<FileFolderContainer> ProgramLink::getList(bool descending, int limit) {
+    LOGS(0, "", "descending", descending, "limit", limit);
     LinkDataList.clear();
 
     MSqlQuery query(MSqlQuery::InitCon());
@@ -63,6 +67,7 @@ QList<FileFolderContainer> ProgramLink::getList(bool descending, int limit) {
 /** \brief Returns a list of all the enabled searchlist links'
  *  \return enabled searchlist links' */
 QStringList ProgramLink::getListEnabled() {
+    LOGS(0, "");
     QStringList enabledList;
 
     MSqlQuery query(MSqlQuery::InitCon());
@@ -80,6 +85,7 @@ QStringList ProgramLink::getListEnabled() {
  * 	\param url url of the favourite/'program link'
  *  \return if the favourite/'program link exist*/
 bool ProgramLink::contains(QString url) {
+    LOGS(0, "", "url", url);
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND url = :URL");
     query.bindValue(":TYPE", linkName);
@@ -93,6 +99,7 @@ bool ProgramLink::contains(QString url) {
  * 	\param url url of the favourite/'program link'
  *  \return if the favourite/'program link exist*/
 bool ProgramLink::containsLike(QString url) {
+    LOGS(0, "", "url", url);
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND url LIKE '" + url + "%'");
     query.bindValue(":TYPE", linkName);
@@ -105,6 +112,7 @@ bool ProgramLink::containsLike(QString url) {
  * 	\param url base url of the favourite/'program link'
  *  \return search url*/
 QString ProgramLink::findSearchUrl(QString url) {
+    LOGS(0, "", "url", url);
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("SELECT url FROM mythapps_programlink  WHERE type = :TYPE AND enabled = 1 AND url LIKE '" + url + "%'");
     query.bindValue(":TYPE", linkName);
@@ -119,6 +127,7 @@ QString ProgramLink::findSearchUrl(QString url) {
 /** \brief Add a favourite/'program link' to the mythtv database
  * 	\param fileFolderContainerTemp program data of the favourite/'program link' */
 void ProgramLink::append(FileFolderContainer fileFolderContainerTemp) {
+    LOGS(0, "");
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("INSERT INTO mythapps_programlink (type,title,url,plot,image,autoPlay,seek,pinnedToHome,hostname,enabled) "
                   " VALUES( :TYPE, :TITLE, :URL, :PLOT, :IMAGE, :AUTOPLAY, :SEEK, :PINNEDTOHOME, :HOSTNAME, :ENABLED);");
@@ -141,6 +150,7 @@ void ProgramLink::append(FileFolderContainer fileFolderContainerTemp) {
 /** \brief Add a search url to the mythtv database
  * 	\param currentSearchUrl current search url */
 void ProgramLink::appendSearchUrl(QString currentSearchUrl) {
+    LOGS(0, "", "currentSearchUrl", currentSearchUrl);
     FileFolderContainer fileFolderContainerTemp;
     fileFolderContainerTemp.url = currentSearchUrl;
     fileFolderContainerTemp.autoPlay = false;
@@ -170,6 +180,7 @@ void ProgramLink::appendSearchUrl(QString currentSearchUrl) {
 /** \brief Removes the favourite/'program link' by URL from the mythtv database
  *  \param fileFolderContainerTemp program data container*/
 void ProgramLink::listRemove(FileFolderContainer fileFolderContainerTemp) {
+    LOGS(0, "");
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("DELETE FROM mythconverg.mythapps_programlink WHERE type = :TYPE AND url = :URL;");
     query.bindValue(":TYPE", linkName);
@@ -193,6 +204,7 @@ bool ProgramLink::isPinnedToHome(FileFolderContainer fileFolderContainerTemp) {
 /** \brief remove the program link from the home screen
  *  \param fileFolderContainerTemp program data container  */
 void ProgramLink::removeFromHomeScreen(FileFolderContainer fileFolderContainerTemp) {
+    LOGS(0, "");
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("UPDATE mythapps_programlink SET pinnedToHome = false WHERE type = :TYPE AND url = :URL AND pinnedToHome = true;");
     query.bindValue(":TYPE", linkName);
@@ -212,6 +224,7 @@ void ProgramLink::addToHomeScreen(FileFolderContainer fileFolderContainerTemp) {
 
 /** \brief get the unwatched size. (seek is false)  */
 QString ProgramLink::getUnWatchedSize() {
+    LOGS(0, "");
     MSqlQuery query(MSqlQuery::InitCon());
     query.prepare("SELECT id FROM mythapps_programlink  WHERE type = :TYPE AND seek = 'false'");
     query.bindValue(":TYPE", linkName);

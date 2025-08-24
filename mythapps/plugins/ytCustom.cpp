@@ -67,6 +67,7 @@ QString ytCustom::getPluginIcon() const {
 bool ytCustom::getPluginStartPos() const { return false; }
 
 void ytCustom::load(const QString label, const QString data) {
+    LOGS(0, "", "label", label, "data", data);
     m_toggleSearchVisibleCallback(true);
 
     if (data.length() < 2) {
@@ -97,7 +98,7 @@ void ytCustom::loadYTCustom() {
 }
 
 void ytCustom::updateMediaListCallback(const QString &label, const QString &data) {
-    LOG(VB_GENERAL, LOG_DEBUG, "ytCustom::updateMediaListCallback(): " + data);
+    LOGS(0, "", "label", label, "data", data);
 
     setWidgetVisibility(uiCtx->searchSettingsGroup, false);
 
@@ -115,6 +116,7 @@ void ytCustom::updateMediaListCallback(const QString &label, const QString &data
 }
 
 void ytCustom::search(const QString &searchText) {
+    LOGS(0, "", "searchText", searchText);
     setWidgetVisibility(uiCtx->searchSettingsGroup, false);
 
     loadProgramList(searchText, "");
@@ -124,6 +126,7 @@ void ytCustom::search(const QString &searchText) {
  *  \param searchText what to search for
  *  \param directory what directory path to load */
 QList<QVariant> ytCustom::getVideos(QString searchText, QString directory) {
+    LOGS(0, "", "searchText", searchText, "directory", directory);
     QString query = getAPIBaseUrl() + "videos?part=snippet&maxResults=50&chart=mostPopular";
 
     if (!searchText.isEmpty()) {
@@ -174,7 +177,7 @@ QList<QVariant> ytCustom::getVideos(QString searchText, QString directory) {
 }
 
 void ytCustom::loadProgramList(QString searchText, QString directory) {
-    LOG(VB_GENERAL, LOG_DEBUG, "getLoadProgramList()");
+    LOGS(1, "", "searchText", searchText, "directory", directory);
 
     dialog->getLoader()->SetVisible(true);
 
@@ -245,6 +248,7 @@ void ytCustom::loadProgramList(QString searchText, QString directory) {
 }
 
 void ytCustom::searchSettingsClicked(MythUIButtonListItem *item) {
+    LOGS(0, "");
     QStringList options = item->GetData().toStringList();
     int pos = (options.indexOf(item->GetText("buttontext2")) + 1) % options.size();
     QString itemNewText = options.at(pos);
@@ -292,6 +296,7 @@ void ytCustom::searchSettingsClicked(MythUIButtonListItem *item) {
 
 /** \brief convert word date to RFC3339 Date */
 QString ytCustom::translateWordtoRFC3339Date(const QString &date) {
+    LOGS(0, "", "date", date);
     static const QMap<QString, int> offsets = [] {
         QMap<QString, int> map;
         map.insert("1 Month Ago", 31);
@@ -311,6 +316,7 @@ QString ytCustom::translateWordtoRFC3339Date(const QString &date) {
 
 /** \brief get a list of dates that can be used in the date range ui */
 QStringList ytCustom::getlist(int currentPos, bool forward) {
+    LOGS(0, "", "currentPos", currentPos, "forward", forward);
     QStringList dateRange;
     if (forward) {
         dateRange = dateListBefore;
@@ -331,6 +337,7 @@ QStringList ytCustom::getlist(int currentPos, bool forward) {
 }
 
 void ytCustom::initializeSettingsDialog() {
+    LOGS(0, "");
     if (uiCtx->searchSettingsButtonList->GetItemAt(0) != nullptr)
         return;
 
@@ -368,6 +375,7 @@ void ytCustom::initializeSettingsDialog() {
 }
 
 void ytCustom::processAndSaveImage(const QByteArray &data, const QString &path) const {
+    LOGS(0, "", "path", path);
     QImage img;
     if (!img.loadFromData(data))
         return;
@@ -388,6 +396,7 @@ void ytCustom::processAndSaveImage(const QByteArray &data, const QString &path) 
 
 /** \brief check if a video url is entered in the search box and open the video. */
 bool ytCustom::handleSuggestion(const QString searchText) {
+    LOGS(0, "", "searchText", searchText);
     if (searchText.contains(getPluginDisplayName(), Qt::CaseInsensitive) && searchText.contains("v=") && searchText.contains("http") && searchText.contains(".com")) {
 
         QUrl qu(searchText.trimmed());
@@ -404,6 +413,7 @@ bool ytCustom::handleSuggestion(const QString searchText) {
 }
 
 QString ytCustom::getRegionCodeFromOS() {
+    LOGS(0, "");
     QLocale locale = QLocale::system();
     QStringList parts = locale.name().split('_');
 

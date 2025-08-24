@@ -157,6 +157,7 @@ bool Music::initializeUI(MythUIType *ui) {
 }
 
 QStringList Music::getOptionsMenuItems(ProgramData *currentSelectionDetails, const QString &currentFilePath, bool appIsOpen) {
+    LOGS(0, "", "currentFilePath", currentFilePath, "appIsOpen", appIsOpen);
     QStringList options;
 
     if (appIsOpen && m_playlist->GetCount() > 0) {
@@ -171,6 +172,7 @@ QStringList Music::getOptionsMenuItems(ProgramData *currentSelectionDetails, con
 }
 
 bool Music::menuCallback(const QString &menuText, ProgramData *currentSelectionDetails) {
+    LOGS(0, "", "menuText", menuText);
     if (menuText == tr("Remove all tracks from playlist")) {
         controls->playListClear();
         m_playlist->Reset();
@@ -181,7 +183,7 @@ bool Music::menuCallback(const QString &menuText, ProgramData *currentSelectionD
 }
 
 void Music::load(const QString label, const QString data) {
-    LOG(VB_GENERAL, LOG_DEBUG, "Music::load");
+    LOGS(1, "", "label", label, "data", data);
 
     m_toggleSearchVisibleCallback(true);
 
@@ -194,7 +196,7 @@ void Music::load(const QString label, const QString data) {
 }
 
 void Music::loadMusic() {
-    LOG(VB_GENERAL, LOG_DEBUG, "loadMusic()");
+    LOGS(1, "");
 
     controls->setActivePlayer(1);
     controls->setAudioLibraryScan();
@@ -204,7 +206,7 @@ void Music::loadMusic() {
 }
 
 void Music::updateMediaListCallback(const QString &label, const QString &data) {
-    LOG(VB_GENERAL, LOG_DEBUG, "updateMediaListCallback(): " + data);
+    LOGS(1, "", "label", label, "data", data);
 
     if (data.startsWith("/")) {
         QStringList parts = data.split('/');
@@ -230,6 +232,7 @@ void Music::updateMediaListCallback(const QString &label, const QString &data) {
 }
 
 void Music::clearAndStopPlaylist() {
+    LOGS(0, "");
     controls->stopPlayBack();
     controls->playListClear();
     playbackTimer->stop();
@@ -248,6 +251,7 @@ void Music::fileListMusicGridClickedCallback(MythUIButtonListItem *item) { SetFo
 
 /** \brief show the music UI */
 void Music::showMusicUI(bool show) {
+    LOGS(0, "", "show", show);
     showMusicPlayingBar(show);
     setWidgetVisibility(m_musicDetailsUIGroup, show);
     setWidgetVisibility(m_fileListMusicGrid, show);
@@ -265,12 +269,14 @@ void Music::showMusicUI(bool show) {
 
 /** \brief set the music party mode that plays a random track */
 void Music::setPartyMode() {
+    LOGS(0, "");
     partyMode = true;
     delay(1);
     controls->setPartyMode();
 }
 
 void Music::showMusicPlayingBar(bool show) {
+    LOGS(0, "", "show", show);
     m_next_buttonOn->SetVisible(false);
     m_ff_buttonOn->SetVisible(false);
     m_playingOn->SetVisible(false);
@@ -306,7 +312,7 @@ void Music::showMusicPlayingBar(bool show) {
 }
 
 void Music::loadMusicSetup() {
-    LOG(VB_GENERAL, LOG_DEBUG, "Music::loadMusicSetup(");
+    LOGS(1, "");
 
     m_fileListMusicGrid->Reset();
     m_filterGrid->Reset();
@@ -389,6 +395,7 @@ QMap<QString, MediaItem> Music::getByGenres(QString searchText) {
 QMap<QString, MediaItem> Music::getByPlaylist() { return mediaSource->getPlaylist(); }
 
 void Music::loadCategory(const QMap<QString, MediaItem> &items, const QString &subPath, bool listview) {
+    LOGS(0, "", "subPath", subPath, "listview", listview);
     LOG(VB_GENERAL, LOG_DEBUG, "loadCategory: " + subPath);
     showMusicUI(false);
     m_toggleSearchVisibleCallback(false);
@@ -433,6 +440,7 @@ void Music::updateMusicPlaylistUI() {
 }
 
 void Music::playbackTimerSlot() {
+    LOGS(0, "");
     PlaybackInfo info = m_PlaybackInfoCallback();
 
     m_musicDuration->SetText(info.currentTime + " / " + removeHoursIfZero(info.duration));
@@ -451,6 +459,7 @@ void Music::playbackTimerSlot() {
  * \param label - name of the song
  * \return -1 not found. number of matches*/
 int Music::isInPlaylist(QString label) {
+    LOGS(0, "", "label", label);
     label.remove(QRegExp("^[0-9]*")); // remove trailing numbers and spaces
     label = label.trimmed();
 
@@ -466,7 +475,7 @@ int Music::isInPlaylist(QString label) {
 /** \brief remove the song/label from the playlist?
  * \param label - name of the song */
 void Music::removeFromPlaylist(QString label) {
-    LOG(VB_GENERAL, LOG_DEBUG, "Music::removeFromPlaylist(): " + label);
+    LOGS(1, "", "label", label);
 
     int inPlaylist = isInPlaylist(label);
     if (inPlaylist != -1) {
@@ -476,7 +485,7 @@ void Music::removeFromPlaylist(QString label) {
 }
 
 void Music::addToPlaylistClickedCallback(MythUIButtonListItem *item) {
-    LOG(VB_GENERAL, LOG_DEBUG, "addToPlaylistClickedCallback()");
+    LOGS(1, "");
     if (dialog->getLoader()->IsVisible()) { // button debounce
         return;
     }
@@ -525,6 +534,7 @@ void Music::addToPlaylistClickedCallback(MythUIButtonListItem *item) {
 
 /** \brief refresh/update the playlist. */
 void Music::refreshGuiPlaylist() {
+    LOGS(0, "");
     QJsonArray properties;
     QJsonObject params;
     params["playlistid"] = controls->getActivePlayer(); // fix!
@@ -542,6 +552,7 @@ void Music::refreshGuiPlaylist() {
 
 /** \brief add a newline when the 1st character changes in the list */
 QStringList Music::addSpacingToList(QMap<QString, QStringList> map, bool listview) {
+    LOGS(0, "", "listview", listview);
     QStringList list;
     char currentLetter = 'A';
 
@@ -568,6 +579,7 @@ QStringList Music::addSpacingToList(QMap<QString, QStringList> map, bool listvie
 }
 
 void Music::loadMusicHelper(QString labelPrefix, QMap<QString, QStringList> loadMusicType, MythUIButtonList *m_fileList) {
+    LOGS(0, "", "labelPrefix", labelPrefix);
     QMapIterator<QString, QStringList> i(loadMusicType);
     int count = 0;
     while (i.hasNext()) {
@@ -593,6 +605,7 @@ void Music::loadMusicHelper(QString labelPrefix, QMap<QString, QStringList> load
 }
 
 void Music::loadSongs(QString album) {
+    LOGS(0, "", "album", album);
     m_musicTitle->SetText(album);
     m_toggleSearchVisibleCallback(true);
 
@@ -641,7 +654,7 @@ void Music::loadSongs(QString album) {
 
 /** \brief default view when loading the music app */
 void Music::loadSongsMain(QString value, QString type) {
-    LOG(VB_GENERAL, LOG_DEBUG, "Music::loadSongsMain");
+    LOGS(1, "", "value", value, "type", type);
     loadMusicSetup();
 
     if (type.compare("playlists") == 0) {
@@ -687,7 +700,7 @@ void Music::nextTrack() { controls->inputActionHelper("skipnext"); }
 
 /** \brief update the music playing bar labels. song playing etc */
 void Music::updateMusicPlayingBarStatus() {
-    LOG(VB_GENERAL, LOG_DEBUG, "updateMusicPlayingBarStatus()");
+    LOGS(0, "");
     QString answer = controls->playerGetItem();
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(answer.toLocal8Bit());
@@ -716,7 +729,7 @@ void Music::updateMusicPlayingBarStatus() {
 
 /** \brief download the cover art image */
 void Music::downloadImage(QString thumbnailPath) {
-    LOG(VB_GENERAL, LOG_DEBUG, "downloadImage() " + thumbnailPath);
+    LOGS(0, "", "thumbnailPath", thumbnailPath);
 
     if (thumbnailPath.isEmpty() || thumbnailPath == "image://DefaultVideoCover.png/") {
         QString filename = QString("%1%2").arg(GetShareDir()).arg("themes/default/mv_browse_nocover.png");
@@ -734,6 +747,7 @@ void Music::downloadImage(QString thumbnailPath) {
 }
 
 void Music::fileListMusicGridSelectedCallback(MythUIButtonListItem *item) {
+    LOGS(0, "");
     QString label = item->GetText("buttontext2");
     LOG(VB_GENERAL, LOG_DEBUG, "Music::fileListMusicGridSelectedCallback(): " + label);
 
@@ -781,7 +795,7 @@ void Music::filterGridClickedCallback(MythUIButtonListItem *item) {
 /** \brief the filterOptions (Crossfade, Party Mode Video & Music Only etc) had been clicked. load the corresponding option */
 void Music::filterOptionsListClickedCallback(MythUIButtonListItem *item) {
     QString label = item->GetText();
-    qDebug() << label;
+    LOGS(0, "", "label", label);
 
     if (label.compare(tr("Crossfade On")) == 0) {
         controls->setCrossFade(0);
@@ -818,7 +832,7 @@ void Music::filterOptionsListClickedCallback(MythUIButtonListItem *item) {
 }
 
 void Music::search(const QString &searchText) {
-    LOG(VB_GENERAL, LOG_DEBUG, "musicSearch()");
+    LOGS(1, "", "searchText", searchText);
     m_fileListMusicGrid->Reset();
     m_songList->Reset();
 
@@ -839,7 +853,7 @@ void Music::search(const QString &searchText) {
 }
 
 bool Music::onTextMessageReceived(const QString &method, const QString &message) {
-    LOG(VB_GENERAL, LOG_DEBUG, "Music::onTextMessageReceived: " + method);
+    LOGS(0, "", "method", method, "message", message);
 
     if (method == "Player.OnAVStart") {
         updateMusicPlayingBarStatus(); // update the music status bar
@@ -859,13 +873,14 @@ bool Music::onTextMessageReceived(const QString &method, const QString &message)
 }
 
 void Music::exitPlugin() {
-    LOG(VB_GENERAL, LOG_DEBUG, "Music::exitPlugin()");
+    LOGS(0, "");
 
     showMusicUI(false);
     clearAndStopPlaylist();
 }
 
 bool Music::handleAction(const QString action, MythUIType *focusWidget, ProgramData *currentSelectionDetails) {
+    LOGS(0, "", "action", action);
     bool musicPlayerFullscreenOpen = false; // todo: not working
 
     if (action == "NEXTTRACK") {

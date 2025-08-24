@@ -40,6 +40,7 @@ QString Videos::getPluginIcon() const { return pluginIcon; }
 bool Videos::getPluginStartPos() const { return false; }
 
 void Videos::load(const QString label, const QString data) {
+    LOGS(0, "", "label", label, "data", data);
     m_toggleSearchVisibleCallback(false);
 
     if (data.length() < 2) {
@@ -71,6 +72,7 @@ void Videos::loadVideos() {
 }
 
 void Videos::loadDirectory(const QString &folderPath, bool recursive) {
+    LOGS(0, "", "folderPath", folderPath, "recursive", recursive);
     QDir dir(folderPath);
     if (!dir.exists()) {
         LOG(VB_GENERAL, LOG_WARNING, "Videos::loadDirectory: invalid path: " + folderPath);
@@ -106,6 +108,7 @@ void Videos::loadDirectory(const QString &folderPath, bool recursive) {
 void Videos::setControls(Controls *c) { controls = c; }
 
 void Videos::generateMythTVThumbnailAsync(const QString &videoFilePath, bool isPlay) {
+    LOGS(0, "", "videoFilePath", videoFilePath, "isPlay", isPlay);
     QString previewDir = getGlobalPathPrefix() + "preview/";
 
     QDir dir(previewDir);
@@ -144,6 +147,7 @@ void Videos::generateMythTVThumbnailAsync(const QString &videoFilePath, bool isP
 }
 
 void Videos::handleThumbnailReady(const QString &videoFilePath, const QString &thumbnailPath, bool isPlay) {
+    LOGS(0, "", "videoFilePath", videoFilePath, "thumbnailPath", thumbnailPath, "isPlay", isPlay);
     QFileInfo fi(videoFilePath);
     QString title = fi.completeBaseName();
     QString thumbnail = QStringLiteral("file://%1").arg(thumbnailPath);
@@ -158,7 +162,7 @@ void Videos::handleThumbnailReady(const QString &videoFilePath, const QString &t
 }
 
 void Videos::updateMediaListCallback(const QString &label, const QString &data) {
-    LOG(VB_GENERAL, LOG_DEBUG, "updateMediaListCallback(): " + data);
+    LOGS(0, "", "label", label, "data", data);
 
     ProgramData programData(label, data);
     QString path = programData.getFilePathParam();
@@ -172,7 +176,7 @@ void Videos::updateMediaListCallback(const QString &label, const QString &data) 
 }
 
 void Videos::internalPlay(const QString &url) {
-    LOG(VB_GENERAL, LOG_DEBUG, "internalPlay()");
+    LOGS(0, "", "url", url);
 
     MythMainWindow *mainWindow = GetMythMainWindow();
     if (!mainWindow) {
