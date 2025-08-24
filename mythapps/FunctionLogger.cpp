@@ -43,8 +43,7 @@ void FunctionLogger::log(const QString &message) const {
         initLogFile();
         if (logInitialized) {
             QMutexLocker locker(&logMutex);
-            logStream << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz")
-                      << " - " << message << "\n";
+            logStream << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz") << " - " << message << "\n";
             logStream.flush();
         }
     }
@@ -55,7 +54,7 @@ void FunctionLogger::log(const QString &message) const {
             qDebug().noquote() << message;
         break;
     case 1:
-            qDebug().noquote() << message;
+        qDebug().noquote() << message;
         break;
     default:
         break;

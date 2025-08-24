@@ -19,25 +19,12 @@ extern bool logDebug;
 void initLogFile();
 
 class FunctionLogger {
-public:
+  public:
     template <typename... Args>
-    FunctionLogger(int level,
-                   const char *funcName,
-                   const char *fileName,
-                   int lineNumber,
-                   Args &&...args)
-        : m_level(level),
-          m_funcName(funcName),
-          m_fileName(fileName),
-          m_lineNumber(lineNumber),
-          m_extraInfo(formatArgs(std::forward<Args>(args)...))
-    {
+    FunctionLogger(int level, const char *funcName, const char *fileName, int lineNumber, Args &&...args)
+        : m_level(level), m_funcName(funcName), m_fileName(fileName), m_lineNumber(lineNumber), m_extraInfo(formatArgs(std::forward<Args>(args)...)) {
         if (shouldLog()) {
-            log(QStringLiteral("%1 START %2:%3 %4")
-                .arg(m_funcName)
-                .arg(m_fileName ? m_fileName : "")
-                .arg(m_lineNumber)
-                .arg(m_extraInfo));
+            log(QStringLiteral("%1 START %2:%3 %4").arg(m_funcName).arg(m_fileName ? m_fileName : "").arg(m_lineNumber).arg(m_extraInfo));
         }
     }
 
@@ -47,12 +34,15 @@ public:
         }
     }
 
-private:
+  private:
     bool shouldLog() const {
         switch (m_level) {
-        case 0: return logDebug;
-        case 1: return true;
-        default: return false;
+        case 0:
+            return logDebug;
+        case 1:
+            return true;
+        default:
+            return false;
         }
     }
 
@@ -60,16 +50,10 @@ private:
 
     QString formatArgs() { return {}; }
 
-    template <typename T>
-    QString formatArgs(T &&single) {
-        return QVariant(std::forward<T>(single)).toString();
-    }
+    template <typename T> QString formatArgs(T &&single) { return QVariant(std::forward<T>(single)).toString(); }
 
-    template <typename Name, typename Value, typename... Rest>
-    QString formatArgs(Name &&name, Value &&value, Rest &&...rest) {
-        QString pair = QStringLiteral("%1:%2,")
-                           .arg(QVariant(std::forward<Name>(name)).toString())
-                           .arg(QVariant(std::forward<Value>(value)).toString());
+    template <typename Name, typename Value, typename... Rest> QString formatArgs(Name &&name, Value &&value, Rest &&...rest) {
+        QString pair = QStringLiteral("%1:%2,").arg(QVariant(std::forward<Name>(name)).toString()).arg(QVariant(std::forward<Value>(value)).toString());
         QString remaining = formatArgs(std::forward<Rest>(rest)...);
         return remaining.isEmpty() ? pair : pair + " " + remaining;
     }
@@ -82,11 +66,10 @@ private:
 };
 
 // Scoped logging macro
-#define LOGS(level, ...) \
-    do { \
-        FunctionLogger(level, __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__); \
+#define LOGS(level, ...)                                                                                                                                                                               \
+    do {                                                                                                                                                                                               \
+        FunctionLogger(level, __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__);                                                                                                                        \
     } while (0)
-    
+
 //#define LOGS(level, ...) \
     do { (void)sizeof...( __VA_ARGS__ ); } while (0)
-
