@@ -64,28 +64,32 @@ export qt5="/home/ubuntu/Desktop/build/mxe/usr/i686-w64-mingw32.shared/qt5"
 If compiling, you may need to open 'build/mythtv/mythplugins/mythapps/mythapps/makefile' and replace 'qmake' with 'i686-w64-mingw32.shared-qmake-qt5'
 
 # SETUP 
-Recommended to use the offical Kodi Repo as it has DRM support - https://kodi.wiki/view/Official_Ubuntu_PPA.
-1. DRM - inputstream adaptive is required for 4k video and most popular streaming services. (subscription required)
-<br /> Recommended packages: kodi-inputstream-adaptive, kodi-visualization-projectm.  <br />
-sudo add-apt-repository ppa:team-xbmc/ppa; sudo apt-get update \
-sudo apt-get install kodi kodi-inputstream-adaptive kodi-visualization-projectm netcat-openbsd chromium-browser xdotool
+Recommended to use the flathub Kodi as it's keep updated and has DRM support.
+1.  sudo apt update \
+	sudo apt install flatpak \
+	sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo \
+	sudo flatpak install flathub tv.kodi.Kodi \
+	sudo flatpak override tv.kodi.Kodi --filesystem=host \
+	flatpak run tv.kodi.Kodi
 
-2. Open Kodi. Enabled remote control via http in Kodi->Setting->Services->Control.     Allow Remote Control via HTTP - Yes. \
+3. Open Kodi. Enabled remote control via http in Kodi->Setting->Services->Control.     Allow Remote Control via HTTP - Yes. \
                    Require Aurthenitcation - Yes. Username / Password / Port (8080) \
                    Allow remote control from applications on this system - Yes 
 				          
-3. Kodi->Setting->System->Display.      Delay after change of refresh rate - 0.2 seconds \
+4. Kodi->Setting->System->Display.      Delay after change of refresh rate - 0.2 seconds \
   .  .  .  .Kodi->Setting->System->Audio->Play Gui Sounds - No \
   .  .  .  .Kodi->Setting->System->Addons->Set Unknown Sources (if required)
 				   			   
-4. Install some Kodi video addons such as the free Nasa TV in the Kodi gui and check the video plays without prompts in Kodi.
+5. Install some Kodi video addons such as the free Nasa TV in the Kodi gui and check the video plays without prompts in Kodi.
 
-5. Optionally install and open the YouTube addon in Kodi, and sign up for an API key. Enter this in the MythApps setting menu instead of Kodi and click save. - https://www.linuxbabe.com/raspberry-pi/kodi-youtube  
+6. Optionally install and open the YouTube addon in Kodi, and sign up for an API key. Enter this in the MythApps setting menu instead of Kodi and click save. - https://www.linuxbabe.com/raspberry-pi/kodi-youtube  
 Open the addon in Kodi and navigate to:		YouTube settings->MPEG-DASH->MPEG-DASH - Yes
 											YouTube settings->MPEG-DASH->Video quality adaptive (WEBM/VP9) - (to enable 4k)
 											YouTube settings->Folders->Quick Search (Incognito)
+   
+7. Open mythfrontend, and mythapps. press the m key to accessing the settings menu and check you have all dependencies installed.
 
-6. Setup Searching. Each App has a search url and is auto-discovered in the settings menu after opening each App once from MythApps home screen. Some search url's may need to be disabled.
+8. Setup Searching. Each App has a search url and is auto-discovered in the settings menu after opening each App once from MythApps home screen. Some search url's may need to be disabled.
 
 TIPS	<br />
 Tested on mythbuntu skin. <br />
@@ -109,7 +113,7 @@ While MythApps is stable for me, Please note this is a new plugin under develope
 
 
 ## Code Formating
-run ./format.sh <br />
+run ./format.sh or compile.sh<br />
 See https://www.mythtv.org/wiki/Coding_Standards for more information.
 
 ## Generate developer documenation
