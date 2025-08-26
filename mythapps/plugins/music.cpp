@@ -19,6 +19,7 @@
 
 #include "libmythbase/mythlogging.h"
 #include "libmythui/mythuistatetracker.h"
+#include "libmythui/xmlparsebase.h"
 #include <libmyth/mythcontext.h>
 #include <libmythui/mythdialogbox.h>
 #include <libmythui/mythmainwindow.h>
@@ -95,7 +96,19 @@ bool Music::useBasicMenu() { return true; }
 void Music::displayHomeScreenItems() { return; }
 
 bool Music::initializeUI(MythUIType *ui) {
+    LOGS(0, "");
+    bool foundtheme = false;
     bool err = false;
+
+    QString theme = gCoreContext->GetSetting("Theme");
+    QString xmlFile = GetThemeXmlFile(theme, "-music");
+    LOG(VB_GENERAL, LOG_INFO, "Loading " + xmlFile);
+    foundtheme = XMLParseBase::LoadWindowFromXML(xmlFile, "mythapps-music", ui);
+
+    if (!foundtheme) {
+        LOG(VB_GENERAL, LOG_INFO, "No music theme found");
+        return false;
+    }
 
     UIUtilE::Assign(ui, m_musicDetailsUIGroup, "musicDetailsUI", &err);
     UIUtilE::Assign(ui, m_fileListMusicGrid, "fileListMusicGrid", &err);

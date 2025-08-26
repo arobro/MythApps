@@ -26,10 +26,6 @@ TARGET = mythapps
 target.path = $${LIBDIR}/mythtv/plugins
 INSTALLS += target
 
-installfiles.path = $${PREFIX}/share/mythtv/mythapps
-installfiles.files = mythapps-ui.xml
-INSTALLS += installfiles
-
 # Input
 HEADERS += \
     mythapps.h mythsettings.h mythinput.h imageThread.h searchSuggestions.h shared.h controls.h programData.h programLink.h netRequest.h \
@@ -61,3 +57,5 @@ android {
 }
 
 include(../../libs-targetfix.pro)
+
+QMAKE_CLEAN += Makefile libmythapps.so

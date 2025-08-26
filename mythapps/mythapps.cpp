@@ -193,7 +193,7 @@ bool MythApps::Create() {
 
     bool foundtheme = false;
     QString theme = gCoreContext->GetSetting("Theme");
-    QString xmlFile = GetThemeXmlFile(theme);
+    QString xmlFile = GetThemeXmlFile(theme, "");
     LOG(VB_GENERAL, LOG_INFO, "Loading " + xmlFile);
     foundtheme = LoadWindowFromXML(xmlFile, "mythapps", this);
 

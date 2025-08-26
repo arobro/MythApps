@@ -58,7 +58,7 @@ QString createImageCachePath(const QString imageFileName);
 
 bool checkIfProgramInstalled(const QString &programName);
 
-QString GetThemeXmlFile(const QString &theme);
+QString GetThemeXmlFile(const QString &theme, const QString &prefix);
 
 int getThreadCount();
 void waitForThreads(int maxThreadsRunning);

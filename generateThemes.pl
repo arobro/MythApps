@@ -18,78 +18,71 @@ If you want a change to only apply to the steppes theme, copy the below overide 
 DEFAULT CONTENT  <!--steppes_ CONTENT HERE _!!--> 
 =cut
 
-#!/ usr / bin / perl - w
-
+#!/usr/bin/perl -w
 use strict;
 use warnings;
-my $file = 'theme/default/mythapps-ui.xml';
 
-open(FH, '>', "theme/default/mythapps-ui.720.xml") or die $ !;
-open my $info, $file or die "Could not open $file: $!";
-my $noAlpha720 = 0;
-my $noAlpha1080 = 0;
-my $mcw = 0;
-my $HD = 0;
-my $steppes = 0;
-generate();
+my @input_files = (
+    'theme/default/mythapps-ui.xml',
+    'theme/default/mythapps-music-ui.xml'
+);
 
-open(FH, '>', "theme/default/mythapps-ui.Steppes.xml") or die $ !;
-open $info, $file or die "Could not open $file: $!";
-$noAlpha720 = 1;
-$noAlpha1080 = 1;
-$mcw = 0;
-$HD = 1;
-$steppes = 1;
-generate();
+foreach my $file (@input_files) {
+    my ($base) = $file =~ m{([^/]+)\.xml$};  # e.g. mythapps-ui
 
-open(FH, '>', "theme/default/mythapps-ui.720.NoAlpha.xml") or die $ !;
-open $info, $file or die "Could not open $file: $!";
-$noAlpha720 = 1;
-$noAlpha1080 = 0;
-$mcw = 0;
-$HD = 0;
-$steppes = 0;
-generate();
+    # Variant 1: 720
+    process_variant($file, "${base}.720.xml",
+        noAlpha720 => 0, noAlpha1080 => 0, mcw => 0, HD => 0, steppes => 0
+    );
 
-open(FH, '>', "theme/default/mythapps-ui.720.MCW.xml") or die $ !;
-open $info, $file or die "Could not open $file: $!";
-$noAlpha720 = 1;
-$noAlpha1080 = 0;
-$mcw = 1;
-$HD = 0;
-$steppes = 0;
-generate();
+    # Variant 2: Steppes
+    process_variant($file, "${base}.Steppes.xml",
+        noAlpha720 => 1, noAlpha1080 => 1, mcw => 0, HD => 1, steppes => 1
+    );
 
-sub generate {
-    my $ignoreLine = 0;
-    while (my $line = <$info>) {
+    # Variant 3: 720.NoAlpha
+    process_variant($file, "${base}.720.NoAlpha.xml",
+        noAlpha720 => 1, noAlpha1080 => 0, mcw => 0, HD => 0, steppes => 0
+    );
 
-        if (index($line, "<!--MCW") != -1 and $mcw == 1) {
-            my @spl = split('~', $line, 3);
-            print FH $spl[1]."\n";
-        }
-        elsif((index($line, "<!--steppes") != -1) and $steppes == 1) {
-            my @spl = split('_', $line, 3);
-            print FH $spl[1]."\n";
-        }
-        elsif((index($line, "<!--720") != -1) and $HD == 0) {
-            my @spl = split('!!', $line, 3);
-            print FH $spl[1]."\n";
-        }
-        elsif((index($line, "<!--NoAlpha1080") != -1) and $noAlpha1080 == 1) {
-            my @spl = split('_', $line, 3);
-            print FH $spl[1]."\n";
-        }
-        elsif((index($line, "<!--NoAlpha720") != -1) and $noAlpha720 == 1) {
-            my @spl = split('!!', $line, 3);
-            print FH $spl[1]."\n";
-        }
-        else {
-            print FH $line;
-        }
-    }
-    close(FH);
-    close $info;
+    # Variant 4: 720.MCW
+    process_variant($file, "${base}.720.MCW.xml",
+        noAlpha720 => 1, noAlpha1080 => 0, mcw => 1, HD => 0, steppes => 0
+    );
 }
 
 system("sudo make install");
+
+sub process_variant {
+    my ($infile, $outfile, %flags) = @_;
+    open(my $info, '<', $infile) or die "Could not open $infile: $!";
+    open(my $fh, '>', "theme/default/generated/$outfile") or die $!;
+
+    while (my $line = <$info>) {
+        if (index($line, "<!--MCW") != -1 && $flags{mcw}) {
+            my @spl = split('~', $line, 3);
+            print {$fh} $spl[1]."\n";
+        }
+        elsif (index($line, "<!--steppes") != -1 && $flags{steppes}) {
+            my @spl = split('_', $line, 3);
+            print {$fh} $spl[1]."\n";
+        }
+        elsif (index($line, "<!--720") != -1 && !$flags{HD}) {
+            my @spl = split('!!', $line, 3);
+            print {$fh} $spl[1]."\n";
+        }
+        elsif (index($line, "<!--NoAlpha1080") != -1 && $flags{noAlpha1080}) {
+            my @spl = split('_', $line, 3);
+            print {$fh} $spl[1]."\n";
+        }
+        elsif (index($line, "<!--NoAlpha720") != -1 && $flags{noAlpha720}) {
+            my @spl = split('!!', $line, 3);
+            print {$fh} $spl[1]."\n";
+        }
+        else {
+            print {$fh} $line;
+        }
+    }
+    close $fh;
+    close $info;
+}

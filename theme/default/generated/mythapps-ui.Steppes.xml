@@ -93,20 +93,20 @@
 			<buttonarea>0,0,100%,100%</buttonarea>
 			<statetype name="buttonitem">
 				<state name="active">
-					<area>0,0,50,50</area> <!--steppes_<area>0,0,50,220</area>_!!--> 
+<area>0,0,50,220</area>
 					<shape name="buttonbackground">
 						<area>0,0,0,0</area>
 					</shape>
 					<shape name="buttonbackground2">
 						<!--/1.53-->
-						<area>0,0,100%,234</area><!--720!!<area>0,0,100%,152</area>!!--> <!--steppes_<area>5,5,98%,208</area>_!!--> 
+<area>5,5,98%,208</area>
 						<fill style="gradient">
 							<gradient start="#505050" end="#000000" alpha="0" direction="vertical"  />
-							<!--720!!<gradient start="#003C8A" end="#003C8A" alpha="0" />!!--><!--MCW!!~<gradient start="#003C8A" end="#003C8A" alpha="255" />~!!--><!--steppes_<gradient start="#05A7A9" end="#05A7A9" alpha="255" />_!!--> 
+<gradient start="#05A7A9" end="#05A7A9" alpha="255" />
 						</fill>
 					</shape>
 					<imagetype name="buttonimage">
-						<area>0,0,320,208</area><!--720!!<area>0,6,209,135</area>!!--> <!--steppes_<area>5,11,98%,200</area>_!!--> 
+<area>5,11,98%,200</area>
 						<alpha>255</alpha>
 						<preserveaspect>true</preserveaspect>
 					</imagetype>
@@ -117,7 +117,7 @@
 						<alpha>255</alpha>
 					</textarea>
 					<textarea name="buttontext2">
-						<area>5,0,310,30</area><!--720!!<area>3,1,202,30</area>!!--> <!--steppes_<area>5,10,310,30</area>_!!--> 
+<area>5,10,310,30</area>
 						<align>center,vcenter</align>
 						<font>basesmall</font>
 						<alpha>255</alpha>
@@ -131,18 +131,18 @@
 					<shape name="buttonbackground2">
 						<fill style="gradient">
 							<gradient start="#52CA38" end="#349838" alpha="255" />
-							<!--steppes_<gradient start="#3B1E3B" end="#3B1E3B" alpha="255" />_!!--> 
+<gradient start="#3B1E3B" end="#3B1E3B" alpha="255" />
 						</fill>
 						
 					</shape>
-					<!--steppes_<shape name="selector">_!!--> 
-					<!--steppes_<area>10,10,290,10</area>_!!--> 
-					<!--steppes_<fill style="gradient">_!!--> 
-					<!--steppes_<gradient start="#52CA38" end="#349838" alpha="255" />_!!--> 
-					<!--steppes_</fill>_!!-->  
-					<!--steppes_</shape>_!!--> 				
+<shape name="selector">
+<area>10,10,290,10</area>
+<fill style="gradient">
+<gradient start="#52CA38" end="#349838" alpha="255" />
+</fill>
+</shape>
 					<imagetype name="buttonimage">
-						<area>10,10,300,216</area><!--720!!<area>6,6,196,141</area>!!--> <!--steppes_<area>5,11,98%,200</area>_!!--> 
+<area>5,11,98%,200</area>
 						<alpha>255</alpha>
 						<preserveaspect>true</preserveaspect>
 					</imagetype>

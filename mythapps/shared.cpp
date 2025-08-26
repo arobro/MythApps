@@ -331,17 +331,17 @@ bool checkIfProgramInstalled(const QString &programName) {
     return false;
 }
 
-QString GetThemeXmlFile(const QString &theme) {
+QString GetThemeXmlFile(const QString &theme, const QString &prefix) {
     if (theme == "Mythbuntu" || theme == "Willi" || theme == "Functionality" || theme == "Arclight" || theme == "Monochrome" || theme == "MythAeon") {
-        return "mythapps-ui.xml";
+        return "mythapps" + prefix + "-ui.xml";
     } else if (theme == "Steppes" || theme == "Steppes-large") {
-        return "mythapps-ui.Steppes.xml";
+        return "mythapps" + prefix + "-ui.Steppes.xml";
     } else if (theme == "MythCenter-wide") {
-        return "mythapps-ui.720.MCW.xml";
+        return "mythapps" + prefix + "-ui.720.MCW.xml";
     } else if (theme.contains("XMAS")) {
-        return "mythapps-ui.720.NoAlpha.xml";
+        return "mythapps" + prefix + "-ui.720.NoAlpha.xml";
     }
-    return "mythapps-ui.720.xml";
+    return "mythapps" + prefix + "-ui.720.xml";
 }
 
 /** \brief Format ms to hh:mm:ss */
