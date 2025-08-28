@@ -56,15 +56,19 @@ QString NetRequest::requestUrlPublic(QString url, QString authorization) {
 
 /** \brief download an image.
  * 	\param imageUrl image url to download
- *  \param tryDirectDownload Download directly (faster) instead of via Kodi
  *  \return binary image object */
-QByteArray NetRequest::downloadImage(QString imageUrl, bool tryDirectDownload) {
-    LOGS(0, "", "imageUrl", imageUrl, "tryDirectDownload", tryDirectDownload);
+QByteArray NetRequest::downloadImage(QString imageUrl) {
+    LOGS(0, "", "imageUrl", imageUrl);
     QUrl l_url;
+    QString imageUrlDecoded = urlDecode(removeTrailingChar(imageUrl, '/').replace("image://", ""));
 
-    if (tryDirectDownload && imageUrl.contains("http")) {
-        l_url = urlDecode(removeTrailingChar(imageUrl, '/').replace("image://", ""));
+    if (imageUrl.contains("http")) {
+        l_url = imageUrlDecoded;
     } else {
+        if (imageUrl.contains("image://")) {
+            imageUrl = imageUrlDecoded;
+        }
+
         l_url = "http://" + ip + ":" + port + "/image/" + imageUrl;
         l_url.setUserName(username);
         l_url.setPassword(password);
@@ -82,12 +86,7 @@ QByteArray NetRequest::downloadImage(QString imageUrl, bool tryDirectDownload) {
     reply2->disconnect();
     delete reply2;
 
-    // download image via Kodi if failed to download directly.
-    if (tryDirectDownload && imageData.size() < 300) {
-        return downloadImage(urlEncode(imageUrl), false);
-    } else {
-        return imageData;
-    }
+    return imageData;
 }
 
 /** \brief download favourite icon for a website.

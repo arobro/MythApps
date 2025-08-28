@@ -21,7 +21,7 @@ class NetRequest {
 
     QString requestUrlPublic(QString url, QString authorization);
 
-    QByteArray downloadImage(QString imageUrl, bool tryDirectDownload);
+    QByteArray downloadImage(QString imageUrl);
 
     QString getFavIconUrl(QString websiteUrl);
 

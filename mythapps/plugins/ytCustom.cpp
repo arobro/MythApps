@@ -54,7 +54,7 @@ QString ytCustom::getPluginIcon() const {
     QString iconPath = getGlobalPathPrefix() + "/" + pluginIcon;
 
     if (!QFile::exists(iconPath)) {
-        QByteArray ytCustomBytes = netRequest->downloadImage(logoUrl(), true);
+        QByteArray ytCustomBytes = netRequest->downloadImage(logoUrl());
 
         if (!ytCustomBytes.isEmpty()) {
             processAndSaveImage(ytCustomBytes, iconPath);

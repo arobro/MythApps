@@ -419,6 +419,10 @@ void Music::loadCategory(const QMap<QString, MediaItem> &items, const QString &s
         QString label = it.key();
         QString image = it.value().thumbnail;
 
+        if (!image.isEmpty()) {
+            image = "image://" + it.value().thumbnail;
+        }
+
         m_loadProgramCallback(label, appPathName + "/" + subPath + "/" + label, image, nullptr);
     }
 }
@@ -754,7 +758,7 @@ void Music::downloadImage(QString thumbnailPath) {
 
     NetRequest nr(username, password, ip, port, false);
     QImage image;
-    image.loadFromData(nr.downloadImage(urlEncode(thumbnailPath), false));
+    image.loadFromData(nr.downloadImage(urlEncode(thumbnailPath)));
     albumArtImage->Assign(image);
     m_coverart->SetImage(albumArtImage);
 }

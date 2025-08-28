@@ -52,9 +52,14 @@ void FunctionLogger::log(const QString &message) const {
     case 0:
         if (logDebug)
             qDebug().noquote() << message;
+
         break;
     case 1:
-        qDebug().noquote() << message;
+        if (message.size() > 230) {
+            qDebug().noquote() << message.left(230) << "..";
+        } else {
+            qDebug().noquote() << message;
+        }
         break;
     default:
         break;

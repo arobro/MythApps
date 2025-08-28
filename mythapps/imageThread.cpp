@@ -49,7 +49,7 @@ void ImageThread::downloadAppIcon(NetRequest &nr, const QString &fn) {
     if (fn == params.appIcon && !QFileInfo::exists(fn)) {
         QFile out(fn);
         if (out.open(QIODevice::WriteOnly)) {
-            out.write(nr.downloadImage(urlEncode(params.thumbnailUrl), false));
+            out.write(nr.downloadImage(urlEncode(params.thumbnailUrl)));
         }
         out.close();
     }
@@ -64,7 +64,7 @@ void ImageThread::processImage(NetRequest &nr, const QString &fn) {
     if (QFileInfo::exists(fn)) {
         orig.load(fn);
     } else {
-        orig.loadFromData(nr.downloadImage(params.thumbnailUrl, true));
+        orig.loadFromData(nr.downloadImage(params.thumbnailUrl));
     }
     if (orig.isNull())
         return;
