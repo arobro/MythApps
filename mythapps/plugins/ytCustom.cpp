@@ -12,6 +12,8 @@
 // MythTV headers
 #include "libmyth/mythcontext.h"
 #include "libmythui/mythmainwindow.h"
+#include <libmythbase/mythcorecontext.h>
+#include <libmythbase/mythlogging.h>
 
 // MythApps headers
 #include "SafeDelete.h"

@@ -5,6 +5,8 @@
 #include <libmythbase/mythpluginapi.h>
 #include <libmythbase/mythversion.h>
 #include <libmythui/mythmainwindow.h>
+#include <libmythbase/mythcorecontext.h>
+#include <libmythbase/mythlogging.h>
 
 // MythApps headers
 #include "mythapps.h"

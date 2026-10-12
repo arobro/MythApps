@@ -1,5 +1,9 @@
 #include "programLink.h"
 
+// MythTV headers
+#include <libmythbase/mythdb.h>
+#include <libmythbase/mythlogging.h>
+
 // MythApps headers
 #include "shared.h"
 

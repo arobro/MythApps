@@ -71,5 +71,6 @@ class FunctionLogger {
         FunctionLogger(level, __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__);                                                                                                                        \
     } while (0)
 
-//#define LOGS(level, ...) \
+/* #define LOGS(level, ...)
     do { (void)sizeof...( __VA_ARGS__ ); } while (0)
+*/

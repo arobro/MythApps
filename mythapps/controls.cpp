@@ -3,6 +3,8 @@
 // MythTV headers
 #include <libmyth/mythcontext.h>
 #include <libmythbase/mythdirs.h>
+#include <libmythbase/mythcorecontext.h>
+#include <libmythbase/mythlogging.h>
 
 /** \param m_username Kodi username
  *  \param m_password Kodi password
@@ -110,9 +112,9 @@ void Controls::startKodiIfNotRunning() {
         kodiName = "flatpak run tv.kodi.Kodi"; // try flatpak kodi
     }
     if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0) {
-        system("export LIRC_SOCKET_PATH=\"/\";if ! pgrep -x kodi > /dev/null; then " + kodiName.toLocal8Bit() + " & fi;");
+        system(("export LIRC_SOCKET_PATH=\"/\";if ! pgrep -x kodi > /dev/null; then " + kodiName.toLocal8Bit() + " & fi;").constData());
     } else {
-        system("if ! pgrep -x kodi > /dev/null; then " + kodiName.toLocal8Bit() + " & fi;");
+        system(("if ! pgrep -x kodi > /dev/null; then " + kodiName.toLocal8Bit() + " & fi;").constData());
     }
 #endif
 }

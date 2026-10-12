@@ -30,7 +30,7 @@ void Favourites::displayHomeScreenItems() { loadFavourites(true); }
 
 void Favourites::loadFavourites(bool displayOnHome) {
     LOGS(0, "", "displayOnHome", displayOnHome);
-    Q_FOREACH (const FileFolderContainer &favourite, favLink.getList(true, 0)) {
+    for (const FileFolderContainer &favourite : favLink.getList(true, 0)) {
         if (displayOnHome && !favourite.pinnedToHome) // Skip items not pinned to home
             continue;
 

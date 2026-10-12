@@ -16,6 +16,7 @@ else
 fi
 
 if grep -q mythapps "library.xml"; then
+  echo "Sorry, cant not find menu library.xml."
   exit 1
 fi
 

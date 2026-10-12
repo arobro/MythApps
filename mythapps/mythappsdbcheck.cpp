@@ -9,6 +9,8 @@
 #include <libmyth/mythcontext.h>
 #include <libmythbase/mythdb.h>
 #include <libmythbase/mythdbcheck.h>
+#include <libmythbase/mythcorecontext.h>
+#include <libmythbase/mythlogging.h>
 
 // MythApps headers
 #include "FunctionLogger.h"
@@ -24,7 +26,7 @@ const QString MythAppsVersionName = "MythAppsDBSchemaVer";
 template <typename T> void createSetting(const QString &settingName, const T &settingValue, bool remote) {
     if (gCoreContext->GetSetting(settingName).isEmpty()) {
         if (remote) {
-            gCoreContext->SaveSettingOnHost(settingName, QString(settingValue), QString());
+            gCoreContext->SaveSettingOnHost(settingName, QVariant(settingValue).toString(), QString());
         } else {
             gCoreContext->SaveSetting(settingName, settingValue);
         }

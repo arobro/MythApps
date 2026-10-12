@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 STYLE="{IndentWidth: 4, ColumnLimit: 200}"
 

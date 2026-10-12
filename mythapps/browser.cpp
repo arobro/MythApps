@@ -1,4 +1,6 @@
 #include "browser.h"
+#include <QProcess>
+#include <QStandardPaths>
 
 // MythApps headers
 #include "shared.h"
@@ -15,17 +17,17 @@ void Browser::openBrowser(QString website) {
         website = "http://" + website;
     }
     controls->androidAppSwitch(website);
-#elif _WIN32
+#elif defined(_WIN32)
     system("start msedge " + website.toLocal8Bit());
 #else
-    if (system("command -v chromium >/dev/null 2>&1 || { exit 1; }") == 0) {
-        system("chromium -kiosk " + website.toLocal8Bit() + " &");
+    if (!QStandardPaths::findExecutable("chromium").isEmpty()) {
+        QProcess::startDetached("chromium", {"-kiosk", website});
         browserName = "chromium";
-    } else if (system("command -v firefox >/dev/null 2>&1 || { exit 1; }") == 0) {
-        system("firefox --kiosk " + website.toLocal8Bit() + " &");
+    } else if (!QStandardPaths::findExecutable("firefox").isEmpty()) {
+        QProcess::startDetached("firefox", {"--kiosk", website});
         browserName = "firefox";
     } else {
-        system("sensible-browser" + website.toLocal8Bit() + " &");
+        QProcess::startDetached("sensible-browser", {website});
     }
 #endif
 }
@@ -65,42 +67,42 @@ bool Browser::proccessRemote(QString action) {
     if (isGnomeWayland()) {
         if ((action == "BACK" || action == "ESCAPE") and browserOpen) { // browser key events
             activateWindowWayland(browserName);
-            system("ydotool key 56:1 62:1 62:0 56:0"); // Alt+F4
+            (void)system("ydotool key 56:1 62:1 62:0 56:0"); // Alt+F4
         } else if ((action == "RIGHT") and browserOpen) {
             activateWindowWayland(browserName);
-            system("ydotool key 15:1 15:0"); // tab
+            (void)system("ydotool key 15:1 15:0"); // tab
         } else if ((action == "PLAY" || action == "PAUSE") and browserOpen) {
             activateWindowWayland(browserName);
-            system("ydotool key 57:1 57:0"); // space
+            (void)system("ydotool key 57:1 57:0"); // space
         } else if ((action == "DETAILS" || action == "MENU" || action == "LEFT") and browserOpen) {
             activateWindowWayland(browserName);
-            system("ydotool type F");
+            (void)system("ydotool type F");
         } else if ((action == "UP") and browserOpen) {
             activateWindowWayland(browserName);
-            system("ydotool key 104:1 104:0"); // page up
+            (void)system("ydotool key 104:1 104:0"); // page up
         } else if ((action == "DOWN") and browserOpen) {
             activateWindowWayland(browserName);
-            system("ydotool key 109:1 109:0"); // page down
-        } else if (browserOpen) {              // do nothing.
+            (void)system("ydotool key 109:1 109:0"); // page down
+        } else if (browserOpen) {                    // do nothing.
 
         } else {
             found = false;
         }
     } else {                                                            // x11
         if ((action == "BACK" || action == "ESCAPE") and browserOpen) { // browser key events
-            system("xdotool search --class Chromium windowactivate --sync %1 key alt+F4 windowactivate $(xdotool getactivewindow)");
+            (void)system("xdotool search --class Chromium windowactivate --sync %1 key alt+F4 windowactivate $(xdotool getactivewindow)");
             setOpenStatus(false);
             emit setFocusWidgetSignal("m_fileListGrid");
         } else if ((action == "RIGHT") and browserOpen) {
-            system("xdotool search --onlyvisible --classname chromium windowactivate --sync key Tab");
+            (void)system("xdotool search --onlyvisible --classname chromium windowactivate --sync key Tab");
         } else if ((action == "PLAY" || action == "PAUSE") and browserOpen) {
-            system("xdotool search --onlyvisible --classname chromium windowactivate --sync key space");
+            (void)system("xdotool search --onlyvisible --classname chromium windowactivate --sync key space");
         } else if ((action == "DETAILS" || action == "MENU" || action == "LEFT") and browserOpen) {
-            system("xdotool search --onlyvisible --classname chromium windowactivate --sync key F");
+            (void)system("xdotool search --onlyvisible --classname chromium windowactivate --sync key F");
         } else if ((action == "UP") and browserOpen) {
-            system("xdotool search --onlyvisible --classname chromium windowactivate --sync key Page_Up");
+            (void)system("xdotool search --onlyvisible --classname chromium windowactivate --sync key Page_Up");
         } else if ((action == "DOWN") and browserOpen) {
-            system("xdotool search --onlyvisible --classname chromium windowactivate --sync key Page_Down");
+            (void)system("xdotool search --onlyvisible --classname chromium windowactivate --sync key Page_Down");
         } else if (browserOpen) { // do nothing.
 
         } else {
@@ -121,7 +123,7 @@ void Browser::bringToFrontIfOpen() {
         if (isGnomeWayland()) {
             activateWindowWayland(browserName);
         } else {
-            system("xdotool search --onlyvisible --classname chromium windowactivate --sync key Return");
+            (void)system("xdotool search --onlyvisible --classname chromium windowactivate --sync key Return");
         }
     }
 #endif

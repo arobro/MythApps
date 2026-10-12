@@ -5,9 +5,14 @@
 #include <QDir>
 #include <QPluginLoader>
 
+// MythTV headers
+#include <libmythbase/mythcorecontext.h>
+#include <libmythbase/mythlogging.h>
+
 // MythApps headers
 #include "SafeDelete.h"
 #include "shared.h"
+
 
 PluginManager::PluginManager() {
     LOGS(0, "");

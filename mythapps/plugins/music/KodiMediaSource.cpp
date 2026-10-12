@@ -181,11 +181,9 @@ QMap<QString, MediaItem> KodiMediaSource::reindexByField(QMap<QString, MediaItem
     LOGS(0, "");
     QMap<QString, MediaItem> list;
 
-    QMapIterator<QString, MediaItem> i(map);
-    while (i.hasNext()) {
-        i.next();
-        QString label = i.key();
-        MediaItem item = i.value();
+    for (auto i = map.constBegin(); i != map.constEnd(); ++i) {
+        const QString &label = i.key();
+        const MediaItem &item = i.value();
 
         QString key;
         if (filterKey.compare("artist") == 0) {

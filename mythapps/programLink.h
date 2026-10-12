@@ -7,6 +7,7 @@
 
 // MythTV headers
 #include <libmyth/mythcontext.h>
+#include <libmythbase/mythdb.h>
 
 // MythApps headers
 #include "container.h"

@@ -11,6 +11,8 @@
 
 // MythApps headers
 #include "FunctionLogger.h"
+#include <libmythbase/mythcorecontext.h>
+
 
 SearchSuggestions::SearchSuggestions() {
     LOGS(0, "");
@@ -40,8 +42,8 @@ QStringList SearchSuggestions::getSuggestions(QString search) {
         xml.readNext();
         if (xml.tokenType() == QXmlStreamReader::StartElement)
             if (xml.name() == "suggestion") {
-                QStringRef str = xml.attributes().value("data");
-                suggestions.append(str.toString());
+                QString str = xml.attributes().value("data").toString();
+                suggestions.append(str);
             }
 
         if (xml.name() == "Text") {

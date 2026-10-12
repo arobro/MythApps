@@ -2,6 +2,7 @@
 
 // MythTV headers
 #include <libmyth/mythcontext.h>
+#include <libmythbase/mythlogging.h>
 
 // MythApps headers
 #include "programData.h"
@@ -22,7 +23,7 @@ void FileBrowserHistory::goBack() {
 }
 
 void FileBrowserHistory::debug() {
-    foreach (QStringList previousList, previousListItem) {
+    for (const QStringList previousList : previousListItem) {
         LOG(VB_GENERAL, LOG_DEBUG, "FileBrowserHistory::debug(): " + previousList.at(1));
     }
 }

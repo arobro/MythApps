@@ -14,6 +14,9 @@
 #include <libmythui/mythuibuttonlist.h>
 #include <libmythui/mythuicheckbox.h>
 #include <libmythui/mythuitext.h>
+#include <libmythbase/mythcorecontext.h>
+#include <libmythbase/mythlogging.h>
+#include <libmythbase/mythdb.h>
 
 // MythApps headers
 #include "mythappsdbcheck.h"
@@ -102,7 +105,7 @@ bool MythSettings::Create() {
     if (websites.contains("~")) {
         QStringList kodiWebList = websites.split("~");
 
-        foreach (QString website, kodiWebList) {
+        for (const QString &website : kodiWebList) {
             if (website.contains("|")) {
                 allWebsites = allWebsites + website.split("|").at(0) + "~";
             }
@@ -323,7 +326,7 @@ void MythSettings::save() {
 
         if (savedWebsites.contains("~")) {
             QStringList kodiWebList = savedWebsites.split("~");
-            foreach (QString website, kodiWebList) {
+            for (const QString &website : kodiWebList) {
                 LOG(VB_GENERAL, LOG_DEBUG, "website " + website);
                 allSavedWebsites = allSavedWebsites + savedWebSite(website);
             }

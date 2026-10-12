@@ -47,7 +47,7 @@ void WatchList::loadWatchList(bool unwatched) {
         limit = 22;
     }
 
-    Q_FOREACH (const FileFolderContainer &watched, watchedLink.getList(true, limit)) {
+    for (const FileFolderContainer &watched : watchedLink.getList(true, limit)) {
         QString seek = watched.seek;
         if (seek.compare("false") == 0 and !unwatched) {
             seek = "";
@@ -111,6 +111,7 @@ void WatchList::addToUnWatchedList(bool menu, ProgramData *currentSelectionDetai
 }
 
 bool WatchList::handleAction(const QString action, MythUIType *focusWidget, ProgramData *currentSelectionDetails) {
+    Q_UNUSED(focusWidget)
     LOGS(0, "", "action", action);
     if (action == "TOGGLERECORD") {
         addToUnWatchedList(true, currentSelectionDetails);
