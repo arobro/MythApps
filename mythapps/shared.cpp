@@ -292,10 +292,35 @@ bool isGnomeWayland() {
 
 /** \brief Activate the window. Wayland on Linux only.
  * \param windowName the name of the window to activate */
-void activateWindowWayland(QString windowName) {
-    systemSafe("gdbus call --session --dest org.gnome.Shell --object-path /de/lucaswerkmeister/ActivateWindowByTitle"
-               " --method de.lucaswerkmeister.ActivateWindowByTitle.activateBySubstring '" +
-               windowName.toLocal8Bit() + "'");
+void activateWindowWayland(const QString windowName) {
+    QStringList arguments;
+    arguments << "call"
+              << "--session"
+              << "--dest"
+              << "org.gnome.Shell"
+              << "--object-path"
+              << "/de/lucaswerkmeister/ActivateWindowByTitle"
+              << "--method"
+              << "de.lucaswerkmeister.ActivateWindowByTitle.activateBySubstring" << windowName;
+
+    QProcess process;
+    process.start("gdbus", arguments);
+
+    if (!process.waitForFinished(3000)) {
+        LOG(VB_GENERAL, LOG_WARNING, QString("Failed to execute gdbus command for window: %1. Error: %2").arg(windowName, process.errorString()));
+        return;
+    }
+
+    QString output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+    QString errorOutput = QString::fromUtf8(process.readAllStandardError()).trimmed();
+
+    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
+        LOG(VB_GENERAL, LOG_ERR, QString("ActivateWindowWayland: Failed: %1. Stderr: %2").arg(windowName, errorOutput));
+    } else if (output.contains("false")) {
+        LOG(VB_GENERAL, LOG_ERR, QString("ActivateWindowWayland: Window activation failed: %1. Response: %2").arg(windowName, output));
+    } else {
+        LOG(VB_GENERAL, LOG_DEBUG, QString("ActivateWindowWayland:Window activated"));
+    }
 }
 
 /** \brief Returns the full cached image path based of the original image location. Will copy the image to the cache if required. Used to copy mythapp

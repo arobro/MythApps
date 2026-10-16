@@ -51,7 +51,7 @@ bool isX11();
 bool isGnome();
 bool isGnomeWayland();
 
-void activateWindowWayland(QString windowName);
+void activateWindowWayland(const QString windowName);
 
 QString getGlobalPathPrefix();
 QString createImageCachePath(const QString imageFileName);
