@@ -1,9 +1,12 @@
 #include "controls.h"
 
+// QT headers
+#include <QProcess>
+
 // MythTV headers
 #include <libmyth/mythcontext.h>
-#include <libmythbase/mythdirs.h>
 #include <libmythbase/mythcorecontext.h>
+#include <libmythbase/mythdirs.h>
 #include <libmythbase/mythlogging.h>
 
 /** \param m_username Kodi username
@@ -102,20 +105,23 @@ void Controls::startKodiIfNotRunning() {
     LOGS(0, "");
 #ifdef __ANDROID__
 #elif _WIN32
-    system("tasklist /nh /fi \"imagename eq kodi.exe\" | find /i \"kodi.exe\" > "
-           "nul || (start kodi_start.cmd)");
+    QProcess p;
+    p.setProgram("cmd");
+    p.setNativeArguments(R"(/c "tasklist /nh /fi "imagename eq kodi.exe" | find /i "kodi.exe" > nul || (start kodi_start.cmd)") ");
+        p.startDetached();
 #else
     QString kodiName = "kodi";
     if (checkIfProgramInstalled("kodi-start")) { // used for testing
         kodiName = "kodi-start";
     } else if (!checkIfProgramInstalled(kodiName)) {
-        kodiName = "flatpak run tv.kodi.Kodi"; // try flatpak kodi
+        kodiName = "flatpak run tv.kodi.Kodi";
     }
-    if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0) {
-        system(("export LIRC_SOCKET_PATH=\"/\";if ! pgrep -x kodi > /dev/null; then " + kodiName.toLocal8Bit() + " & fi;").constData());
-    } else {
-        system(("if ! pgrep -x kodi > /dev/null; then " + kodiName.toLocal8Bit() + " & fi;").constData());
-    }
+
+    QString cmd = "if ! pgrep -x kodi > /dev/null; then " + kodiName + " & fi;";
+    if (gCoreContext->GetSetting("MythAppsInternalRemote").compare("1") == 0)
+        cmd = "export LIRC_SOCKET_PATH=\"/\";" + cmd;
+
+    QProcess::startDetached("sh", {"-c", cmd});
 #endif
 }
 

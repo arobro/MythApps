@@ -8,15 +8,15 @@
 
 // MythTV headers
 #include <libmyth/mythcontext.h>
+#include <libmythbase/mythcorecontext.h>
+#include <libmythbase/mythdb.h>
 #include <libmythbase/mythdbcon.h>
 #include <libmythbase/mythdirs.h>
+#include <libmythbase/mythlogging.h>
 #include <libmythui/mythmainwindow.h>
 #include <libmythui/mythuibuttonlist.h>
 #include <libmythui/mythuicheckbox.h>
 #include <libmythui/mythuitext.h>
-#include <libmythbase/mythcorecontext.h>
-#include <libmythbase/mythlogging.h>
-#include <libmythbase/mythdb.h>
 
 // MythApps headers
 #include "mythappsdbcheck.h"

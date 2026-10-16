@@ -1,4 +1,6 @@
 #include "browser.h"
+
+// QT headers
 #include <QProcess>
 #include <QStandardPaths>
 

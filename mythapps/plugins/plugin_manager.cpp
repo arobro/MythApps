@@ -13,7 +13,6 @@
 #include "SafeDelete.h"
 #include "shared.h"
 
-
 PluginManager::PluginManager() {
     LOGS(0, "");
     initializePlugin(m_favourites, "Favourites");

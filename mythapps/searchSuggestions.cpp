@@ -13,7 +13,6 @@
 #include "FunctionLogger.h"
 #include <libmythbase/mythcorecontext.h>
 
-
 SearchSuggestions::SearchSuggestions() {
     LOGS(0, "");
     netRequestSearchSuggestions = new NetRequest("", "", "", "", false);
